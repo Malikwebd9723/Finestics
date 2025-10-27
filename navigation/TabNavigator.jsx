@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather, FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Pressable, View, Text } from 'react-native';
 import { useThemeContext } from '../context/ThemeProvider';
 
@@ -89,6 +89,34 @@ export default function TabNavigator() {
         options={{
           ...renderHeader('Categories'),
           tabBarIcon: ({ color, size }) => <Ionicons name="list" color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="Users"
+        component={Categories}
+        options={{
+          ...renderHeader('Users'),
+          tabBarIcon: ({ color, size }) => <Ionicons name="person" color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="Expense"
+        component={Categories}
+        options={{
+          ...renderHeader('Expense'),
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome5 name="money-bill-wave" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="States"
+        component={Categories}
+        options={{
+          ...renderHeader('States'),
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="chart-bar" color={color} size={size} />
+          ),
         }}
       />
     </Tab.Navigator>

@@ -43,20 +43,22 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const colors =
     theme === "dark"
       ? {
-          background: "#0f172a",
-          card: "#1e293b",
-          text: "#f8fafc",
-          muted: "#94a3b8",
-          primary: "#60a5fa",
-          white: "#ffffff",
-        }
-      : {
-          background: "#f8fafc",
-          card: "#ffffff",
-          text: "#0f172a",
+          background: "#0F172A",
+          card: "#1E293B",
+          text: "#F9FAFB",
           muted: "#64748b",
-          primary: "#2563eb",
+          primary: "#6B7280",
           white: "#ffffff",
+          placeholder: "#64748b",
+        }
+        : {
+          background: "#F9FAFB",
+          card: "#FFFFFF",
+          text: "#111827",
+          muted: "#94a3b8",
+          primary: "#0F172A",
+          white: "#ffffff",
+          placeholder: "#64748b",
         };
 
   return (
