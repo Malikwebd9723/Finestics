@@ -4,18 +4,21 @@ import RootNavigator from './navigation/RootNavigator';
 import { ThemeProvider, useThemeContext } from './context/ThemeProvider';
 import './global.css';
 import { View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { PaperProvider } from 'react-native-paper';
 
 function ThemedApp() {
   const { colors, theme } = useThemeContext();
 
   return (
+    <PaperProvider>
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <NavigationContainer>
         <RootNavigator />
       </NavigationContainer>
     </View>
+    </PaperProvider>
   );
 }
 export default function App() {
