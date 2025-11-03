@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { View, Text } from "react-native";
+import { View, Text, Alert } from "react-native";
 import { DataTable } from "react-native-paper";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useThemeContext } from "../context/ThemeProvider";
 
-export default function GlobalDataTable({ title, columns, items, route }) {
+export default function GlobalDataTable({ title, columns, items, route, pressable = false }) {
   const { colors, theme } = useThemeContext();
   const itemsPerPageList = [10, 20, 30, 40, 50];
   const [page, setPage] = useState(0);
@@ -50,7 +50,7 @@ export default function GlobalDataTable({ title, columns, items, route }) {
       </View>
 
       {items.length === 0 ? (
-        <View className="py-8 items-center">
+        <View className="py-8 items-center justify-center">
           <Text style={{ color: colors.textSecondary }}>No records found</Text>
         </View>
       ) : (
@@ -82,6 +82,7 @@ export default function GlobalDataTable({ title, columns, items, route }) {
           {items.slice(from, to).map((item, index) => (
             <DataTable.Row
               key={`${index}-${theme}`}
+              onPress={()=> (pressable && navigation.navigate("InvoiceScreen")) }
               style={{
                 backgroundColor:
                   index % 2 === 0

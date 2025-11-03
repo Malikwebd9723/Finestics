@@ -9,7 +9,21 @@
     "experiments": {
       "tsconfigPaths": true
     },
-    "plugins": [],
+    "plugins": [
+            [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Finestics to access your photos.",
+          "savePhotosPermission": "Allow Finestics to save images to your gallery.",
+          "isAccessMediaLocationEnabled": true,
+          "permissions": [
+            "READ_MEDIA_IMAGES",
+            "READ_MEDIA_VIDEO",
+            "WRITE_EXTERNAL_STORAGE"
+          ]
+        }
+      ]
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

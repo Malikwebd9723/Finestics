@@ -135,8 +135,8 @@ export default function Dashboard() {
         </View>
       </View>
       <GlobalDataTable title="Items to Pick" columns={columns} items={items} />
-      <GlobalDataTable title="Recent Orders" columns={orderColumns} items={orderItems} route={"ordersScreen"}/>
-      <GlobalDataTable title="Recent Transactions" columns={transactionColumns} items={transactionItems} route={"transactionHistory"} />
+      <GlobalDataTable title="Recent Orders" columns={orderColumns} items={orderItems} route={"OrdersScreen"}/>
+      <GlobalDataTable title="Recent Transactions" columns={transactionColumns} items={transactionItems} route={"TransactionHistory"} />
     </ScrollView>
   );
 }
