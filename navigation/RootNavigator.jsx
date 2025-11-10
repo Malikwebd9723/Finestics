@@ -10,6 +10,8 @@ import Expense from "screens/Admin/Expense";
 import Statistics from "screens/Admin/Statistics";
 import TransactionHistory from "screens/TransactionHistory";
 import InvoiceScreen from "screens/InvoiceScreen";
+import OrdersScreen from "screens/OrdersScreen";
+import CreateOrderScreen from "screens/CreateOrderScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -40,6 +42,20 @@ export default function RootNavigator() {
       <Stack.Screen name="InvoiceScreen" component={InvoiceScreen}       options={{ 
         headerShown: true, 
         title: "Invoice", 
+        headerStyle: { backgroundColor: colors.card },
+        headerTitleStyle: { color: colors.text },
+        headerTintColor: colors.text,
+        }} />
+      <Stack.Screen name="OrdersScreen" component={OrdersScreen}       options={{ 
+        headerShown: true, 
+        title: "Orders", 
+        headerStyle: { backgroundColor: colors.card },
+        headerTitleStyle: { color: colors.text },
+        headerTintColor: colors.text,
+        }} />
+      <Stack.Screen name="CreateOrderScreen" component={CreateOrderScreen}       options={{ 
+        headerShown: true, 
+        title: "Update Order", 
         headerStyle: { backgroundColor: colors.card },
         headerTitleStyle: { color: colors.text },
         headerTintColor: colors.text,
