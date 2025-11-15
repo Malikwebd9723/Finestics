@@ -134,8 +134,6 @@ export default function CreateOrderScreen() {
             orderId ? "Order updated successfully!" : "Order created successfully!",
             ToastAndroid.SHORT
         );
-
-        console.log("🧾 Order Data:", orderPayload);
     };
 
     const renderItem = useMemo(
@@ -202,10 +200,10 @@ export default function CreateOrderScreen() {
                     backgroundColor: colors.card,
                     borderRadius: 10,
                     borderWidth: 1,
-                    borderColor: colors.grey,
+                    borderColor: colors.gray,
                 }}
                 selectStyle={{
-                    borderColor: colors.grey,
+                    borderColor: colors.gray,
                     paddingVertical: 10,
                     paddingHorizontal: 15,
                     borderRadius: 10,
@@ -232,10 +230,10 @@ export default function CreateOrderScreen() {
                     backgroundColor: colors.card,
                     borderRadius: 10,
                     borderWidth: 1,
-                    borderColor: colors.grey,
+                    borderColor: colors.gray,
                 }}
                 selectStyle={{
-                    borderColor: colors.grey,
+                    borderColor: colors.gray,
                     paddingVertical: 10,
                     paddingHorizontal: 15,
                     borderRadius: 10,
@@ -250,7 +248,7 @@ export default function CreateOrderScreen() {
                 </Text>
             </ModalSelector>
 
-            <Divider style={{ marginTop: 20, borderColor: colors.grey }} />
+            <Divider style={{ marginTop: 20, borderColor: colors.gray }} />
         </View>
     );
 
@@ -271,7 +269,7 @@ export default function CreateOrderScreen() {
                 </View>
             ))}
 
-            <View className="my-3 border-t" style={{ borderColor: colors.grey }} />
+            <View className="my-3 border-t" style={{ borderColor: colors.gray }} />
 
             <View className="gap-3 mb-5">
                 <View className="flex-row justify-between">
@@ -292,7 +290,7 @@ export default function CreateOrderScreen() {
                         ${discount.toFixed(2)}
                     </Text>
                 </View>
-                <View className="flex-row justify-between border-t pt-2" style={{ borderColor: colors.grey }}>
+                <View className="flex-row justify-between border-t pt-2" style={{ borderColor: colors.gray }}>
                     <Text className="text-base font-semibold" style={{ color: colors.text }}>
                         Total (incl. GST)
                     </Text>

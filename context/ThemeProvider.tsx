@@ -50,7 +50,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           primary: "#6B7280",
           white: "#ffffff",
           placeholder: "#64748b",
-          grey: "#74797d",
+          gray: "#2e3a4dff",
           success:"#10B981",
           error:"#EF4444",
         }
@@ -62,7 +62,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           primary: "#0F172A",
           white: "#ffffff",
           placeholder: "#64748b",
-          grey: "#EFF2F9",
+          gray: "#f1f2f5ff",
           success:"#10B981",
           error:"#EF4444",
         };

@@ -13,6 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeContext } from 'context/ThemeProvider';
 import { useNavigation, NavigationProp } from "@react-navigation/native";
+import SearchBar from "components/SearchBar";
 
 // Define your navigation type (adjust according to your app’s navigation structure)
 type RootStackParamList = {
@@ -109,30 +110,11 @@ export default function Categories () {
   return (
     <View className="flex-1 p-2" style={{ backgroundColor: colors.background }}>
       {/* Search Bar */}
-      <View
-        className="flex-row items-center mb-4 rounded-full px-4 py-2"
-        style={{ backgroundColor: colors.card }}
-      >
-        <Ionicons name="search" size={20} color={colors.text} />
-        <TextInput
-          placeholder="Search"
-          placeholderTextColor={colors.text}
-          value={search}
-          onChangeText={handleSearch}
-          className="flex-1 ml-2 text-base"
-          style={{ color: colors.text }}
-        />
-
-        <Pressable
-          onPress={() => {
-            Alert.alert("Add Category", "Functionality to add a new category.");
-          }}
-          className="w-10 h-10 rounded-full items-center justify-center"
-          style={{ backgroundColor: colors.primary }}
-        >
-          <Ionicons name="add" size={24} color="#fff" />
-        </Pressable>
-      </View>
+      <SearchBar
+        value={search}
+        onChange={handleSearch}
+        onAddPress={() => Alert.alert("Add Category", "Add Category button pressed")}
+      />
 
       {/* Category Grid or Skeleton */}
       {loading ? (

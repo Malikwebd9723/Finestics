@@ -87,7 +87,7 @@ export default function GlobalDataTable({ title, columns, items, route, pressabl
                 backgroundColor:
                   index % 2 === 0
                     ? colors.card
-                    : colors.grey ?? "#1e293b",
+                    : colors.gray ?? "#1e293b",
                     borderBottomWidth: 0,
                     borderRadius: 8,
               }}

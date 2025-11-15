@@ -9,10 +9,20 @@ import {
   Modal,
   Pressable,
   ToastAndroid,
+  ViewStyle,
+  StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ModalSelector from "react-native-modal-selector";
 import { useThemeContext } from "context/ThemeProvider";
+
+// React Hook Form
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { categorySchema } from "../../validations/formValidationSchemas";
+import { pickImageFromGallery } from "utils/imagePicker";
+import { inputStyles } from "constants/inputStyles";
+import SearchBar from "components/SearchBar";
 
 interface Vegetable {
   id: string;
@@ -21,88 +31,172 @@ interface Vegetable {
   selling: string;
   unit: string;
   image: any;
-  status: "green" | "red" | "gray";
+  status: "instock" | "outofstock";
 }
 
+// Sample Data
 const vegetablesData: Vegetable[] = [
-  { id: "1", name: "Aloe Vera", purchase: "10.00", selling: "12.00", unit: "Bag", image: require("../../assets/aloe.jpg"), status: "green" },
-  { id: "2", name: "Carrot", purchase: "5.00", selling: "6.50", unit: "Kg", image: require("../../assets/carrot.jpg"), status: "green" },
-  { id: "3", name: "Potatoes", purchase: "3.00", selling: "4.00", unit: "Kg", image: require("../../assets/potato.jpg"), status: "green" },
-  { id: "4", name: "Courgette", purchase: "6.00", selling: "7.50", unit: "Kg", image: require("../../assets/courgette.jpg"), status: "green" },
-  { id: "5", name: "Ginger", purchase: "12.00", selling: "15.00", unit: "Kg", image: require("../../assets/ginger.jpg"), status: "green" },
-  { id: "6", name: "Sugar Cane", purchase: "8.00", selling: "10.00", unit: "Stick", image: require("../../assets/sugarcane.jpg"), status: "green" },
-  { id: "7", name: "Papaya", purchase: "14.00", selling: "17.00", unit: "Piece", image: require("../../assets/papaya.jpg"), status: "red" },
-  { id: "8", name: "Other", purchase: "0.00", selling: "0.00", unit: "-", image: require("../../assets/others.jpg"), status: "gray" },
+  {
+    id: "1",
+    name: "Aloe Vera",
+    purchase: "10.00",
+    selling: "12.00",
+    unit: "Bag",
+    image: require("../../assets/aloe.jpg"),
+    status: "instock",
+  },
+  {
+    id: "2",
+    name: "Carrot",
+    purchase: "5.00",
+    selling: "6.50",
+    unit: "Kg",
+    image: require("../../assets/carrot.jpg"),
+    status: "instock",
+  },
+  {
+    id: "3",
+    name: "Potatoes",
+    purchase: "3.00",
+    selling: "4.00",
+    unit: "Kg",
+    image: require("../../assets/potato.jpg"),
+    status: "instock",
+  },
+  {
+    id: "7",
+    name: "Papaya",
+    purchase: "14.00",
+    selling: "17.00",
+    unit: "Piece",
+    image: require("../../assets/papaya.jpg"),
+    status: "outofstock",
+  },
 ];
 
 export default function CategoryDetails() {
   const { colors } = useThemeContext();
+
   const [searchText, setSearchText] = useState("");
   const [filteredData, setFilteredData] = useState<Vegetable[]>(vegetablesData);
-  const [selectedItem, setSelectedItem] = useState<Vegetable | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [imagePreview, setImagePreview] = useState<any>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
+  // Form Handler
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+    setValue,
+  } = useForm({
+    resolver: yupResolver(categorySchema),
+    defaultValues: {
+      name: "",
+      purchase: "",
+      selling: "",
+      unit: "",
+      status: "",
+    },
+  });
+
+  // Search Filter
   const handleSearch = (text: string) => {
     setSearchText(text);
+
     if (text.trim() === "") {
       setFilteredData(vegetablesData);
     } else {
-      const filtered = vegetablesData.filter((item) =>
-        item.name.toLowerCase().includes(text.toLowerCase())
+      setFilteredData(
+        vegetablesData.filter((item) =>
+          item.name.toLowerCase().includes(text.toLowerCase())
+        )
       );
-      setFilteredData(filtered);
     }
   };
 
-  const openModal = (item: Vegetable) => {
-    setSelectedItem({ ...item });
+  // Open modal to UPDATE item
+  const openEditModal = (item: Vegetable) => {
+    setEditingId(item.id);
+
+    reset({
+      name: item.name,
+      purchase: item.purchase,
+      selling: item.selling,
+      unit: item.unit,
+      status: item.status,
+    });
+
+    setImagePreview(item.image);
     setModalVisible(true);
   };
 
-  const handleUpdate = () => {
-    ToastAndroid.show("Item updated successfully!", ToastAndroid.SHORT);
+  // Open modal to ADD item
+  const openAddModal = () => {
+    setEditingId(null);
+    reset({
+      name: "",
+      purchase: "",
+      selling: "",
+      unit: "",
+      status: "",
+    });
+    setImagePreview(null);
+    setModalVisible(true);
+  };
+
+  // Image Picker
+  const pickImage = async () => {
+    const uri = await pickImageFromGallery();
+    if (uri) setImagePreview({ uri });
+  };
+
+  // Submit Handler
+  const submitForm = (data: any) => {
+    const finalData = {
+      ...data,
+      id: editingId || Date.now().toString(),
+      image: imagePreview,
+    };
+
+    console.log("FORM SUBMITTED:", finalData);
+
+    ToastAndroid.show(
+      editingId ? "Item updated!" : "New item added!",
+      ToastAndroid.SHORT
+    );
+
     setModalVisible(false);
   };
 
+  // Row UI
   const renderItem = ({ item }: { item: Vegetable }) => (
     <TouchableOpacity
-      onPress={() => openModal(item)}
+      onPress={() => openEditModal(item)}
       className="flex-row items-center rounded-2xl p-3 mb-3"
-      style={{ backgroundColor: colors.card, elevation: 2 }}
+      style={{ backgroundColor: colors.card }}
     >
       <Image source={item.image} className="w-12 h-12 rounded-full mr-3" />
       <View className="flex-1">
-        <Text
-          className="font-semibold text-base"
-          style={{ color: colors.text }}
-        >
+        <Text className="font-semibold text-base" style={{ color: colors.text }}>
           {item.name}
         </Text>
       </View>
+
       <View
-        className="w-3 h-3 rounded-full"
+        className="px-3 py-1 rounded-full"
         style={{
           backgroundColor:
-            item.status === "green"
-              ? colors.success
-              : item.status === "red"
-              ? colors.error
-              : colors.grey,
+            item.status === "instock" ? colors.success : colors.error,
         }}
-      />
+      >
+        <Text className="text-xs" style={{ color: colors.white }}>
+          {item.status === "instock" ? "In Stock" : "Out of Stock"}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
-
-  const inputStyle = {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 10,
-    color: colors.text,
-    backgroundColor: colors.card,
-  };
 
   return (
     <View className="flex-1 p-5" style={{ backgroundColor: colors.background }}>
@@ -116,7 +210,7 @@ export default function CategoryDetails() {
           <Text className="text-xl font-bold" style={{ color: colors.text }}>
             Vegetables
           </Text>
-          <Text style={{ color: colors.subtext }}>
+          <Text style={{ color: colors.muted }}>
             {filteredData.length} Items
           </Text>
         </View>
@@ -124,153 +218,192 @@ export default function CategoryDetails() {
       </View>
 
       {/* Search Bar */}
-      <View
-        className="flex-row items-center mb-4 rounded-full px-4 py-2"
-        style={{ backgroundColor: colors.card }}
-      >
-        <Ionicons name="search" size={20} color={colors.text} />
-        <TextInput
-          placeholder="Search"
-          placeholderTextColor={colors.text}
-          value={searchText}
-          onChangeText={handleSearch}
-          className="flex-1 ml-2 text-base"
-          style={{ color: colors.text }}
-        />
-        <Pressable
-          onPress={() => ToastAndroid.show("Add item clicked", ToastAndroid.SHORT)}
-          className="w-10 h-10 rounded-full items-center justify-center"
-          style={{ backgroundColor: colors.primary }}
-        >
-          <Ionicons name="add" size={24} color="#fff" />
-        </Pressable>
-      </View>
+      <SearchBar
+        value={searchText}
+        onChange={handleSearch}
+        onAddPress={openAddModal}
+      />
 
-      {/* List */}
+      {/* LIST */}
       <FlatList
         data={filteredData}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
       />
 
-      {/* Modal */}
+      {/* MODAL */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View className="flex-1 justify-center items-center bg-black/40">
           <View
             className="w-[90%] rounded-2xl p-5"
             style={{ backgroundColor: colors.card }}
           >
-            {selectedItem && (
-              <>
-                <TouchableOpacity>
-                  <Image
-                    source={selectedItem.image}
-                    className="w-24 h-24 rounded-full mb-3 self-center"
+            <TouchableOpacity onPress={pickImage}>
+              <Image
+                source={imagePreview || require("../../assets/others.jpg")}
+                className="w-24 h-24 rounded-full mb-3 self-center"
+              />
+            </TouchableOpacity>
+
+            <Text className="text-center mb-4" style={{ color: colors.text }}>
+              {editingId ? "Update Item" : "Add New Item"}
+            </Text>
+
+            {/* NAME */}
+            <Controller
+              control={control}
+              name="name"
+              render={({ field }) => (
+                <>
+                  <TextInput
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    style={[inputStyles.base, { backgroundColor: colors.card, color: colors.text }]}
+                    placeholder="Name"
+                    placeholderTextColor={colors.placeholder}
                   />
-                </TouchableOpacity>
-                <Text
-                  className="text-center mb-4"
-                  style={{ color: colors.text }}
-                >
-                  Update Item
+                  {errors.name && (
+                    <Text style={{ color: colors.error }}>
+                      {errors.name.message}
+                    </Text>
+                  )}
+                </>
+              )}
+            />
+
+            {/* PURCHASE */}
+            <Controller
+              control={control}
+              name="purchase"
+              render={({ field }) => (
+                <>
+                  <TextInput
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    style={[inputStyles.base, { backgroundColor: colors.card, color: colors.text }]}
+                    placeholder="Purchase Price"
+                    placeholderTextColor={colors.placeholder}
+                    keyboardType="numeric"
+                  />
+                  {errors.purchase && (
+                    <Text style={{ color: colors.error }}>
+                      {errors.purchase.message}
+                    </Text>
+                  )}
+                </>
+              )}
+            />
+
+            {/* SELLING */}
+            <Controller
+              control={control}
+              name="selling"
+              render={({ field }) => (
+                <>
+                  <TextInput
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    style={[inputStyles.base, { backgroundColor: colors.card, color: colors.text }]}
+                    placeholder="Selling Price"
+                    placeholderTextColor={colors.placeholder}
+                    keyboardType="numeric"
+                  />
+                  {errors.selling && (
+                    <Text style={{ color: colors.error }}>
+                      {errors.selling.message}
+                    </Text>
+                  )}
+                </>
+              )}
+            />
+
+            {/* UNIT */}
+            <Controller
+              control={control}
+              name="unit"
+              render={({ field }) => (
+                <>
+                  <TextInput
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    style={[inputStyles.base, { backgroundColor: colors.card, color: colors.text }]}
+                    placeholder="Unit (e.g., Kg, Bag)"
+                    placeholderTextColor={colors.placeholder}
+                  />
+                  {errors.unit && (
+                    <Text style={{ color: colors.error }}>
+                      {errors.unit.message}
+                    </Text>
+                  )}
+                </>
+              )}
+            />
+
+            {/* STATUS SELECTOR */}
+            <Controller
+              control={control}
+              name="status"
+              render={({ field }) => {
+                const selectedLabel =
+                  field.value === "instock"
+                    ? "In Stock"
+                    : field.value === "outofstock"
+                      ? "Out of Stock"
+                      : "Select Status";
+
+                return (
+                  <>
+                    <ModalSelector
+                      data={[
+                        { key: "instock", label: "In Stock" },
+                        { key: "outofstock", label: "Out of Stock" },
+                      ]}
+                      initValue={selectedLabel}
+                      onChange={(option) => field.onChange(option.key)}
+                      selectedKey={field.value}
+                      selectStyle={{
+                        borderRadius: 12,
+                        borderColor: "#ddd",
+                        borderWidth: 1,
+                        padding: 12,
+                        marginTop: 8,
+                        backgroundColor: colors.primary,
+                      }}
+                      selectTextStyle={{ color: colors.text }}
+                      optionTextStyle={{ color: colors.text }}
+                    />
+                    {errors.status && (
+                      <Text style={{ color: colors.error }}>{errors.status.message}</Text>
+                    )}
+                  </>
+                );
+              }}
+            />
+
+
+            {/* BUTTONS */}
+            <View className="flex-row justify-between mt-4">
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                className="flex-1 mr-2 rounded-xl p-3 bg-gray-300 items-center"
+              >
+                <Text className="text-black">Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleSubmit(submitForm)}
+                className="flex-1 rounded-xl p-3"
+                style={{ backgroundColor: colors.primary }}
+              >
+                <Text className="text-center text-white">
+                  {editingId ? "Update" : "Add"}
                 </Text>
-
-                <TextInput
-                  style={inputStyle}
-                  value={selectedItem.name}
-                  onChangeText={(text) =>
-                    setSelectedItem({ ...selectedItem, name: text })
-                  }
-                  placeholder="Name"
-                  placeholderTextColor={colors.text}
-                />
-
-                <TextInput
-                  style={inputStyle}
-                  value={selectedItem.purchase}
-                  onChangeText={(text) =>
-                    setSelectedItem({ ...selectedItem, purchase: text })
-                  }
-                  placeholder="Purchase Price"
-                  placeholderTextColor={colors.text}
-                  keyboardType="numeric"
-                />
-
-                <TextInput
-                  style={inputStyle}
-                  value={selectedItem.selling}
-                  onChangeText={(text) =>
-                    setSelectedItem({ ...selectedItem, selling: text })
-                  }
-                  placeholder="Selling Price"
-                  placeholderTextColor={colors.text}
-                  keyboardType="numeric"
-                />
-
-                <TextInput
-                  style={inputStyle}
-                  value={selectedItem.unit}
-                  onChangeText={(text) =>
-                    setSelectedItem({ ...selectedItem, unit: text })
-                  }
-                  placeholder="Unit"
-                  placeholderTextColor={colors.text}
-                />
-
-                {/* Dropdown using Modal Selector */}
-                <View className="w-full mb-5">
-                  <ModalSelector
-                    data={[
-                      { key: "green", label: "In Stock" },
-                      { key: "red", label: "Out of Stock" },
-                    ]}
-                    initValue={
-                      selectedItem.status === "green"
-                        ? "In Stock"
-                        : selectedItem.status === "red"
-                        ? "Out of Stock"
-                        : "Select Status"
-                    }
-                    onChange={(option) =>
-                      setSelectedItem({
-                        ...selectedItem,
-                        status: option.key as "green" | "red",
-                      })
-                    }
-                    style={{ width: "100%" }}
-                    selectStyle={{
-                      borderRadius: 12,
-                      borderColor: "#ddd",
-                      borderWidth: 1,
-                      backgroundColor: colors.background,
-                      padding: 12,
-                    }}
-                    selectTextStyle={{ color: colors.text }}
-                    optionTextStyle={{ color: colors.text }}
-                    cancelText="Cancel"
-                  />
-                </View>
-
-                {/* Buttons */}
-                <View className="flex-row justify-between">
-                  <TouchableOpacity
-                    onPress={() => setModalVisible(false)}
-                    className="flex-1 mr-2 rounded-xl p-3 bg-gray-300 items-center"
-                  >
-                    <Text className="text-black">Cancel</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={handleUpdate}
-                    className="flex-1 rounded-xl p-3"
-                    style={{ backgroundColor: colors.primary }}
-                  >
-                    <Text className="text-center text-white">Update</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>

@@ -62,7 +62,7 @@ export default function Dashboard() {
           {/* Left — Today’s Order */}
           <View
             className="mr-4 flex-1 justify-between rounded-lg p-2"
-            backgroundColor={colors.grey}>
+            backgroundColor={colors.gray}>
             <Text className="text-lg font-bold" style={{ color: colors.text }}>
               Today’s Order
             </Text>
