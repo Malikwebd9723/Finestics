@@ -1,5 +1,4 @@
-export const BASE_URL = "https://your-api-url.com"; // replace with env variable
-
+require('dotenv').config()
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -36,7 +35,7 @@ export async function apiRequest<T = any>(
       options.body = JSON.stringify(body);
     }
 
-    const response = await fetch(`${BASE_URL}${route}`, options);
+    const response = await fetch(`${process.env.BASE_URL}${route}`, options);
 
     let data: any = null;
     try {
