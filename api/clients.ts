@@ -1,73 +1,25 @@
-require('dotenv').config()
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: {
-    status?: number;
-    message?: string;
-    raw?: any;
-  };
-}
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { config } from 'config';
 
-type RequestMethod = "GET" | "POST" | "PUT" | "DELETE";
-
-export async function apiRequest<T = any>(
+export const apiRequest = async (
   route: string,
-  method: RequestMethod = "GET",
-  body?: any,
-  token?: string
-): Promise<ApiResponse<T>> {
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  body?: any
+) => {
   try {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    const options: RequestInit = {
+    const accessToken = await AsyncStorage.getItem('accessToken');
+    const response = await fetch(`${config.BaseUrl}${route}`, {
       method,
-      headers,
-    };
-
-    if (body) {
-      options.body = JSON.stringify(body);
-    }
-
-    const response = await fetch(`${process.env.BASE_URL}${route}`, options);
-
-    let data: any = null;
-    try {
-      data = await response.json();
-    } catch (e) {
-      data = null;
-    }
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: {
-          status: response.status,
-          message: data?.message || "Request failed",
-          raw: data,
-        },
-      };
-    }
-
-    return {
-      success: true,
-      data,
-    };
-  } catch (error: any) {
-    console.log("API ERROR:", error);
-
-    return {
-      success: false,
-      error: {
-        message: error?.message || "Network error",
-        raw: error,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
       },
-    };
+      ...(body && { body: JSON.stringify(body) }),
+    });
+
+    const json = await response.json();
+    return { success: response.ok, status: response.status, data: json };
+  } catch (error) {
+    return { ok: false, status: 500, data: { message: 'Network error' } };
   }
-}
+};

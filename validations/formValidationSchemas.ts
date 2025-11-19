@@ -1,11 +1,15 @@
-import * as Yup from "yup";
+import * as Yup from 'yup';
 
 export const categorySchema = Yup.object().shape({
-  name: Yup.string().required("Name is required"),
-  purchase: Yup.string()
-    .required("Purchase price is required"),
-  selling: Yup.string()
-    .required("Selling price is required"),
-  unit: Yup.string().required("Unit is required"),
-  status: Yup.string().required("Status is required"),
+  name: Yup.string().required('Name is required'),
+  purchase: Yup.string().required('Purchase price is required'),
+  selling: Yup.string().required('Selling price is required'),
+  unit: Yup.string().required('Unit is required'),
+  status: Yup.string().required('Status is required'),
+});
+
+export const loginSchema = Yup.object().shape({
+  email: Yup.string().email('Invalid email').required('Email is required'),
+  password: Yup.string().required('Password is required'),
+  rememberMe: Yup.boolean(),
 });

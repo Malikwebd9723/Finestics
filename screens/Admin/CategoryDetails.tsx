@@ -7,10 +7,7 @@ import {
   Image,
   TouchableOpacity,
   Modal,
-  Pressable,
   ToastAndroid,
-  ViewStyle,
-  StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ModalSelector from "react-native-modal-selector";
@@ -21,8 +18,8 @@ import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { categorySchema } from "../../validations/formValidationSchemas";
 import { pickImageFromGallery } from "utils/imagePicker";
-import { inputStyles } from "constants/inputStyles";
 import SearchBar from "components/SearchBar";
+import { searchbarStyles } from "constants/inputStyles";
 
 interface Vegetable {
   id: string;
@@ -259,7 +256,7 @@ export default function CategoryDetails() {
                     value={field.value}
                     onChangeText={field.onChange}
                     onBlur={field.onBlur}
-                    style={[inputStyles.base, { backgroundColor: colors.card, color: colors.text }]}
+                    style={[searchbarStyles.base, { backgroundColor: colors.card, color: colors.text }]}
                     placeholder="Name"
                     placeholderTextColor={colors.placeholder}
                   />
@@ -282,7 +279,7 @@ export default function CategoryDetails() {
                     value={field.value}
                     onChangeText={field.onChange}
                     onBlur={field.onBlur}
-                    style={[inputStyles.base, { backgroundColor: colors.card, color: colors.text }]}
+                    style={[searchbarStyles.base, { backgroundColor: colors.card, color: colors.text }]}
                     placeholder="Purchase Price"
                     placeholderTextColor={colors.placeholder}
                     keyboardType="numeric"
@@ -306,7 +303,7 @@ export default function CategoryDetails() {
                     value={field.value}
                     onChangeText={field.onChange}
                     onBlur={field.onBlur}
-                    style={[inputStyles.base, { backgroundColor: colors.card, color: colors.text }]}
+                    style={[searchbarStyles.base, { backgroundColor: colors.card, color: colors.text }]}
                     placeholder="Selling Price"
                     placeholderTextColor={colors.placeholder}
                     keyboardType="numeric"
@@ -330,7 +327,7 @@ export default function CategoryDetails() {
                     value={field.value}
                     onChangeText={field.onChange}
                     onBlur={field.onBlur}
-                    style={[inputStyles.base, { backgroundColor: colors.card, color: colors.text }]}
+                    style={[searchbarStyles.base, { backgroundColor: colors.card, color: colors.text }]}
                     placeholder="Unit (e.g., Kg, Bag)"
                     placeholderTextColor={colors.placeholder}
                   />

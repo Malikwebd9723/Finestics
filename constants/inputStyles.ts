@@ -1,6 +1,6 @@
 import { ViewStyle, StyleSheet } from "react-native";
 
-export const inputStyles: Record<string, ViewStyle> = StyleSheet.create({
+export const searchbarStyles: Record<string, ViewStyle> = StyleSheet.create({
   base: {
     width: "100%",
     borderWidth: 1,

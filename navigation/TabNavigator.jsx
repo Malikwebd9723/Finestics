@@ -10,13 +10,14 @@ import { useNavigation } from '@react-navigation/native';
 import Users from 'screens/Admin/Users';
 import Expense from 'screens/Admin/Expense';
 import Statistics from 'screens/Admin/Statistics';
+import { useAuth } from 'context/AuthContext';
 
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
   const { theme, colors, setTheme } = useThemeContext();
   const navigation = useNavigation();
-
+  const {logout} = useAuth()
   // Common header for all screens
   const renderHeader = (title) => ({
     headerTitleAlign: 'start', // centralized title
@@ -56,7 +57,7 @@ export default function TabNavigator() {
     ),
     headerLeft: () => (
       <View style={{ marginLeft: 15 }}>
-        <Pressable onPress={() => navigation.navigate('Login')}>
+        <Pressable onPress={() => logout()}>
           <Feather name="menu" size={24} color={colors.text} />
         </Pressable>
       </View>
