@@ -177,7 +177,7 @@ export default function LoginScreen() {
           <Text className="mr-1 text-sm" style={{ color: colors.text }}>
             Don't have an account?
           </Text>
-          <TouchableOpacity onPress={() => navigation.replace('Signup')}>
+          <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
             <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
               Signup?
             </Text>

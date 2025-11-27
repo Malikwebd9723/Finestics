@@ -14,13 +14,14 @@ import OrdersScreen from 'screens/OrdersScreen';
 import CreateOrderScreen from 'screens/CreateOrderScreen';
 import { useAuth } from 'context/AuthContext';
 import { ActivityIndicator, View } from 'react-native';
+import SetupProfileScreen from 'screens/Onboarding/SetupProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
   const { colors } = useThemeContext();
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -30,8 +31,10 @@ export default function RootNavigator() {
   }
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {user ? (
+      {user && user.role === 'super_admin' ? (
         <Stack.Screen name="Main" component={TabNavigator} />
+      ) : user && user.role === 'customer' ? (
+        <Stack.Screen name="onboarding" component={SetupProfileScreen} />
       ) : (
         <Stack.Screen name="Login" component={Login} />
       )}
