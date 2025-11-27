@@ -80,15 +80,13 @@ export default function SetupProfileScreen() {
           response.data.error.message || 'Error while submitting!',
           ToastAndroid.SHORT
         );
+        AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
         setLoading(false);
         return;
       }
 
       ToastAndroid.show('Profile Submitted Successfully!', ToastAndroid.SHORT);
       setLoading(false);
-      AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
-      // Redirect to login
-      navigation.replace('Login');
     } catch (error) {
       setLoading(false);
       ToastAndroid.show('Something went wrong, try again!', ToastAndroid.SHORT);
