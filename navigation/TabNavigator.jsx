@@ -7,13 +7,17 @@ import { useThemeContext } from '../context/ThemeProvider';
 import Dashboard from '../screens/Admin/Dashboard';
 import Categories from '../screens/Admin/Categories';
 import { useNavigation } from '@react-navigation/native';
+import Users from 'screens/Admin/Users';
+import Expense from 'screens/Admin/Expense';
+import Statistics from 'screens/Admin/Statistics';
+import { useAuth } from 'context/AuthContext';
 
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
   const { theme, colors, setTheme } = useThemeContext();
   const navigation = useNavigation();
-
+  const {logout} = useAuth()
   // Common header for all screens
   const renderHeader = (title) => ({
     headerTitleAlign: 'start', // centralized title
@@ -53,7 +57,7 @@ export default function TabNavigator() {
     ),
     headerLeft: () => (
       <View style={{ marginLeft: 15 }}>
-        <Pressable onPress={() => navigation.navigate('Login')}>
+        <Pressable onPress={() => logout()}>
           <Feather name="menu" size={24} color={colors.text} />
         </Pressable>
       </View>
@@ -65,10 +69,10 @@ export default function TabNavigator() {
     <Tab.Navigator
       screenOptions={{
         tabBarShowLabel: true,
-        tabBarActiveTintColor: colors.white,
+        tabBarActiveTintColor: colors.text,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
-          backgroundColor: '#1e293b',
+          backgroundColor: colors.card,
           borderTopWidth: 0,
           height: 60,
         },
@@ -93,7 +97,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen
         name="Users"
-        component={Categories}
+        component={Users}
         options={{
           ...renderHeader('Users'),
           tabBarIcon: ({ color, size }) => <Ionicons name="person" color={color} size={size} />,
@@ -101,7 +105,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen
         name="Expense"
-        component={Categories}
+        component={Expense}
         options={{
           ...renderHeader('Expense'),
           tabBarIcon: ({ color, size }) => (
@@ -111,7 +115,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen
         name="States"
-        component={Categories}
+        component={Statistics}
         options={{
           ...renderHeader('States'),
           tabBarIcon: ({ color, size }) => (
