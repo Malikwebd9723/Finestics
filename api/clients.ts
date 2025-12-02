@@ -7,7 +7,8 @@ export const apiRequest = async (
   body?: any
 ) => {
   try {
-    const accessToken = await AsyncStorage.getItem('accessToken');
+    // const accessToken = await AsyncStorage.getItem('accessToken');
+    const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiZW1haWwiOiJjdXN0b21lckBleGFtcGxlLmNvbSIsInJvbGUiOm51bGwsImlhdCI6MTc2NDcwMzE0NywiZXhwIjoxNzY0Nzg5NTQ3fQ.R5DdqAtt3H_dh7IgmymDnmhpCOe78NQjkFV7sUkG_tU";
     const response = await fetch(`${config.BaseUrl}${route}`, {
       method,
       headers: {

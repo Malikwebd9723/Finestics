@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TabNavigator from './TabNavigator';
 import Login from '../screens/Login';
 import Signup from '../screens/Signup';
 import CategoryDetails from 'screens/Admin/CategoryDetails';
-import { useThemeContext } from 'context/ThemeProvider';
 import Users from 'screens/Admin/Users';
 import Expense from 'screens/Admin/Expense';
 import Statistics from 'screens/Admin/Statistics';
@@ -12,12 +12,50 @@ import TransactionHistory from 'screens/TransactionHistory';
 import InvoiceScreen from 'screens/InvoiceScreen';
 import OrdersScreen from 'screens/OrdersScreen';
 import CreateOrderScreen from 'screens/CreateOrderScreen';
+import RoleSelectionScreen from 'screens/Onboarding/RoleSelectionScreen';
+// import BusinessInfoScreen from 'screens/Onboarding/BusinessInfoScreen';
+// import BusinessAddressScreen from 'screens/Onboarding/BusinessAddressScreen';
+// import SubscriptionScreen from 'screens/Onboarding/SubscriptionScreen';
+// import SubmitOnboardingScreen from 'screens/Onboarding/SubmitOnboardingScreen';
+import { useThemeContext } from 'context/ThemeProvider';
 import { useAuth } from 'context/AuthContext';
-import { ActivityIndicator, View } from 'react-native';
-import SetupProfileScreen from 'screens/Onboarding/SetupProfileScreen';
+import BusinessInfoScreen from 'screens/Onboarding/BusinessInfoScreen';
 
 const Stack = createNativeStackNavigator();
+const OnboardingStack = createNativeStackNavigator();
 
+// --- Onboarding Flow Navigator ---
+function OnboardingNavigator() {
+  return (
+    <OnboardingStack.Navigator screenOptions={{ headerShown: false }}>
+      <OnboardingStack.Screen name="RoleSelectionScreen" component={RoleSelectionScreen} />
+      {/* <OnboardingStack.Screen name="BusinessInfoScreen" component={BusinessInfoScreen} />
+      <OnboardingStack.Screen name="BusinessAddressScreen" component={BusinessAddressScreen} />
+      <OnboardingStack.Screen name="SubscriptionScreen" component={SubscriptionScreen} />
+      <OnboardingStack.Screen name="SubmitOnboardingScreen" component={SubmitOnboardingScreen} /> */}
+    </OnboardingStack.Navigator>
+  );
+}
+
+// --- Function to determine initial route ---
+function getInitialRoute(user) {
+  if (!user) return 'Login';
+
+  if (user.role === 'super_admin') return 'Main';
+
+  if (user.role === 'customer') {
+    if (!user.onboardingCompleted) {
+      if (!user.profileSetupCompleted) return 'Onboarding';
+      if (!user.preferencesCompleted) return 'Onboarding';
+      if (!user.paymentSetupCompleted) return 'Onboarding';
+    }
+    return 'Main';
+  }
+
+  return 'Login';
+}
+
+// --- Root Navigator ---
 export default function RootNavigator() {
   const { colors } = useThemeContext();
   const { user, loading } = useAuth();
@@ -29,16 +67,26 @@ export default function RootNavigator() {
       </View>
     );
   }
+
+  const initialRoute = getInitialRoute(user);
+
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {user && user.role === 'super_admin' ? (
-        <Stack.Screen name="Main" component={TabNavigator} />
-      ) : user && user.role === 'customer' ? (
-        <Stack.Screen name="onboarding" component={SetupProfileScreen} />
-      ) : (
-        <Stack.Screen name="Login" component={Login} />
-      )}
+    <Stack.Navigator
+      initialRouteName={"BusinessInfoScreen"}
+      screenOptions={{ headerShown: false }}
+    >
+      {/* Auth Screens */}
+      <Stack.Screen name="BusinessInfoScreen" component={BusinessInfoScreen} />
+      <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Signup" component={Signup} />
+
+      {/* Main App */}
+      <Stack.Screen name="Main" component={TabNavigator} />
+
+      {/* Onboarding Flow */}
+      <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
+
+      {/* Admin/Other Screens */}
       <Stack.Screen name="Users" component={Users} />
       <Stack.Screen name="Expense" component={Expense} />
       <Stack.Screen name="Statistics" component={Statistics} />
