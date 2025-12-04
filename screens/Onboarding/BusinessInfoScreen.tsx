@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Controller, FieldErrors, Control, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { businessSchema } from 'validations/formValidationSchemas';
+import { businessInfoSchema } from 'validations/formValidationSchemas';
 import { useThemeContext } from '../../context/ThemeProvider';
 import * as ImagePicker from 'expo-image-picker';
 import { apiRequest } from 'api/clients';
@@ -23,18 +23,8 @@ interface BusinessFormValues {
     licenseNumber: string;
     website: string;
     description: string;
-}
-
-interface Props {
-    colors: any;
-    control: Control<BusinessFormValues>;
-    errors: FieldErrors<BusinessFormValues>;
-    coverImage: string | null;
-    logoImage: string | null;
-    onPickCover: () => void;
-    onPickLogo: () => void;
-    onBack: () => void;
-    onNext: () => void;
+    phone?: string;
+    email?: string;
 }
 
 export default function BusinessInfoScreen() {
@@ -63,38 +53,37 @@ export default function BusinessInfoScreen() {
         handleSubmit,
         formState: { errors },
     } = useForm<BusinessFormValues>({
-        resolver: yupResolver(businessSchema),
+        resolver: yupResolver(businessInfoSchema),
         defaultValues: {
             businessName: '',
             businessType: '',
             licenseNumber: '',
             website: '',
             description: '',
+            phone: '',
+            email: '',
         },
     });
 
-      const onSubmit = async (formData :any) => {
-    
+    const onSubmit = async (formData: any) => {
+
         const dataToSubmit = {
-          ...formData,
-          coverImage,
-          logoImage,
+            ...formData,
+            coverImage,
+            logoImage,
         };
-    
+
         try {
-          const response = await apiRequest('/onboarding/business-info', 'POST', { dataToSubmit });
-    
-          if (!response.success) {
-            errorHandler(response.data);
-            return;
+            const response = await apiRequest('/onboarding/business-info', 'POST', { dataToSubmit });
+            if (!response.success) {
+                errorHandler(response.data);
+                return;
+            }
+            ToastAndroid.show('Business info Submitted!', ToastAndroid.SHORT);
+        } catch (error) {
+            ToastAndroid.show('Something went wrong, try again!', ToastAndroid.SHORT);
         }
-        
-        console.log(response);
-          ToastAndroid.show('Business info Submitted!', ToastAndroid.SHORT);
-        } catch (error) {;
-          ToastAndroid.show('Something went wrong, try again!', ToastAndroid.SHORT);
-        }
-      };
+    };
     return (
         <KeyboardAvoidingView
             behavior="padding"
@@ -182,6 +171,52 @@ export default function BusinessInfoScreen() {
                         )}
                     </View>
 
+                    {/* Business Phone Number */}
+                    <View>
+                        <Controller
+                            control={control}
+                            name="phone"
+                            render={({ field: { onChange, onBlur, value } }) => (
+                                <TextInput
+                                    placeholder="Phone number (optional)"
+                                    placeholderTextColor={colors.placeholder}
+                                    keyboardType='phone-pad'
+                                    className="w-full rounded-xl px-4 py-3"
+                                    style={{ backgroundColor: colors.card, color: colors.text }}
+                                    onBlur={onBlur}
+                                    onChangeText={onChange}
+                                    value={value}
+                                />
+                            )}
+                        />
+                        {errors.phone && (
+                            <Text className="mt-1 text-sm text-red-500">{errors.phone.message}</Text>
+                        )}
+                    </View>
+
+                    {/* Business Email */}
+                    <View>
+                        <Controller
+                            control={control}
+                            name="email"
+                            render={({ field: { onChange, onBlur, value } }) => (
+                                <TextInput
+                                    placeholder="Email address (optional)"
+                                    placeholderTextColor={colors.placeholder}
+                                    keyboardType='email-address'
+                                    className="w-full rounded-xl px-4 py-3"
+                                    style={{ backgroundColor: colors.card, color: colors.text }}
+                                    onBlur={onBlur}
+                                    onChangeText={onChange}
+                                    value={value}
+                                />
+                            )}
+                        />
+                        {errors.email && (
+                            <Text className="mt-1 text-sm text-red-500">{errors.email.message}</Text>
+                        )}
+                    </View>
+
                     {/* License Number */}
                     <View>
                         <Controller
@@ -189,7 +224,7 @@ export default function BusinessInfoScreen() {
                             name="licenseNumber"
                             render={({ field: { onChange, onBlur, value } }) => (
                                 <TextInput
-                                    placeholder="Business license number"
+                                    placeholder="License number (optional)"
                                     placeholderTextColor={colors.placeholder}
                                     className="w-full rounded-xl px-4 py-3"
                                     style={{ backgroundColor: colors.card, color: colors.text }}
@@ -261,7 +296,7 @@ export default function BusinessInfoScreen() {
                 {/* Footer */}
                 <View className="mt-8 flex-row justify-between">
                     <TouchableOpacity
-                        onPress={() => {""}}
+                        onPress={() => { "" }}
                         className="mr-3 flex-1 items-center rounded-xl py-3"
                         style={{ backgroundColor: colors.primary }}>
                         <Text style={{ color: colors.white, fontWeight: '600' }}>Back</Text>

@@ -26,10 +26,23 @@ export const signupSchema = yup.object().shape({
     .required('Confirm your password'),
 });
 
-export const businessSchema = yup.object().shape({
+export const businessInfoSchema = yup.object().shape({
   businessName: yup.string().required('Business name is required'),
   businessType: yup.string().required('Business type is required'),
-  licenseNumber: yup.string().required('License number is required'),
+  licenseNumber: yup.string().optional(),
   website: yup.string().url('Enter a valid URL').nullable(),
   description: yup.string().required('Description is required'),
+  phone: yup.string().optional(),
+  email: yup.string().email('Invalid email').optional(),
+});
+
+export const businessAddressSchema = yup.object().shape({
+  type: yup.string().required('Address type is required'),
+  label: yup.string().required('Label is required'),
+  street: yup.string().required('Street is required'),
+  city: yup.string().required('City is required'),
+  state: yup.string().required('State is required'),
+  postalCode: yup.string().required('Zip code is required'),
+  country: yup.string().required('Country is required'),
+  isPrimary: yup.boolean(),
 });

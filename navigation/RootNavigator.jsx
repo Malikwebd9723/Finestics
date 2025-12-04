@@ -20,6 +20,7 @@ import RoleSelectionScreen from 'screens/Onboarding/RoleSelectionScreen';
 import { useThemeContext } from 'context/ThemeProvider';
 import { useAuth } from 'context/AuthContext';
 import BusinessInfoScreen from 'screens/Onboarding/BusinessInfoScreen';
+import BusinessAddressScreen from 'screens/Onboarding/BusinessAddressScreen';
 
 const Stack = createNativeStackNavigator();
 const OnboardingStack = createNativeStackNavigator();
@@ -72,11 +73,11 @@ export default function RootNavigator() {
 
   return (
     <Stack.Navigator
-      initialRouteName={"BusinessInfoScreen"}
+      initialRouteName={"BusinessAddressScreen"}
       screenOptions={{ headerShown: false }}
     >
       {/* Auth Screens */}
-      <Stack.Screen name="BusinessInfoScreen" component={BusinessInfoScreen} />
+      <Stack.Screen name="BusinessAddressScreen" component={BusinessAddressScreen} />
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Signup" component={Signup} />
 
