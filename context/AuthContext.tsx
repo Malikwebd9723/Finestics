@@ -8,6 +8,7 @@ interface AuthContextType {
   user: any;
   login: (data: any) => Promise<void>;
   logout: () => Promise<void>;
+  profileStatus: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: any) {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [profileStatus, setProfileStatus] = useState<string | null>(null);
 
   // Save safely (no undefined allowed)
   const saveValue = async (key: string, value: any) => {
@@ -96,7 +98,7 @@ export function AuthProvider({ children }: any) {
 
   // Login
   const login = async (userData: any) => {
-    const { accessToken, refreshToken, user } = userData.data;
+    const { accessToken, refreshToken, user, profileStatus } = userData.data;
 
     // Only save if exists, never undefined
     if (accessToken) await AsyncStorage.setItem('accessToken', accessToken);
@@ -105,6 +107,7 @@ export function AuthProvider({ children }: any) {
     await AsyncStorage.setItem('user', JSON.stringify(user));
 
     setUser(user);
+    setProfileStatus(profileStatus);
   };
 
 
@@ -115,7 +118,7 @@ export function AuthProvider({ children }: any) {
   };
 
   return (
-    <AuthContext.Provider value={{ loading, user, login, logout }}>
+    <AuthContext.Provider value={{ loading, user, login, logout, profileStatus }}>
       {children}
     </AuthContext.Provider>
   );

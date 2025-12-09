@@ -6,12 +6,12 @@ export const ERROR_MESSAGES = [
         message: "Profile approval pending.",
     },
     {
-        code: "INVALID_AUTH_HEADER",
-        message: "Invalid User",
+        code: "ACCESS_TOKEN_EXPIRED",
+        message: "Login again to continue.",
     },
     {
-        code: "INVALID_REFRESH_TOKEN",
-        message: "Refresh token is invalid.",
+        code: "VALIDATION_FAILED",
+        message: "Wrong input data.",
     },
     {
         code: "USER_NOT_FOUND",

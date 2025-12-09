@@ -7,8 +7,10 @@ export const apiRequest = async (
   body?: any
 ) => {
   try {
-    // const accessToken = await AsyncStorage.getItem('accessToken');
-    const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiZW1haWwiOiJjdXN0b21lckBleGFtcGxlLmNvbSIsInJvbGUiOm51bGwsImlhdCI6MTc2NDcwMzE0NywiZXhwIjoxNzY0Nzg5NTQ3fQ.R5DdqAtt3H_dh7IgmymDnmhpCOe78NQjkFV7sUkG_tU";
+    console.log(JSON.stringify(body));
+    
+    const accessToken = await AsyncStorage.getItem('accessToken');
+    // const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJ2ZW5kb3JAZXhhbXBsZS5jb20iLCJyb2xlIjoidmVuZG9yIiwiaWF0IjoxNzY1Mjk4NDMwLCJleHAiOjE3NjUzODQ4MzB9.OAv5cNJzrk9b5VeGO7UehwL3XrRJVELcep1QdIJVAeQ";
     const response = await fetch(`${config.BaseUrl}${route}`, {
       method,
       headers: {

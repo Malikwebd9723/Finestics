@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { apiRequest } from 'api/clients';
 import { errorHandler } from 'utils/errorHandler';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 interface BusinessFormValues {
     type: string;
     label: string;
@@ -33,14 +34,16 @@ interface BusinessFormValues {
 export default function BusinessAddressScreen() {
     const { colors } = useThemeContext();
     const [showTypePicker, setShowTypePicker] = useState(false);
-    const ADDRESS_TYPES = ['Business', 'Billing', 'Shipping', 'Other'];
+    const ADDRESS_TYPES = ['Business', 'Billing', 'Delivery'];
     const LABEL_TYPES = ['Branch', 'Office', 'Store', 'Warehouse', 'Other'];
     const [showLabelPicker, setShowLabelPicker] = useState(false);
+    const navigation = useNavigation();
 
     const {
         control,
         handleSubmit,
         formState: { errors },
+        reset,
     } = useForm<BusinessFormValues>({
         resolver: yupResolver(businessAddressSchema),
         defaultValues: {
@@ -57,19 +60,15 @@ export default function BusinessAddressScreen() {
 
     const onSubmit = async (formData: any) => {
 
-        const dataToSubmit = {
-            ...formData,
-        };
-
         try {
-            console.log(dataToSubmit);
-            
-            const response = await apiRequest('/onboarding/business-info', 'POST', { dataToSubmit });
+            const response = await apiRequest('/onboarding/address', 'POST', formData);
             if (!response.success) {
                 errorHandler(response.data);
                 return;
             }
             ToastAndroid.show('Address info Submitted!', ToastAndroid.SHORT);
+            navigation.navigate("SubscriptionScreen" as never)
+            reset();
         } catch (error) {
             ToastAndroid.show('Something went wrong, try again!', ToastAndroid.SHORT);
         }
@@ -149,7 +148,7 @@ export default function BusinessAddressScreen() {
                                                     <TouchableOpacity
                                                         key={type}
                                                         onPress={() => {
-                                                            onChange(type);
+                                                            onChange(type.toLowerCase());
                                                             setShowTypePicker(false);
                                                         }}
                                                         style={{
@@ -264,7 +263,7 @@ export default function BusinessAddressScreen() {
                                                     <TouchableOpacity
                                                         key={type}
                                                         onPress={() => {
-                                                            onChange(type);
+                                                            onChange(type.toLowerCase());
                                                             setShowLabelPicker(false);
                                                         }}
                                                         style={{
@@ -311,9 +310,9 @@ export default function BusinessAddressScreen() {
                                 )}
                             />
 
-                            {errors.type && (
+                            {errors.label && (
                                 <Text className="mt-1 text-sm text-red-500">
-                                    {errors.type.message}
+                                    {errors.label.message}
                                 </Text>
                             )}
                         </View>

@@ -17,6 +17,7 @@ import { useThemeContext } from '../../context/ThemeProvider';
 import * as ImagePicker from 'expo-image-picker';
 import { apiRequest } from 'api/clients';
 import { errorHandler } from 'utils/errorHandler';
+import { useNavigation } from '@react-navigation/native';
 interface BusinessFormValues {
     businessName: string;
     businessType: string;
@@ -31,6 +32,7 @@ export default function BusinessInfoScreen() {
     const { colors } = useThemeContext();
     const [coverImage, setCoverImage] = useState<string | null>(null);
     const [logoImage, setLogoImage] = useState<string | null>(null);
+    const navigation = useNavigation();
 
     // shared image picker
     const pickImage = async (setImage: (uri: string) => void) => {
@@ -80,6 +82,7 @@ export default function BusinessInfoScreen() {
                 return;
             }
             ToastAndroid.show('Business info Submitted!', ToastAndroid.SHORT);
+            navigation.navigate("BusinessAddressScreen" as never)
         } catch (error) {
             ToastAndroid.show('Something went wrong, try again!', ToastAndroid.SHORT);
         }

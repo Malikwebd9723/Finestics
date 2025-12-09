@@ -38,11 +38,11 @@ export const businessInfoSchema = yup.object().shape({
 
 export const businessAddressSchema = yup.object().shape({
   type: yup.string().required('Address type is required'),
-  label: yup.string().required('Label is required'),
+  label: yup.string().required('Address label is required'),
   street: yup.string().required('Street is required'),
   city: yup.string().required('City is required'),
   state: yup.string().required('State is required'),
-  postalCode: yup.string().required('Zip code is required'),
-  country: yup.string().required('Country is required'),
+  postalCode: yup.string().required('Postal code is required'),
+  country: yup.string().required('Country name is required'),
   isPrimary: yup.boolean(),
 });

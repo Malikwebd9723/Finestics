@@ -1,14 +1,15 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ActivityIndicator, ToastAndroid } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useForm } from 'react-hook-form';
 import { useThemeContext } from '../../context/ThemeProvider';
 import { apiRequest } from 'api/clients';
 import { errorHandler } from 'utils/errorHandler';
+import { useNavigation } from '@react-navigation/native';
 
 export default function RoleStep() {
     const { colors } = useThemeContext();
-
+    const navigation = useNavigation();
     const { handleSubmit, setValue, watch, formState } = useForm({
         defaultValues: { role: '' as 'customer' | 'vendor' },
     });
@@ -23,7 +24,8 @@ export default function RoleStep() {
             if (!response.success) {
                 errorHandler(response.data);
             }
-            
+            ToastAndroid.show("Role Selected", ToastAndroid.SHORT);
+            navigation.navigate("BusinessInfoScreen" as never);
         } catch (error) {
             console.log('Request Failed:', error);
         }
