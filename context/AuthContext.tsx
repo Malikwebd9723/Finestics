@@ -1,14 +1,13 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiRequest } from "api/clients";
-import { ToastAndroid } from "react-native";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiRequest } from 'api/clients';
+import { ToastAndroid } from 'react-native';
 
 interface AuthContextType {
   loading: boolean;
   user: any;
   login: (data: any) => Promise<void>;
   logout: () => Promise<void>;
-  profileStatus: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,7 +15,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: any) {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
-  const [profileStatus, setProfileStatus] = useState<string | null>(null);
 
   // Save safely (no undefined allowed)
   const saveValue = async (key: string, value: any) => {
@@ -30,14 +28,13 @@ export function AuthProvider({ children }: any) {
   // Fetch profile using valid access token
   const fetchUserProfile = async (): Promise<boolean> => {
     try {
-      const res = await apiRequest("/auth/me", "GET");
-
-      if (res.success && res.data?.user) {
-        await saveValue("user", JSON.stringify(res.data.user));
-        setUser(res.data.user);
+      const res = await apiRequest('/users/me', 'GET');
+      const resUser = res.data.data.user;
+      if (res.data.success && resUser) {
+        await saveValue('user', JSON.stringify(resUser));
+        setUser(resUser);
         return true;
       }
-
       return false;
     } catch (e) {
       return false;
@@ -46,7 +43,7 @@ export function AuthProvider({ children }: any) {
 
   const loadStorageValue = async (key: string) => {
     const value = await AsyncStorage.getItem(key);
-    if (!value || value === "null" || value === "undefined") return null;
+    if (!value || value === 'null' || value === 'undefined') return null;
     return value;
   };
 
@@ -54,39 +51,36 @@ export function AuthProvider({ children }: any) {
   useEffect(() => {
     const init = async () => {
       try {
-        const accessToken = await loadStorageValue("accessToken");
-        const refreshToken = await loadStorageValue("refreshToken");
-
-        const storedUser = await AsyncStorage.getItem("user");
-        if (storedUser) setUser(JSON.parse(storedUser));
-
+        const accessToken = await loadStorageValue('accessToken');
+        const refreshToken = await loadStorageValue('refreshToken');
+        
         if (!accessToken || !refreshToken) {
+          console.log("reset");
+          
           setLoading(false);
           return;
         }
-        let userProfile = await fetchUserProfile();
 
-        if (!userProfile) {
-          const refreshRes = await apiRequest(
-            "/auth/refresh-token",
-            "POST",
-            { refreshToken }
-          );
+        let ok = await fetchUserProfile();
+        
+        if (!ok) {
+          // THEN try refreshing
+          const refreshRes = await apiRequest('/auth/refresh-token', 'POST', {
+            refreshToken,
+          });
 
           if (!refreshRes.success) {
             await logout();
-            ToastAndroid.show("Session expired. Please log in again.", ToastAndroid.SHORT);
             setLoading(false);
             return;
           }
 
-          await saveValue("accessToken", refreshRes.data.accessToken);
-          await saveValue("refreshToken", refreshRes.data.refreshToken);
-
-          await fetchUserProfile(); // load user again
+          await saveValue('accessToken', refreshRes.data.accessToken);
+          await saveValue('refreshToken', refreshRes.data.refreshToken);
+          await fetchUserProfile();
         }
       } catch (err) {
-        console.log("INIT ERROR:", err);
+        console.log('INIT ERROR:', err);
         await logout();
       }
 
@@ -98,27 +92,26 @@ export function AuthProvider({ children }: any) {
 
   // Login
   const login = async (userData: any) => {
-    const { accessToken, refreshToken, user, profileStatus } = userData.data;
-
+    const { accessToken, refreshToken, user } = userData.data;
+    
     // Only save if exists, never undefined
     if (accessToken) await AsyncStorage.setItem('accessToken', accessToken);
+
     if (refreshToken) await AsyncStorage.setItem('refreshToken', refreshToken);
 
     await AsyncStorage.setItem('user', JSON.stringify(user));
 
     setUser(user);
-    setProfileStatus(profileStatus);
   };
-
 
   // Logout
   const logout = async () => {
-    await AsyncStorage.multiRemove(["user", "accessToken", "refreshToken"]);
+    await AsyncStorage.multiRemove(['user', 'accessToken', 'refreshToken']);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ loading, user, login, logout, profileStatus }}>
+    <AuthContext.Provider value={{ loading, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -126,6 +119,6 @@ export function AuthProvider({ children }: any) {
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be inside AuthProvider");
+  if (!ctx) throw new Error('useAuth must be inside AuthProvider');
   return ctx;
 };
