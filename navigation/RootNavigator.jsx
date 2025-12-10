@@ -50,10 +50,8 @@ export default function RootNavigator() {
 
       // Check if user exists in storage
       const accessToken = await AsyncStorage.getItem('accessToken');
+      const profileStatus = await AsyncStorage.getItem('profileStatus');
 
-      // Not logged in
-      console.log(user);
-      
       if (!user || !accessToken) {
         setTargetRoute('Login');
         setTargetParams(undefined);
@@ -69,74 +67,68 @@ export default function RootNavigator() {
         return;
       }
 
-      // Approved user
-      // if profileStatus === 'approved') {
-      //   setTargetRoute('Main');
-      //   setTargetParams(undefined);
-      //   setInitializing(false);
-      //   return;
-      // }
-
-      // Pending verification
-      // if profileStatus === 'pending') {
-      //   setTargetRoute('Onboarding');
-      //   setTargetParams({ screen: 'PendingVerificationScreen' });
-      //   setInitializing(false);
-      //   return;
-      // }
-
       // Check onboarding status
       try {
         const res = await apiRequest('/onboarding/status', 'GET');
-
         if (!res.success) {
           setTargetRoute('Login');
           setTargetParams(undefined);
           setInitializing(false);
           return;
         }
-        // const profileStatus = res.data.data.profileStatus;
-        // // Approved user
-        // if (profileStatus === 'approved') {
-        //   setTargetRoute('Main');
-        //   setTargetParams(undefined);
-        //   setInitializing(false);
-        //   return;
-        // }
-
-        // // Pending verification
-        // if (profileStatus === 'pending') {
-        //   setTargetRoute('Onboarding');
-        //   setTargetParams({ screen: 'PendingVerificationScreen' });
-        //   setInitializing(false);
-        //   return;
-        // }
-
-        if (!res.data.data.onboardingCompleted) {
-          setTargetRoute('SubmitOnboardingScreen');
+        
+        // If profile is approved, user should go to Main
+        if (profileStatus === 'approved') {
+          setTargetRoute('Main');
           setTargetParams(undefined);
           setInitializing(false);
           return;
         }
-        const steps = res.data.data.steps;
-        let nextScreen = 'RoleSelectionScreen';
 
-        if (!steps.roleSelected) {
-          nextScreen = 'RoleSelectionScreen';
-        } else if (!steps.businessInfoCompleted) {
-          nextScreen = 'BusinessInfoScreen';
-        } else if (!steps.addressCompleted) {
-          nextScreen = 'BusinessAddressScreen';
-        } else if (!steps.paymentPlanSelected) {
-          nextScreen = 'SubscriptionScreen';
-        } else {
-          nextScreen = 'PendingVerificationScreen';
+        const onboardingData = res.data.data.onboardingCompleted;
+        const steps = res.data.data.steps;
+
+        // If onboarding is not completed, check which step to show
+        if (!onboardingData) {
+          console.log('Onboarding not completed:', onboardingData);
+          
+          // Determine which onboarding step the user should see
+          let nextScreen = 'RoleSelectionScreen';
+
+          if (!steps.roleSelected) {
+            nextScreen = 'RoleSelectionScreen';
+          } else if (!steps.businessInfoCompleted) {
+            nextScreen = 'BusinessInfoScreen';
+          } else if (!steps.addressCompleted) {
+            nextScreen = 'BusinessAddressScreen';
+          } else if (!steps.paymentPlanSelected) {
+            nextScreen = 'SubscriptionScreen';
+          } else {
+            // All steps completed but onboarding not marked complete
+            nextScreen = 'SubmitOnboardingScreen';
+          }
+
+          setTargetRoute('Onboarding');
+          setTargetParams({ screen: nextScreen });
+          setInitializing(false);
+          return;
         }
 
-        setTargetRoute('Onboarding');
-        setTargetParams({ screen: nextScreen });
+        // Onboarding is completed, check if pending verification
+        if (profileStatus === 'pending') {
+          setTargetRoute('Onboarding');
+          setTargetParams({ screen: 'PendingVerificationScreen' });
+          setInitializing(false);
+          return;
+        }
+
+        // Default to Main if everything is complete
+        setTargetRoute('Main');
+        setTargetParams(undefined);
         setInitializing(false);
+
       } catch (error) {
+        console.error('Error determining route:', error);
         setTargetRoute('Login');
         setTargetParams(undefined);
         setInitializing(false);

@@ -3,23 +3,24 @@ import {
     View,
     Text,
     TouchableOpacity,
-    Image,
     TextInput,
     ScrollView,
     KeyboardAvoidingView,
     ToastAndroid,
     Modal,
+    Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Controller, FieldErrors, Control, useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { businessAddressSchema } from 'validations/formValidationSchemas';
 import { useThemeContext } from '../../context/ThemeProvider';
-import * as ImagePicker from 'expo-image-picker';
 import { apiRequest } from 'api/clients';
 import { errorHandler } from 'utils/errorHandler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+
 interface BusinessFormValues {
     type: string;
     label: string;
@@ -34,10 +35,11 @@ interface BusinessFormValues {
 export default function BusinessAddressScreen() {
     const { colors } = useThemeContext();
     const [showTypePicker, setShowTypePicker] = useState(false);
-    const ADDRESS_TYPES = ['Business', 'Billing', 'Delivery'];
-    const LABEL_TYPES = ['Branch', 'Office', 'Store', 'Warehouse', 'Other'];
     const [showLabelPicker, setShowLabelPicker] = useState(false);
     const navigation = useNavigation();
+
+    const ADDRESS_TYPES = ['Business', 'Billing', 'Delivery'];
+    const LABEL_TYPES = ['Branch', 'Office', 'Store', 'Warehouse', 'Other'];
 
     const {
         control,
@@ -59,7 +61,6 @@ export default function BusinessAddressScreen() {
     });
 
     const onSubmit = async (formData: any) => {
-
         try {
             const response = await apiRequest('/onboarding/address', 'POST', formData);
             if (!response.success) {
@@ -67,268 +68,326 @@ export default function BusinessAddressScreen() {
                 return;
             }
             ToastAndroid.show('Address info Submitted!', ToastAndroid.SHORT);
-            navigation.navigate("SubscriptionScreen" as never)
+            navigation.navigate("SubscriptionScreen" as never);
             reset();
         } catch (error) {
             ToastAndroid.show('Something went wrong, try again!', ToastAndroid.SHORT);
         }
     };
+
+    const ModalPicker = ({ 
+        visible, 
+        onClose, 
+        options, 
+        title, 
+        onSelect 
+    }: { 
+        visible: boolean; 
+        onClose: () => void; 
+        options: string[]; 
+        title: string; 
+        onSelect: (value: string) => void;
+    }) => (
+        <Modal
+            visible={visible}
+            animationType="slide"
+            transparent
+        >
+            <TouchableOpacity
+                style={{
+                    flex: 1,
+                    backgroundColor: "rgba(0,0,0,0.5)",
+                    justifyContent: "flex-end",
+                }}
+                activeOpacity={1}
+                onPress={onClose}
+            >
+                <View
+                    style={{
+                        backgroundColor: colors.card,
+                        borderTopLeftRadius: 24,
+                        borderTopRightRadius: 24,
+                        paddingTop: 8,
+                        maxHeight: '70%',
+                    }}
+                >
+                    {/* Handle Bar */}
+                    <View style={{ alignItems: 'center', paddingVertical: 12 }}>
+                        <View style={{
+                            width: 40,
+                            height: 4,
+                            backgroundColor: colors.border || '#ddd',
+                            borderRadius: 2,
+                        }} />
+                    </View>
+
+                    <Text
+                        style={{
+                            fontSize: 20,
+                            fontWeight: "700",
+                            color: colors.text,
+                            marginBottom: 8,
+                            textAlign: "center",
+                            paddingHorizontal: 20,
+                        }}
+                    >
+                        {title}
+                    </Text>
+
+                    <ScrollView style={{ maxHeight: 400 }}>
+                        {options.map((option, index) => (
+                            <TouchableOpacity
+                                key={option}
+                                onPress={() => {
+                                    onSelect(option.toLowerCase());
+                                    onClose();
+                                }}
+                                style={{
+                                    paddingVertical: 16,
+                                    paddingHorizontal: 20,
+                                    marginHorizontal: 16,
+                                    marginVertical: 4,
+                                    borderRadius: 12,
+                                    backgroundColor: colors.background,
+                                    borderWidth: 1,
+                                    borderColor: colors.border || '#eee',
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        fontSize: 16,
+                                        color: colors.text,
+                                        fontWeight: '500',
+                                    }}
+                                >
+                                    {option}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+
+                    <TouchableOpacity
+                        onPress={onClose}
+                        style={{
+                            margin: 20,
+                            paddingVertical: 14,
+                            backgroundColor: colors.primary,
+                            borderRadius: 12,
+                            shadowColor: colors.primary,
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.3,
+                            shadowRadius: 8,
+                            elevation: 5,
+                        }}
+                    >
+                        <Text
+                            style={{
+                                textAlign: "center",
+                                color: colors.white || '#fff',
+                                fontWeight: "600",
+                                fontSize: 16,
+                            }}
+                        >
+                            Close
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </TouchableOpacity>
+        </Modal>
+    );
+
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
             <KeyboardAvoidingView
-                behavior="padding"
-                className="flex-1"
-                style={{ backgroundColor: colors.background }}>
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+            >
+                <ScrollView 
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingBottom: 40 }}
+                >
+                    {/* Header Section */}
+                    <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 32 }}>
+                        <View style={{ 
+                            alignItems: 'center', 
+                            marginBottom: 16,
+                            padding: 16,
+                            backgroundColor: colors.card,
+                            borderRadius: 20,
+                        }}>
+                            <View style={{
+                                width: 64,
+                                height: 64,
+                                borderRadius: 32,
+                                backgroundColor: colors.primary + '20',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginBottom: 12,
+                            }}>
+                                <Ionicons name="location" size={32} color={colors.primary} />
+                            </View>
+                            <Text style={{ 
+                                fontSize: 28, 
+                                fontWeight: "700", 
+                                color: colors.text,
+                                marginBottom: 6,
+                            }}>
+                                Business Address
+                            </Text>
+                            <Text style={{ 
+                                fontSize: 14, 
+                                color: colors.placeholder,
+                                textAlign: 'center',
+                                lineHeight: 20,
+                            }}>
+                                Please provide your business location details
+                            </Text>
+                        </View>
+                    </View>
 
-                <ScrollView className="mt-4 px-2 pb-10">
-                    <Text className="mt-6 text-center text-2xl font-semibold" style={{ color: colors.text }}>
-                        Address information
-                    </Text>
-
-                    <View className="mt-5 gap-4">
-
-                        {/* Address Type Modal Picker */}
+                    <View style={{ paddingHorizontal: 20, gap: 16 }}>
+                        {/* Address Type Picker */}
                         <View>
+                            <Text style={{ 
+                                fontSize: 14, 
+                                fontWeight: '600', 
+                                color: colors.text, 
+                                marginBottom: 8,
+                                marginLeft: 4,
+                            }}>
+                                Address Type
+                            </Text>
                             <Controller
                                 control={control}
                                 name="type"
                                 render={({ field: { onChange, value } }) => (
                                     <>
-                                        {/* Trigger Button */}
                                         <TouchableOpacity
                                             onPress={() => setShowTypePicker(true)}
-                                            className="w-full rounded-xl px-4 py-3"
-                                            style={{ backgroundColor: colors.card }}
+                                            style={{
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                backgroundColor: colors.card,
+                                                borderRadius: 14,
+                                                paddingHorizontal: 16,
+                                                paddingVertical: 16,
+                                                borderWidth: 1,
+                                                borderColor: errors.type ? '#EF4444' : colors.border || '#eee',
+                                            }}
                                         >
-                                            <Text style={{ color: value ? colors.text : colors.placeholder }}>
+                                            <Text style={{ 
+                                                color: value ? colors.text : colors.placeholder,
+                                                fontSize: 16,
+                                                textTransform: 'capitalize',
+                                            }}>
                                                 {value || "Select address type"}
                                             </Text>
+                                            <Ionicons name="chevron-down" size={20} color={colors.placeholder} />
                                         </TouchableOpacity>
 
-                                        {/* Modal Picker */}
-                                        <Modal
+                                        <ModalPicker
                                             visible={showTypePicker}
-                                            animationType="slide"
-                                            transparent
-                                        >
-                                            {/* Overlay */}
-                                            <TouchableOpacity
-                                                style={{
-                                                    flex: 1,
-                                                    backgroundColor: "rgba(0,0,0,0.4)",
-                                                }}
-                                                activeOpacity={1}
-                                                onPress={() => setShowTypePicker(false)}
-                                            />
-
-                                            {/* Bottom Sheet */}
-                                            <View
-                                                style={{
-                                                    backgroundColor: colors.card,
-                                                    padding: 20,
-                                                    borderTopLeftRadius: 20,
-                                                    borderTopRightRadius: 20,
-                                                    position: "absolute",
-                                                    bottom: 0,
-                                                    width: "100%",
-                                                }}
-                                            >
-                                                <Text
-                                                    style={{
-                                                        fontSize: 18,
-                                                        fontWeight: "600",
-                                                        color: colors.text,
-                                                        marginBottom: 15,
-                                                        textAlign: "center",
-                                                    }}
-                                                >
-                                                    Select Address Type
-                                                </Text>
-                                                {ADDRESS_TYPES.map((type) => (
-                                                    <TouchableOpacity
-                                                        key={type}
-                                                        onPress={() => {
-                                                            onChange(type.toLowerCase());
-                                                            setShowTypePicker(false);
-                                                        }}
-                                                        style={{
-                                                            paddingVertical: 14,
-                                                            borderBottomWidth: 1,
-                                                            borderColor: colors.border || "#ddd",
-                                                        }}
-                                                    >
-                                                        <Text
-                                                            style={{
-                                                                fontSize: 16,
-                                                                color: colors.text,
-                                                                textAlign: "center",
-                                                            }}
-                                                        >
-                                                            {type}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                ))}
-
-                                                {/* Cancel Button */}
-                                                <TouchableOpacity
-                                                    onPress={() => setShowTypePicker(false)}
-                                                    style={{
-                                                        marginTop: 15,
-                                                        paddingVertical: 12,
-                                                        backgroundColor: colors.primary,
-                                                        borderRadius: 10,
-                                                    }}
-                                                >
-                                                    <Text
-                                                        style={{
-                                                            textAlign: "center",
-                                                            color: colors.white,
-                                                            fontWeight: "600",
-                                                        }}
-                                                    >
-                                                        Close
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        </Modal>
+                                            onClose={() => setShowTypePicker(false)}
+                                            options={ADDRESS_TYPES}
+                                            title="Select Address Type"
+                                            onSelect={onChange}
+                                        />
                                     </>
                                 )}
                             />
-
                             {errors.type && (
-                                <Text className="mt-1 text-sm text-red-500">
+                                <Text style={{ marginTop: 6, fontSize: 13, color: '#EF4444', marginLeft: 4 }}>
                                     {errors.type.message}
                                 </Text>
                             )}
                         </View>
 
-                        {/* Address label Modal Picker */}
+                        {/* Address Label Picker */}
                         <View>
+                            <Text style={{ 
+                                fontSize: 14, 
+                                fontWeight: '600', 
+                                color: colors.text, 
+                                marginBottom: 8,
+                                marginLeft: 4,
+                            }}>
+                                Address Label
+                            </Text>
                             <Controller
                                 control={control}
                                 name="label"
                                 render={({ field: { onChange, value } }) => (
                                     <>
-                                        {/* Trigger Button */}
                                         <TouchableOpacity
                                             onPress={() => setShowLabelPicker(true)}
-                                            className="w-full rounded-xl px-4 py-3"
-                                            style={{ backgroundColor: colors.card }}
+                                            style={{
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                backgroundColor: colors.card,
+                                                borderRadius: 14,
+                                                paddingHorizontal: 16,
+                                                paddingVertical: 16,
+                                                borderWidth: 1,
+                                                borderColor: errors.label ? '#EF4444' : colors.border || '#eee',
+                                            }}
                                         >
-                                            <Text style={{ color: value ? colors.text : colors.placeholder }}>
+                                            <Text style={{ 
+                                                color: value ? colors.text : colors.placeholder,
+                                                fontSize: 16,
+                                                textTransform: 'capitalize',
+                                            }}>
                                                 {value || "Select address label"}
                                             </Text>
+                                            <Ionicons name="chevron-down" size={20} color={colors.placeholder} />
                                         </TouchableOpacity>
 
-                                        {/* Modal Picker */}
-                                        <Modal
+                                        <ModalPicker
                                             visible={showLabelPicker}
-                                            animationType="slide"
-                                            transparent
-                                        >
-                                            {/* Overlay */}
-                                            <TouchableOpacity
-                                                style={{
-                                                    flex: 1,
-                                                    backgroundColor: "rgba(0,0,0,0.4)",
-                                                }}
-                                                activeOpacity={1}
-                                                onPress={() => setShowLabelPicker(false)}
-                                            />
-
-                                            {/* Bottom Sheet */}
-                                            <View
-                                                style={{
-                                                    backgroundColor: colors.card,
-                                                    padding: 20,
-                                                    borderTopLeftRadius: 20,
-                                                    borderTopRightRadius: 20,
-                                                    position: "absolute",
-                                                    bottom: 0,
-                                                    width: "100%",
-                                                }}
-                                            >
-                                                <Text
-                                                    style={{
-                                                        fontSize: 18,
-                                                        fontWeight: "600",
-                                                        color: colors.text,
-                                                        marginBottom: 15,
-                                                        textAlign: "center",
-                                                    }}
-                                                >
-                                                    Select Address Label
-                                                </Text>
-                                                {LABEL_TYPES.map((type) => (
-                                                    <TouchableOpacity
-                                                        key={type}
-                                                        onPress={() => {
-                                                            onChange(type.toLowerCase());
-                                                            setShowLabelPicker(false);
-                                                        }}
-                                                        style={{
-                                                            paddingVertical: 14,
-                                                            borderBottomWidth: 1,
-                                                            borderColor: colors.border || "#ddd",
-                                                        }}
-                                                    >
-                                                        <Text
-                                                            style={{
-                                                                fontSize: 16,
-                                                                color: colors.text,
-                                                                textAlign: "center",
-                                                            }}
-                                                        >
-                                                            {type}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                ))}
-
-                                                {/* Cancel Button */}
-                                                <TouchableOpacity
-                                                    onPress={() => setShowLabelPicker(false)}
-                                                    style={{
-                                                        marginTop: 15,
-                                                        paddingVertical: 12,
-                                                        backgroundColor: colors.primary,
-                                                        borderRadius: 10,
-                                                    }}
-                                                >
-                                                    <Text
-                                                        style={{
-                                                            textAlign: "center",
-                                                            color: colors.white,
-                                                            fontWeight: "600",
-                                                        }}
-                                                    >
-                                                        Close
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        </Modal>
+                                            onClose={() => setShowLabelPicker(false)}
+                                            options={LABEL_TYPES}
+                                            title="Select Address Label"
+                                            onSelect={onChange}
+                                        />
                                     </>
                                 )}
                             />
-
                             {errors.label && (
-                                <Text className="mt-1 text-sm text-red-500">
+                                <Text style={{ marginTop: 6, fontSize: 13, color: '#EF4444', marginLeft: 4 }}>
                                     {errors.label.message}
                                 </Text>
                             )}
                         </View>
 
-                        {/* Business street code */}
+                        {/* Street Input */}
                         <View>
+                            <Text style={{ 
+                                fontSize: 14, 
+                                fontWeight: '600', 
+                                color: colors.text, 
+                                marginBottom: 8,
+                                marginLeft: 4,
+                            }}>
+                                Street Address
+                            </Text>
                             <Controller
                                 control={control}
                                 name="street"
                                 render={({ field: { onChange, onBlur, value } }) => (
                                     <TextInput
-                                        placeholder="Street"
+                                        placeholder="123 Main Street"
                                         placeholderTextColor={colors.placeholder}
-                                        keyboardType='default'
-                                        className="w-full rounded-xl px-4 py-3"
-                                        style={{ backgroundColor: colors.card, color: colors.text }}
+                                        style={{
+                                            backgroundColor: colors.card,
+                                            color: colors.text,
+                                            borderRadius: 14,
+                                            paddingHorizontal: 16,
+                                            paddingVertical: 16,
+                                            fontSize: 16,
+                                            borderWidth: 1,
+                                            borderColor: errors.street ? '#EF4444' : colors.border || '#eee',
+                                        }}
                                         onBlur={onBlur}
                                         onChangeText={onChange}
                                         value={value}
@@ -336,144 +395,290 @@ export default function BusinessAddressScreen() {
                                 )}
                             />
                             {errors.street && (
-                                <Text className="mt-1 text-sm text-red-500">{errors.street.message}</Text>
+                                <Text style={{ marginTop: 6, fontSize: 13, color: '#EF4444', marginLeft: 4 }}>
+                                    {errors.street.message}
+                                </Text>
                             )}
                         </View>
 
-                        {/* Business city code */}
-                        <View>
-                            <Controller
-                                control={control}
-                                name="city"
-                                render={({ field: { onChange, onBlur, value } }) => (
-                                    <TextInput
-                                        placeholder="City"
-                                        placeholderTextColor={colors.placeholder}
-                                        keyboardType='default'
-                                        className="w-full rounded-xl px-4 py-3"
-                                        style={{ backgroundColor: colors.card, color: colors.text }}
-                                        onBlur={onBlur}
-                                        onChangeText={onChange}
-                                        value={value}
-                                    />
+                        {/* City and State Row */}
+                        <View style={{ flexDirection: 'row', gap: 12 }}>
+                            <View style={{ flex: 1 }}>
+                                <Text style={{ 
+                                    fontSize: 14, 
+                                    fontWeight: '600', 
+                                    color: colors.text, 
+                                    marginBottom: 8,
+                                    marginLeft: 4,
+                                }}>
+                                    City
+                                </Text>
+                                <Controller
+                                    control={control}
+                                    name="city"
+                                    render={({ field: { onChange, onBlur, value } }) => (
+                                        <TextInput
+                                            placeholder="City"
+                                            placeholderTextColor={colors.placeholder}
+                                            style={{
+                                                backgroundColor: colors.card,
+                                                color: colors.text,
+                                                borderRadius: 14,
+                                                paddingHorizontal: 16,
+                                                paddingVertical: 16,
+                                                fontSize: 16,
+                                                borderWidth: 1,
+                                                borderColor: errors.city ? '#EF4444' : colors.border || '#eee',
+                                            }}
+                                            onBlur={onBlur}
+                                            onChangeText={onChange}
+                                            value={value}
+                                        />
+                                    )}
+                                />
+                                {errors.city && (
+                                    <Text style={{ marginTop: 6, fontSize: 13, color: '#EF4444', marginLeft: 4 }}>
+                                        {errors.city.message}
+                                    </Text>
                                 )}
-                            />
-                            {errors.city && (
-                                <Text className="mt-1 text-sm text-red-500">{errors.city.message}</Text>
-                            )}
-                        </View>
+                            </View>
 
-                        {/* Business state code */}
-                        <View>
-                            <Controller
-                                control={control}
-                                name="state"
-                                render={({ field: { onChange, onBlur, value } }) => (
-                                    <TextInput
-                                        placeholder="State"
-                                        placeholderTextColor={colors.placeholder}
-                                        keyboardType='default'
-                                        className="w-full rounded-xl px-4 py-3"
-                                        style={{ backgroundColor: colors.card, color: colors.text }}
-                                        onBlur={onBlur}
-                                        onChangeText={onChange}
-                                        value={value}
-                                    />
+                            <View style={{ flex: 1 }}>
+                                <Text style={{ 
+                                    fontSize: 14, 
+                                    fontWeight: '600', 
+                                    color: colors.text, 
+                                    marginBottom: 8,
+                                    marginLeft: 4,
+                                }}>
+                                    State
+                                </Text>
+                                <Controller
+                                    control={control}
+                                    name="state"
+                                    render={({ field: { onChange, onBlur, value } }) => (
+                                        <TextInput
+                                            placeholder="State"
+                                            placeholderTextColor={colors.placeholder}
+                                            style={{
+                                                backgroundColor: colors.card,
+                                                color: colors.text,
+                                                borderRadius: 14,
+                                                paddingHorizontal: 16,
+                                                paddingVertical: 16,
+                                                fontSize: 16,
+                                                borderWidth: 1,
+                                                borderColor: errors.state ? '#EF4444' : colors.border || '#eee',
+                                            }}
+                                            onBlur={onBlur}
+                                            onChangeText={onChange}
+                                            value={value}
+                                        />
+                                    )}
+                                />
+                                {errors.state && (
+                                    <Text style={{ marginTop: 6, fontSize: 13, color: '#EF4444', marginLeft: 4 }}>
+                                        {errors.state.message}
+                                    </Text>
                                 )}
-                            />
-                            {errors.state && (
-                                <Text className="mt-1 text-sm text-red-500">{errors.state.message}</Text>
-                            )}
+                            </View>
                         </View>
 
-                        {/* Business postal code */}
-                        <View>
-                            <Controller
-                                control={control}
-                                name="postalCode"
-                                render={({ field: { onChange, onBlur, value } }) => (
-                                    <TextInput
-                                        placeholder="Postal Code"
-                                        placeholderTextColor={colors.placeholder}
-                                        keyboardType='numeric'
-                                        className="w-full rounded-xl px-4 py-3"
-                                        style={{ backgroundColor: colors.card, color: colors.text }}
-                                        onBlur={onBlur}
-                                        onChangeText={onChange}
-                                        value={value}
-                                    />
+                        {/* Postal Code and Country Row */}
+                        <View style={{ flexDirection: 'row', gap: 12 }}>
+                            <View style={{ flex: 1 }}>
+                                <Text style={{ 
+                                    fontSize: 14, 
+                                    fontWeight: '600', 
+                                    color: colors.text, 
+                                    marginBottom: 8,
+                                    marginLeft: 4,
+                                }}>
+                                    Postal Code
+                                </Text>
+                                <Controller
+                                    control={control}
+                                    name="postalCode"
+                                    render={({ field: { onChange, onBlur, value } }) => (
+                                        <TextInput
+                                            placeholder="12345"
+                                            placeholderTextColor={colors.placeholder}
+                                            keyboardType='numeric'
+                                            style={{
+                                                backgroundColor: colors.card,
+                                                color: colors.text,
+                                                borderRadius: 14,
+                                                paddingHorizontal: 16,
+                                                paddingVertical: 16,
+                                                fontSize: 16,
+                                                borderWidth: 1,
+                                                borderColor: errors.postalCode ? '#EF4444' : colors.border || '#eee',
+                                            }}
+                                            onBlur={onBlur}
+                                            onChangeText={onChange}
+                                            value={value}
+                                        />
+                                    )}
+                                />
+                                {errors.postalCode && (
+                                    <Text style={{ marginTop: 6, fontSize: 13, color: '#EF4444', marginLeft: 4 }}>
+                                        {errors.postalCode.message}
+                                    </Text>
                                 )}
-                            />
-                            {errors.postalCode && (
-                                <Text className="mt-1 text-sm text-red-500">{errors.postalCode.message}</Text>
-                            )}
-                        </View>
+                            </View>
 
-                        {/* Business country */}
-                        <View>
-                            <Controller
-                                control={control}
-                                name="country"
-                                render={({ field: { onChange, onBlur, value } }) => (
-                                    <TextInput
-                                        placeholder="Country"
-                                        placeholderTextColor={colors.placeholder}
-                                        keyboardType='default'
-                                        className="w-full rounded-xl px-4 py-3"
-                                        style={{ backgroundColor: colors.card, color: colors.text }}
-                                        onBlur={onBlur}
-                                        onChangeText={onChange}
-                                        value={value}
-                                    />
+                            <View style={{ flex: 1 }}>
+                                <Text style={{ 
+                                    fontSize: 14, 
+                                    fontWeight: '600', 
+                                    color: colors.text, 
+                                    marginBottom: 8,
+                                    marginLeft: 4,
+                                }}>
+                                    Country
+                                </Text>
+                                <Controller
+                                    control={control}
+                                    name="country"
+                                    render={({ field: { onChange, onBlur, value } }) => (
+                                        <TextInput
+                                            placeholder="Country"
+                                            placeholderTextColor={colors.placeholder}
+                                            style={{
+                                                backgroundColor: colors.card,
+                                                color: colors.text,
+                                                borderRadius: 14,
+                                                paddingHorizontal: 16,
+                                                paddingVertical: 16,
+                                                fontSize: 16,
+                                                borderWidth: 1,
+                                                borderColor: errors.country ? '#EF4444' : colors.border || '#eee',
+                                            }}
+                                            onBlur={onBlur}
+                                            onChangeText={onChange}
+                                            value={value}
+                                        />
+                                    )}
+                                />
+                                {errors.country && (
+                                    <Text style={{ marginTop: 6, fontSize: 13, color: '#EF4444', marginLeft: 4 }}>
+                                        {errors.country.message}
+                                    </Text>
                                 )}
-                            />
-                            {errors.country && (
-                                <Text className="mt-1 text-sm text-red-500">{errors.country.message}</Text>
-                            )}
+                            </View>
                         </View>
 
-                        {/* Primary Checkbox */}
-                        <View className="flex-row items-center mt-2">
+                        {/* Primary Address Checkbox */}
+                        <View style={{
+                            backgroundColor: colors.card,
+                            borderRadius: 14,
+                            padding: 16,
+                            borderWidth: 1,
+                            borderColor: colors.border || '#eee',
+                            marginTop: 8,
+                        }}>
                             <Controller
                                 control={control}
                                 name="isPrimary"
                                 render={({ field: { value, onChange } }) => (
                                     <TouchableOpacity
                                         onPress={() => onChange(!value)}
-                                        className="h-6 w-6 mr-2 items-center justify-center rounded border"
                                         style={{
-                                            borderColor: colors.text,
-                                            backgroundColor: value ? colors.primary : 'transparent',
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
                                         }}
                                     >
-                                        {value && <Ionicons name="checkmark" size={16} color="white" />}
+                                        <View
+                                            style={{
+                                                width: 24,
+                                                height: 24,
+                                                borderRadius: 8,
+                                                marginRight: 12,
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                backgroundColor: value ? colors.primary : 'transparent',
+                                                borderWidth: 2,
+                                                borderColor: value ? colors.primary : colors.border || '#ddd',
+                                            }}
+                                        >
+                                            {value && <Ionicons name="checkmark" size={16} color="white" />}
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={{ 
+                                                color: colors.text, 
+                                                fontSize: 16,
+                                                fontWeight: '600',
+                                                marginBottom: 2,
+                                            }}>
+                                                Set as Primary Address
+                                            </Text>
+                                            <Text style={{ 
+                                                color: colors.placeholder, 
+                                                fontSize: 13,
+                                            }}>
+                                                This will be your default business location
+                                            </Text>
+                                        </View>
                                     </TouchableOpacity>
                                 )}
                             />
-
-                            <Text style={{ color: colors.text }}>Is Primary Address?</Text>
                         </View>
                     </View>
 
-                    {/* Footer */}
-                    <View className="mt-8 flex-row justify-between">
+                    {/* Footer Buttons */}
+                    <View style={{ 
+                        flexDirection: 'row', 
+                        gap: 12, 
+                        paddingHorizontal: 20, 
+                        marginTop: 32,
+                    }}>
                         <TouchableOpacity
-                            onPress={() => { "" }}
-                            className="mr-3 flex-1 items-center rounded-xl py-3"
-                            style={{ backgroundColor: colors.primary }}>
-                            <Text style={{ color: colors.white, fontWeight: '600' }}>Back</Text>
+                            onPress={() => navigation.goBack()}
+                            style={{
+                                flex: 1,
+                                alignItems: 'center',
+                                borderRadius: 14,
+                                paddingVertical: 16,
+                                backgroundColor: colors.card,
+                                borderWidth: 2,
+                                borderColor: colors.primary,
+                            }}
+                        >
+                            <Text style={{ 
+                                color: colors.primary, 
+                                fontWeight: '600',
+                                fontSize: 16,
+                            }}>
+                                Back
+                            </Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             onPress={handleSubmit(onSubmit)}
-                            className="ml-3 flex-1 items-center rounded-xl py-3"
-                            style={{ backgroundColor: colors.primary }}>
-                            <Text style={{ color: colors.white, fontWeight: '600' }}>Next</Text>
+                            style={{
+                                flex: 1,
+                                alignItems: 'center',
+                                borderRadius: 14,
+                                paddingVertical: 16,
+                                backgroundColor: colors.primary,
+                                shadowColor: colors.primary,
+                                shadowOffset: { width: 0, height: 4 },
+                                shadowOpacity: 0.3,
+                                shadowRadius: 8,
+                                elevation: 5,
+                            }}
+                        >
+                            <Text style={{ 
+                                color: colors.white || '#fff', 
+                                fontWeight: '600',
+                                fontSize: 16,
+                            }}>
+                                Continue
+                            </Text>
                         </TouchableOpacity>
                     </View>
-
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
-};
+}

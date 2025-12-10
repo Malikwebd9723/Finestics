@@ -29,7 +29,7 @@ export function AuthProvider({ children }: any) {
   const fetchUserProfile = async (): Promise<boolean> => {
     try {
       const res = await apiRequest('/users/me', 'GET');
-      const resUser = res.data.data.user;
+      const resUser = res.data.data;
       if (res.data.success && resUser) {
         await saveValue('user', JSON.stringify(resUser));
         setUser(resUser);
@@ -55,8 +55,6 @@ export function AuthProvider({ children }: any) {
         const refreshToken = await loadStorageValue('refreshToken');
         
         if (!accessToken || !refreshToken) {
-          console.log("reset");
-          
           setLoading(false);
           return;
         }
@@ -92,12 +90,13 @@ export function AuthProvider({ children }: any) {
 
   // Login
   const login = async (userData: any) => {
-    const { accessToken, refreshToken, user } = userData.data;
+    const { accessToken, refreshToken, user, profileStatus } = userData.data;
+    console.log(profileStatus);
     
     // Only save if exists, never undefined
     if (accessToken) await AsyncStorage.setItem('accessToken', accessToken);
-
     if (refreshToken) await AsyncStorage.setItem('refreshToken', refreshToken);
+    if (profileStatus) await AsyncStorage.setItem('profileStatus', profileStatus);
 
     await AsyncStorage.setItem('user', JSON.stringify(user));
 
@@ -106,7 +105,7 @@ export function AuthProvider({ children }: any) {
 
   // Logout
   const logout = async () => {
-    await AsyncStorage.multiRemove(['user', 'accessToken', 'refreshToken']);
+    await AsyncStorage.multiRemove(['user', 'accessToken', 'refreshToken', 'profileStatus']);
     setUser(null);
   };
 

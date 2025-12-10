@@ -64,7 +64,7 @@ const SubscriptionScreen = () => {
 
     // Local navigation actions (can be replaced later)
     const onBack = () => console.log('Back pressed');
-    const onSkip = () => console.log('Skip pressed');
+    const onSkip = () => navigation.navigate("SubmitOnboardingScreen" as never);
     const onNext = () => submitSelectedPlan();
 
     const cardShadow = {
