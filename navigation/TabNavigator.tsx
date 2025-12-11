@@ -1,31 +1,46 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Feather, FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Pressable, View, Text } from 'react-native';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from '../context/ThemeProvider';
+import { useNavigation } from '@react-navigation/native';
+import { DrawerNavigationProp } from '@react-navigation/drawer';
 
 import Dashboard from '../screens/Admin/Dashboard';
 import Categories from '../screens/Admin/Categories';
-import { useNavigation } from '@react-navigation/native';
-import Users from 'screens/Admin/Users';
-import Expense from 'screens/Admin/Expense';
-import Statistics from 'screens/Admin/Statistics';
-import { useAuth } from 'context/AuthContext';
+import Users from '../screens/Admin/Users';
+import Expense from '../screens/Admin/Expense';
+import Statistics from '../screens/Admin/Statistics';
+
+import { navigationItems } from './NavigationItems';
 
 const Tab = createBottomTabNavigator();
 
+// ✔ simplified icon renderer — MaterialCommunityIcons only
+const renderIcon = (icon, size, color) => {
+  return <MaterialCommunityIcons name={icon} size={size} color={color} />;
+};
+
 export default function TabNavigator() {
   const { theme, colors, setTheme } = useThemeContext();
-  const navigation = useNavigation();
-  const {logout} = useAuth()
-  // Common header for all screens
+  const navigation = useNavigation<DrawerNavigationProp<any>>();
+
+  const screenComponents = {
+    Dashboard,
+    Categories,
+    Users,
+    Expense,
+    States: Statistics,
+  };
+
   const renderHeader = (title) => ({
-    headerTitleAlign: 'start', // centralized title
+    headerTitleAlign: 'start',
     headerStyle: { backgroundColor: colors.card },
     headerTitleStyle: { color: colors.text, fontWeight: 'bold', fontSize: 18 },
+
     headerRight: () => (
       <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
-        {/* Theme Toggle */}
         <Pressable onPress={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
           <Ionicons
             name={theme === 'dark' ? 'sunny-outline' : 'moon-outline'}
@@ -35,7 +50,6 @@ export default function TabNavigator() {
           />
         </Pressable>
 
-        {/* Notification Bell */}
         <View>
           <Ionicons name="notifications-outline" size={24} color={colors.text} />
           <View
@@ -55,13 +69,15 @@ export default function TabNavigator() {
         </View>
       </View>
     ),
+
     headerLeft: () => (
       <View style={{ marginLeft: 15 }}>
-        <Pressable onPress={() => logout()}>
+        <Pressable onPress={() => navigation.openDrawer()}>
           <Feather name="menu" size={24} color={colors.text} />
         </Pressable>
       </View>
     ),
+
     headerTitle: title,
   });
 
@@ -76,53 +92,20 @@ export default function TabNavigator() {
           borderTopWidth: 0,
           height: 60,
         },
-      }}>
-      <Tab.Screen
-        name="Dashboard"
-        component={Dashboard}
-        options={{
-          ...renderHeader('Dashboard'),
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="view-dashboard" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Categories"
-        component={Categories}
-        options={{
-          ...renderHeader('Categories'),
-          tabBarIcon: ({ color, size }) => <Ionicons name="list" color={color} size={size} />,
-        }}
-      />
-      <Tab.Screen
-        name="Users"
-        component={Users}
-        options={{
-          ...renderHeader('Users'),
-          tabBarIcon: ({ color, size }) => <Ionicons name="person" color={color} size={size} />,
-        }}
-      />
-      <Tab.Screen
-        name="Expense"
-        component={Expense}
-        options={{
-          ...renderHeader('Expense'),
-          tabBarIcon: ({ color, size }) => (
-            <FontAwesome5 name="money-bill-wave" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="States"
-        component={Statistics}
-        options={{
-          ...renderHeader('States'),
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="chart-bar" color={color} size={size} />
-          ),
-        }}
-      />
+      }}
+    >
+      {navigationItems.map((item, index) => (
+        <Tab.Screen
+          key={index}
+          name={item.screen}
+          component={screenComponents[item.screen]}
+          options={{
+            ...renderHeader(item.label),
+            tabBarIcon: ({ color, size }) =>
+              renderIcon(item.icon, size, color), // ✔ no more iconType
+          }}
+        />
+      ))}
     </Tab.Navigator>
   );
 }

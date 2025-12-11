@@ -6,7 +6,8 @@ import { useThemeContext } from 'context/ThemeProvider';
 import { useAuth } from 'context/AuthContext';
 import { apiRequest } from 'api/clients';
 
-import TabNavigator from './TabNavigator';
+// Import DrawerNavigator instead of TabNavigator
+import DrawerNavigator from './DrawerNavigator';
 import Login from '../screens/Login';
 import Signup from '../screens/Signup';
 
@@ -122,8 +123,8 @@ export default function RootNavigator() {
           return;
         }
 
-        // // Default to Main if everything is complete
-        setTargetRoute('PendingVerificationScreen');
+        // Default to Main if everything is complete
+        setTargetRoute('Main');
         setTargetParams(undefined);
         setInitializing(false);
 
@@ -159,7 +160,8 @@ export default function RootNavigator() {
   if (targetRoute === 'Main') {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Main" component={TabNavigator} />
+        {/* Replace TabNavigator with DrawerNavigator */}
+        <Stack.Screen name="Main" component={DrawerNavigator} />
         <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Signup" component={Signup} />
@@ -175,7 +177,8 @@ export default function RootNavigator() {
           component={OnboardingNavigator}
           initialParams={targetParams}
         />
-        <Stack.Screen name="Main" component={TabNavigator} />
+        {/* Replace TabNavigator with DrawerNavigator */}
+        <Stack.Screen name="Main" component={DrawerNavigator} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Signup" component={Signup} />
       </Stack.Navigator>
@@ -188,7 +191,8 @@ export default function RootNavigator() {
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Signup" component={Signup} />
       <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
-      <Stack.Screen name="Main" component={TabNavigator} />
+      {/* Replace TabNavigator with DrawerNavigator */}
+      <Stack.Screen name="Main" component={DrawerNavigator} />
     </Stack.Navigator>
   );
 }
