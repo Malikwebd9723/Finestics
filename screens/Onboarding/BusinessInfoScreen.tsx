@@ -572,7 +572,7 @@ export default function BusinessInfoScreen() {
                                     marginBottom: 8,
                                     marginLeft: 4,
                                 }}>
-                                    License Number *
+                                    License Number
                                 </Text>
                                 <Controller
                                     control={control}

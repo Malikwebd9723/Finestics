@@ -122,8 +122,8 @@ export default function RootNavigator() {
           return;
         }
 
-        // Default to Main if everything is complete
-        setTargetRoute('Main');
+        // // Default to Main if everything is complete
+        setTargetRoute('PendingVerificationScreen');
         setTargetParams(undefined);
         setInitializing(false);
 
