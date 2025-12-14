@@ -36,7 +36,6 @@ const SubscriptionScreen = () => {
   const fetchPlans = async () => {
     try {
       const res = await apiRequest('/onboarding/payment-plans', 'GET');
-      console.log(res.data.data.plans);
       const fetchedPlans = res.data.data.plans;
       if (res.success && fetchedPlans) {
         setPlans(fetchedPlans);
@@ -74,8 +73,6 @@ const SubscriptionScreen = () => {
     }
   };
 
-  // Local navigation actions (can be replaced later)
-  const onBack = () => console.log('Back pressed');
   const onSkip = () => submitSelectedPlan();
   const onNext = () => submitSelectedPlan();
 
@@ -105,7 +102,7 @@ const SubscriptionScreen = () => {
     <SafeAreaView className="flex-1 px-6 pt-10" style={{ backgroundColor: colors.background }}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <Text className="text-center text-3xl font-bold" style={{ color: colors.text }}>
-          Subscription Plans
+          Payment Plans
         </Text>
 
         <Text className="mt-2 text-center text-base" style={{ color: colors.text }}>
@@ -176,13 +173,6 @@ const SubscriptionScreen = () => {
 
         {/* Footer Buttons */}
         <View className="mb-10 mt-10 flex-row justify-between">
-          <TouchableOpacity
-            onPress={onBack}
-            className="flex-1 items-center rounded-xl py-3"
-            style={{ backgroundColor: colors.primary }}>
-            <Text style={{ color: colors.white, fontWeight: '600' }}>Back</Text>
-          </TouchableOpacity>
-
           <TouchableOpacity
             onPress={onNext}
             disabled={!selected || submitting}

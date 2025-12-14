@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -10,34 +10,9 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeContext } from "context/ThemeProvider";
-import { apiRequest } from "api/clients";
-
-interface User {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string | null;
-  role: string;
-  isEmailVerified: boolean;
-  accountStatus: string;
-  profileImage: string | null;
-  createdAt: string;
-  vendorProfile: any;
-  customerProfile: any;
-}
-
-interface ApiResponse {
-  success: boolean;
-  data: User[];
-  pagination: any;
-}
-
-// API function for unverified users
-export const fetchPendingVendors = async (): Promise<ApiResponse> => {
-  const res = await apiRequest("/admin/approvals/vendors/pending", "GET");
-  return res.data;
-};
+import { fetchPendingVendors } from "api/actions/userActions";
+import { ApiResponse, UserDataType } from "constants/types";
+import UserDetailModal from "./UserDetailmodal";
 
 interface PendingVendorsListProps {
   searchQuery: string;
@@ -46,9 +21,11 @@ interface PendingVendorsListProps {
 export default function PendingVendorsList({ searchQuery }: PendingVendorsListProps) {
   const { colors } = useThemeContext();
   const [fadeAnim] = React.useState(new Animated.Value(0));
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const { data, isLoading, error } = useQuery<ApiResponse>({
-    queryKey: [,"users", "vendors", "pending"],
+    queryKey: [, "users", "vendors", "pending"],
     queryFn: fetchPendingVendors,
   });
 
@@ -104,6 +81,11 @@ export default function PendingVendorsList({ searchQuery }: PendingVendorsListPr
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedUserId(null);
+  };
+  
   const renderSkeleton = () => (
     <View className="px-2">
       {[...Array(6)].map((_, i) => (
@@ -147,59 +129,67 @@ export default function PendingVendorsList({ searchQuery }: PendingVendorsListPr
   }
 
   return (
-    <FlatList
-      data={filteredUsers}
-      keyExtractor={(item) => item.id.toString()}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
-      ListEmptyComponent={
-        <View className="items-center justify-center py-16">
-          <Ionicons name="close-circle-outline" size={64} color="#ef4444" />
-          <Text className="text-center mt-4 text-base font-medium" style={{ color: colors.text }}>
-            No users found
-          </Text>
-        </View>
-      }
-      renderItem={({ item }) => (
-        <Pressable
-          className="relative flex-row items-center justify-between p-4 mb-3 rounded-3xl shadow-sm"
-          style={{
-            backgroundColor: colors.card,
-            elevation: 2,
-            borderColor: "#ef4444",
-            borderLeftWidth: 2,
-          }}
-        >
-          <View className="flex-row items-center flex-1">
-            {item.profileImage ? (
-              <Image
-                source={{ uri: item.profileImage }}
-                className="w-14 h-14 rounded-full"
-                resizeMode="cover"
-              />
-            ) : (
-              <View
-                className="relative w-14 h-14 rounded-full items-center justify-center"
-                style={{ backgroundColor: colors.primary + "20" }}
-              >
-                <Text className="text-lg font-bold" style={{ color: colors.muted }}>
-                  {getInitials(item.firstName, item.lastName)}
-                </Text>
-              </View>
-            )}
-
-            <View className="ml-4 flex-1">
-              <View className="flex-row items-center flex-wrap">
-                <Text className="font-bold text-base mr-2" style={{ color: colors.text }}>
-                  {item.firstName} {item.lastName}
-                </Text>
-              </View>
-              <Text className="text-sm text-gray-500 mt-0.5" numberOfLines={1}>
-                {item.email}
-              </Text>
-            </View>
+    <>
+      <FlatList
+        data={filteredUsers}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
+        ListEmptyComponent={
+          <View className="items-center justify-center py-16">
+            <Ionicons name="checkmark-circle-outline" size={64} color="#10b981" />
+            <Text className="text-center mt-4 text-base font-medium" style={{ color: colors.text }}>
+              No users found
+            </Text>
           </View>
-        </Pressable>
-      )}
-    />
+        }
+        renderItem={({ item }) => (
+          <Pressable
+            className="relative flex-row items-center justify-between p-4 mb-3 rounded-3xl shadow-sm"
+            style={{
+              backgroundColor: colors.card,
+              elevation: 2,
+              borderColor: "#ef4444",
+              borderLeftWidth: 2,
+            }}
+          >
+            <View className="flex-row items-center flex-1">
+              {item.profileImage ? (
+                <Image
+                  source={{ uri: item.profileImage }}
+                  className="w-14 h-14 rounded-full"
+                  resizeMode="cover"
+                />
+              ) : (
+                <View
+                  className="relative w-14 h-14 rounded-full items-center justify-center"
+                  style={{ backgroundColor: colors.primary + "20" }}
+                >
+                  <Text className="text-lg font-bold" style={{ color: colors.muted }}>
+                    {getInitials(item.firstName, item.lastName)}
+                  </Text>
+                </View>
+              )}
+
+              <View className="ml-4 flex-1">
+                <View className="flex-row items-center flex-wrap">
+                  <Text className="font-bold text-base mr-2" style={{ color: colors.text }}>
+                    {item.firstName} {item.lastName}
+                  </Text>
+                </View>
+                <Text className="text-sm text-gray-500 mt-0.5" numberOfLines={1}>
+                  {item.email}
+                </Text>
+              </View>
+            </View>
+          </Pressable>
+        )}
+      />
+      {/* User Detail Modal */}
+      <UserDetailModal
+        visible={modalVisible}
+        userId={selectedUserId}
+        onClose={handleCloseModal}
+      />
+    </>
   );
 }

@@ -3,7 +3,7 @@ import { config } from 'config';
 
 export const apiRequest = async (
   route: string,
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
   body?: any
 ) => {
   try {

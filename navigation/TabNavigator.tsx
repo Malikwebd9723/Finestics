@@ -18,7 +18,7 @@ import { navigationItems } from './NavigationItems';
 const Tab = createBottomTabNavigator();
 
 // ✔ simplified icon renderer — MaterialCommunityIcons only
-const renderIcon = (icon, size, color) => {
+const renderIcon = (icon:any, size:any, color:any) => {
   return <MaterialCommunityIcons name={icon} size={size} color={color} />;
 };
 
@@ -34,7 +34,7 @@ export default function TabNavigator() {
     States: Statistics,
   };
 
-  const renderHeader = (title) => ({
+  const renderHeader = (title:any) => ({
     headerTitleAlign: 'start',
     headerStyle: { backgroundColor: colors.card },
     headerTitleStyle: { color: colors.text, fontWeight: 'bold', fontSize: 18 },

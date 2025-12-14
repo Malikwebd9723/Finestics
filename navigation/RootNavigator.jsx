@@ -17,6 +17,7 @@ import BusinessAddressScreen from 'screens/Onboarding/BusinessAddressScreen';
 import SubscriptionScreen from 'screens/Onboarding/SubscriptionScreen';
 import SubmitOnboardingScreen from 'screens/Onboarding/SubmitOnboardingScreen';
 import PendingVerificationScreen from 'screens/Onboarding/PendingVerificationScreen';
+import CategoryDetails from 'screens/Admin/CategoryDetails';
 
 const Stack = createNativeStackNavigator();
 const OnboardingStack = createNativeStackNavigator();
@@ -79,7 +80,7 @@ export default function RootNavigator() {
         }
         
         // If profile is approved, user should go to Main
-        if (profileStatus === 'approved') {
+        if (profileStatus === 'active') {
           setTargetRoute('Main');
           setTargetParams(undefined);
           setInitializing(false);
@@ -91,8 +92,6 @@ export default function RootNavigator() {
 
         // If onboarding is not completed, check which step to show
         if (!onboardingData) {
-          console.log('Onboarding not completed:', onboardingData);
-          
           // Determine which onboarding step the user should see
           let nextScreen = 'RoleSelectionScreen';
 
@@ -124,7 +123,6 @@ export default function RootNavigator() {
         }
 
         // Default to Main if everything is complete
-        setTargetRoute('Main');
         setTargetParams(undefined);
         setInitializing(false);
 
@@ -165,6 +163,7 @@ export default function RootNavigator() {
         <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Signup" component={Signup} />
+        <Stack.Screen name="CategoryDetails" component={CategoryDetails}/>
       </Stack.Navigator>
     );
   }

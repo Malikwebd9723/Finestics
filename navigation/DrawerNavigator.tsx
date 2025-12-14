@@ -28,50 +28,6 @@ function CustomDrawerContent(props: any) {
     }
   };
 
-  // Navigation items matching your tab screens
-  const navigationItems = [
-    {
-      label: 'Dashboard',
-      icon: 'view-dashboard',
-      iconType: 'MaterialCommunityIcons',
-      onPress: () => props.navigation.navigate('MainTabs', { screen: 'Dashboard' })
-    },
-    {
-      label: 'Categories',
-      icon: 'list',
-      iconType: 'Ionicons',
-      onPress: () => props.navigation.navigate('MainTabs', { screen: 'Categories' })
-    },
-    {
-      label: 'Users',
-      icon: 'person',
-      iconType: 'Ionicons',
-      onPress: () => props.navigation.navigate('MainTabs', { screen: 'Users' })
-    },
-    {
-      label: 'Expense',
-      icon: 'money-bill-wave',
-      iconType: 'FontAwesome5',
-      onPress: () => props.navigation.navigate('MainTabs', { screen: 'Expense' })
-    },
-    {
-      label: 'Statistics',
-      icon: 'chart-bar',
-      iconType: 'MaterialCommunityIcons',
-      onPress: () => props.navigation.navigate('MainTabs', { screen: 'States' })
-    },
-  ];
-
-  const renderIcon = (iconName: string, iconType: string, color: string, size: number = 22) => {
-    if (iconType === 'MaterialCommunityIcons') {
-      return <MaterialCommunityIcons name={iconName as any} size={size} color={color} />;
-    } else if (iconType === 'FontAwesome5') {
-      return <FontAwesome5 name={iconName as any} size={size} color={color} />;
-    } else {
-      return <Ionicons name={iconName as any} size={size} color={color} />;
-    }
-  };
-
   return (
     <DrawerContentScrollView
       {...props}

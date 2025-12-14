@@ -4,10 +4,15 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from '../context/ThemeProvider';
 import { navigationItems } from './NavigationItems';
 
-export default function NavigationList({ navigation, closeDrawer }) {
+interface NavigationListProps {
+  navigation: any;
+  closeDrawer?: () => void;
+}
+
+export default function NavigationList({ navigation, closeDrawer }: NavigationListProps) {
   const { colors } = useThemeContext();
 
-  const renderIcon = (iconName, color, size = 22) => {
+  const renderIcon = (iconName: any, color:any, size = 22) => {
     return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
   };
 

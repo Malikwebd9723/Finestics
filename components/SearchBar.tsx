@@ -4,39 +4,38 @@ import { Ionicons } from "@expo/vector-icons";
 import { useThemeContext } from "context/ThemeProvider";
 
 interface SearchBarProps {
-  value: string;
-  onChange: (text: string) => void;
-  onAddPress?: () => void; // optional (+ button)
+  searchQuery: string;
+  setSearchQuery: (text: string) => void;
+  onAddPress?: () => void;
 }
 
-export default function SearchBar({ value, onChange, onAddPress }: SearchBarProps) {
+export default function SearchBar({ searchQuery, setSearchQuery, onAddPress }: SearchBarProps) {
   const { colors } = useThemeContext();
 
   return (
-    <View
-      className="flex-row items-center mb-4 rounded-full px-4 py-2"
-      style={{ backgroundColor: colors.card }}
-    >
-      <Ionicons name="search" size={20} color={colors.text} />
+    <View className="px-4 mb-4">
+      <View
+        className="flex-row items-center rounded-2xl px-5 py-3 shadow-sm"
+        style={{ backgroundColor: colors.card, elevation: 2 }}
+      >
+        <Ionicons name="search" size={22} color={colors.text} />
+        <TextInput
+          placeholder="Search by name or email..."
+          placeholderTextColor="#999"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          className="flex-1 ml-3 text-base"
+          style={{ color: colors.text }}
+        />
 
-      <TextInput
-        placeholder="Search"
-        placeholderTextColor={colors.placeholder}
-        value={value}
-        onChangeText={onChange}
-        className="flex-1 ml-2 text-base"
-        style={{ color: colors.text }}
-      />
-
-      {onAddPress && (
         <Pressable
           onPress={onAddPress}
-          className="w-10 h-10 rounded-full items-center justify-center"
-          style={{ backgroundColor: colors.primary }}
+          className="w-11 h-11 rounded-xl items-center justify-center shadow-md"
+          style={{ backgroundColor: colors.primary, elevation: 4 }}
         >
-          <Ionicons name="add" size={24} color="#fff" />
+          <Ionicons name="add" size={26} color="#fff" />
         </Pressable>
-      )}
+      </View>
     </View>
   );
 }

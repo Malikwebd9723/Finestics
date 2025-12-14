@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -11,27 +11,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeContext } from "context/ThemeProvider";
 import { apiRequest } from "api/clients";
+import { ApiResponse, UserDataType } from "constants/types";
+import UserDetailModal from "./UserDetailmodal";
 
-interface User {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string | null;
-  role: string;
-  isEmailVerified: boolean;
-  accountStatus: string;
-  profileImage: string | null;
-  createdAt: string;
-  vendorProfile: any;
-  customerProfile: any;
-}
-
-interface ApiResponse {
-  success: boolean;
-  data: User[];
-  pagination: any;
-}
 
 // API function for verified users
 export const fetchAllPendingUsers = async (): Promise<ApiResponse> => {
@@ -46,6 +28,8 @@ interface AllPendingUserListProps {
 export default function AllPendingUserList({ searchQuery }: AllPendingUserListProps) {
   const { colors } = useThemeContext();
   const [fadeAnim] = React.useState(new Animated.Value(0));
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const { data, isLoading, error } = useQuery<ApiResponse>({
     queryKey: ["allUsers", "pending"],
@@ -97,6 +81,11 @@ export default function AllPendingUserList({ searchQuery }: AllPendingUserListPr
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedUserId(null);
+  };
+
   const renderSkeleton = () => (
     <View className="px-2">
       {[...Array(6)].map((_, i) => (
@@ -140,6 +129,7 @@ export default function AllPendingUserList({ searchQuery }: AllPendingUserListPr
   }
 
   return (
+    <>
     <FlatList
       data={filteredUsers}
       keyExtractor={(item) => item.id.toString()}
@@ -155,6 +145,10 @@ export default function AllPendingUserList({ searchQuery }: AllPendingUserListPr
       renderItem={({ item }) => (
         <Pressable
           className="relative flex-row items-center justify-between p-4 mb-3 rounded-3xl shadow-sm"
+          onPress={() => {
+            setSelectedUserId(item.id);
+            setModalVisible(true);
+          }}
           style={{
             backgroundColor: colors.card,
             elevation: 2,
@@ -197,7 +191,15 @@ export default function AllPendingUserList({ searchQuery }: AllPendingUserListPr
             </View>
           </View>
         </Pressable>
+        
       )}
     />
+          {/* User Detail Modal */}
+          <UserDetailModal
+            visible={modalVisible}
+            userId={selectedUserId}
+            onClose={handleCloseModal}
+          />
+    </>
   );
 }

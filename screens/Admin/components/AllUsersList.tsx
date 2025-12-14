@@ -228,20 +228,12 @@ export default function AllUsersList({ searchQuery }: AllUsersListProps) {
               <View className="items-end ml-2">
                 {item.vendorProfile?.status === "active" || 
                  item.customerProfile?.status === "active" ? (
-                  <Ionicons name="checkmark-circle" size={20} color="#10b981" />
+                  <Ionicons name="checkmark-circle" size={20} color= {colors.success} />
                 ) : (
-                  <Ionicons name="close-circle" size={20} color="#ef4444" />
+                  <Ionicons name="close-circle" size={20} color= {colors.error} />
                 )}
               </View>
             )}
-
-            {/* Chevron indicator */}
-            <Ionicons 
-              name="chevron-forward" 
-              size={20} 
-              color={colors.text} 
-              style={{ marginLeft: 8, opacity: 0.5 }} 
-            />
           </Pressable>
         )}
       />

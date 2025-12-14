@@ -16,103 +16,10 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useThemeContext } from "context/ThemeProvider";
-import { apiRequest } from "api/clients";
+import { approveUser, deleteUserAccount, fetchUserDetail, rejectUser, updateAccountStatus, updateUserRole } from "api/actions/userActions";
+import { UserDetailModalProps, UserDetailResponse } from "constants/types";
 
 const { height } = Dimensions.get("window");
-
-interface Address {
-    id: number;
-    type: string;
-    label: string;
-    street: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    isPrimary: boolean;
-}
-
-interface Profile {
-    id: number;
-    userId: number;
-    businessName: string;
-    businessType: string;
-    description: string;
-    taxId: string | null;
-    businessLicense: string;
-    status: string;
-    businessPhone: string;
-    businessEmail: string;
-    preferredDeliveryTime: string;
-    specialInstructions: string;
-    creditLimit: string;
-    outstandingBalance: string;
-    addresses: Address[];
-}
-
-interface Payment {
-    id: number;
-    amount: string;
-    currency: string;
-    status: string;
-    validFrom: string | null;
-    validUntil: string | null;
-    paidAt: string | null;
-    selectedPlan: {
-        id: number;
-        name: string;
-        duration: number;
-        price: string;
-        currency: string;
-    };
-}
-
-interface UserDetail {
-    id: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string | null;
-    role: string;
-    accountStatus: string;
-    onboardingCompleted: boolean;
-    isEmailVerified: boolean;
-    lastLoginAt: string;
-    createdAt: string;
-}
-
-interface UserDetailResponse {
-    success: boolean;
-    data: {
-        user: UserDetail;
-        profile: Profile;
-        payments: Payment[];
-    };
-}
-
-interface UserDetailModalProps {
-    visible: boolean;
-    userId: number | null;
-    onClose: () => void;
-}
-
-// API Functions
-const fetchUserDetail = async (userId: number): Promise<UserDetailResponse> => {
-    const res = await apiRequest(`/admin/approvals/${userId}`, "GET");
-    return res.data;
-};
-
-const approveUser = async (userId: number) => {
-    const res = await apiRequest(`/admin/approvals/${userId}/approve`, "POST");
-    return res.data;
-};
-
-const rejectUser = async (userId: number, rejectionReason: string) => {
-    const res = await apiRequest(`/admin/approvals/${userId}/reject`, "POST", {
-        rejectionReason,
-    });
-    return res.data;
-};
 
 export default function UserDetailModal({
     visible,
@@ -124,7 +31,9 @@ export default function UserDetailModal({
     const [slideAnim] = useState(new Animated.Value(height));
     const [showRejectionDialog, setShowRejectionDialog] = useState(false);
     const [rejectionReason, setRejectionReason] = useState("");
-
+    const [showRoleDialog, setShowRoleDialog] = useState(false);
+    const [showStatusDialog, setShowStatusDialog] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     // Fetch user details
     const { data, isLoading, error } = useQuery<UserDetailResponse>({
         queryKey: ["userDetail", userId],
@@ -134,8 +43,12 @@ export default function UserDetailModal({
 
     // Approve mutation
     const approveMutation = useMutation({
-        mutationFn: approveUser,
-        onSuccess: () => {
+        mutationFn: ({ userId }: { userId: number }) => approveUser(userId),
+        onSuccess: (data) => {
+            if (!data?.success) {
+                ToastAndroid.show("Profile approval failed!", ToastAndroid.SHORT);
+                return;
+            }
             ToastAndroid.show("User profile approved!", ToastAndroid.SHORT);
             queryClient.invalidateQueries({ queryKey: ["users"], refetchType: "all" });
             queryClient.invalidateQueries({ queryKey: ["userDetail", userId] });
@@ -153,7 +66,11 @@ export default function UserDetailModal({
     const rejectMutation = useMutation({
         mutationFn: ({ userId, reason }: { userId: number; reason: string }) =>
             rejectUser(userId, reason),
-        onSuccess: () => {
+        onSuccess: (data) => {
+            if (!data?.success) {
+                ToastAndroid.show("Profile rejection failed!", ToastAndroid.SHORT);
+                return;
+            }
             ToastAndroid.show("User profile rejected!", ToastAndroid.SHORT);
             queryClient.invalidateQueries({ queryKey: ["users"], refetchType: "all" });
             queryClient.invalidateQueries({ queryKey: ["userDetail", userId] });
@@ -169,6 +86,61 @@ export default function UserDetailModal({
         },
     });
 
+    // Update role mutation
+    const updateRoleMutation = useMutation({
+        mutationFn: ({ userId, role }: { userId: number; role: string }) =>
+            updateUserRole(userId, role),
+        onSuccess: (data) => {
+            if (!data?.success) {
+                ToastAndroid.show("Can not update this user role!", ToastAndroid.SHORT);
+                return;
+            }
+            ToastAndroid.show("User role updated!", ToastAndroid.SHORT);
+            queryClient.invalidateQueries({ queryKey: ["users"], refetchType: "all" });
+            queryClient.invalidateQueries({ queryKey: ["userDetail", userId] });
+            setShowRoleDialog(false);
+        },
+        onError: (error: any) => {
+            ToastAndroid.show(error?.message || "Failed to update role", ToastAndroid.SHORT);
+        },
+    });
+
+    // Update status mutation
+    const updateStatusMutation = useMutation({
+        mutationFn: ({ userId, status }: { userId: number; status: string }) =>
+            updateAccountStatus(userId, status),
+        onSuccess: (data) => {
+            if (!data?.success) {
+                ToastAndroid.show("Unable to update account status!", ToastAndroid.SHORT);
+                return;
+            }
+            ToastAndroid.show("Account status updated!", ToastAndroid.SHORT);
+            queryClient.invalidateQueries({ queryKey: ["users"], refetchType: "all" });
+            queryClient.invalidateQueries({ queryKey: ["userDetail", userId] });
+            setShowStatusDialog(false);
+        },
+        onError: (error: any) => {
+            ToastAndroid.show(error?.message || "Failed to update status", ToastAndroid.SHORT);
+        },
+    });
+
+    // Delete user mutation
+    const deleteUserMutation = useMutation({
+        mutationFn: ({ userId }: { userId: number }) => deleteUserAccount(userId),
+        onSuccess: (data) => {
+            if (!data?.success) {
+                ToastAndroid.show("Unable to delete user account!", ToastAndroid.SHORT);
+                return;
+            }
+            ToastAndroid.show("User account deleted!", ToastAndroid.SHORT);
+            queryClient.invalidateQueries({ queryKey: ["users"], refetchType: "all" });
+            setShowDeleteDialog(false);
+            onClose();
+        },
+        onError: (error: any) => {
+            ToastAndroid.show(error?.message || "Failed to delete user", ToastAndroid.SHORT);
+        },
+    });
     // Slide animation
     useEffect(() => {
         if (visible) {
@@ -195,7 +167,7 @@ export default function UserDetailModal({
                 { text: "Cancel", style: "cancel" },
                 {
                     text: "Approve",
-                    onPress: () => approveMutation.mutate(userId!),
+                    onPress: () => approveMutation.mutate({ userId: userId! }),
                 },
             ]
         );
@@ -218,6 +190,28 @@ export default function UserDetailModal({
         setRejectionReason("");
     };
 
+    const handleRoleChange = (newRole: string) => {
+        updateRoleMutation.mutate({ userId: userId!, role: newRole });
+    };
+
+    const handleStatusChange = (newStatus: string) => {
+        updateStatusMutation.mutate({ userId: userId!, status: newStatus });
+    };
+
+    const handleDeleteUser = () => {
+        Alert.alert(
+            "Confirm Delete",
+            "Are you sure you want to delete this user? This action cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => deleteUserMutation.mutate({ userId: userId! }),
+                },
+            ]
+        );
+    };
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString("en-US", {
             year: "numeric",
@@ -230,13 +224,15 @@ export default function UserDetailModal({
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case "approved":
             case "active":
-                return "#10b981";
+                return colors.success;
             case "pending":
                 return "#f59e0b";
             case "rejected":
-                return "#ef4444";
+            case "suspended":
+                return colors.error;
+            case "deleted":
+                return "#6b7280";
             default:
                 return "#6b7280";
         }
@@ -295,7 +291,7 @@ export default function UserDetailModal({
                         </View>
                     ) : error ? (
                         <View className="flex-1 items-center justify-center px-6">
-                            <MaterialIcons name="error-outline" size={64} color="#ef4444" />
+                            <MaterialIcons name="error-outline" size={64} color={colors.error} />
                             <Text className="text-lg font-semibold mt-4" style={{ color: colors.text }}>
                                 Failed to load details
                             </Text>
@@ -317,13 +313,13 @@ export default function UserDetailModal({
                                             style={{ backgroundColor: colors.primary + "20" }}
                                         >
                                             <Text className="text-2xl font-bold" style={{ color: colors.primary }}>
-                                                {data.data.user.firstName.charAt(0)}
-                                                {data.data.user.lastName.charAt(0)}
+                                                {data.data?.user?.firstName.charAt(0)}
+                                                {data.data?.user?.lastName.charAt(0)}
                                             </Text>
                                         </View>
                                         <View className="ml-4 flex-1">
                                             <Text className="text-xl font-bold" style={{ color: colors.text }}>
-                                                {data.data.user.firstName} {data.data.user.lastName}
+                                                {data.data?.user?.firstName} {data.data?.user?.lastName}
                                             </Text>
                                             <View
                                                 className="px-3 py-1 rounded-full self-start mt-1"
@@ -333,7 +329,7 @@ export default function UserDetailModal({
                                                     className="text-xs font-bold"
                                                     style={{ color: colors.primary }}
                                                 >
-                                                    {data.data.user.role.toUpperCase()}
+                                                    {data.data?.user?.role.toUpperCase()}
                                                 </Text>
                                             </View>
                                         </View>
@@ -343,41 +339,41 @@ export default function UserDetailModal({
                                         <InfoRow
                                             icon="email"
                                             label="Email"
-                                            value={data.data.user.email}
+                                            value={data.data?.user?.email}
                                             colors={colors}
                                         />
                                         <InfoRow
                                             icon="phone"
                                             label="Phone"
-                                            value={data.data.user.phone || "Not provided"}
+                                            value={data.data?.user?.phone || "Not provided"}
                                             colors={colors}
                                         />
                                         <InfoRow
                                             icon="verified-user"
                                             label="Account Status"
-                                            value={data.data.user.accountStatus}
+                                            value={data.data?.user?.accountStatus}
                                             colors={colors}
                                             badge
-                                            badgeColor={getStatusColor(data.data.user.accountStatus)}
+                                            badgeColor={getStatusColor(data.data?.user?.accountStatus)}
                                         />
                                         <InfoRow
                                             icon="check-circle"
                                             label="Email Verified"
-                                            value={data.data.user.isEmailVerified ? "Yes" : "No"}
+                                            value={data.data?.user?.isEmailVerified ? "Yes" : "No"}
                                             colors={colors}
                                             badge
-                                            badgeColor={data.data.user.isEmailVerified ? "#10b981" : "#ef4444"}
+                                            badgeColor={data.data?.user?.isEmailVerified ? colors.success : colors.error}
                                         />
                                         <InfoRow
                                             icon="access-time"
                                             label="Last Login"
-                                            value={formatDate(data.data.user.lastLoginAt)}
+                                            value={formatDate(data.data?.user?.lastLoginAt)}
                                             colors={colors}
                                         />
                                         <InfoRow
                                             icon="event"
                                             label="Joined"
-                                            value={formatDate(data.data.user.createdAt)}
+                                            value={formatDate(data.data?.user?.createdAt)}
                                             colors={colors}
                                         />
                                     </View>
@@ -443,6 +439,12 @@ export default function UserDetailModal({
                                             icon="email"
                                             label="Business Email"
                                             value={data.data.profile.businessEmail}
+                                            colors={colors}
+                                        />
+                                        <InfoRow
+                                            icon="cloud-circle"
+                                            label="Business Website"
+                                            value={data.data.profile.website}
                                             colors={colors}
                                         />
 
@@ -519,12 +521,52 @@ export default function UserDetailModal({
                                 )}
                             </ScrollView>
 
-                            {/* Action Buttons */}
+                            {/* Action Buttons - For Approved/Active Profiles */}
+                            {data.data.profile?.status === "active" && (
+                                <View className="p-5 border-t" style={{ borderColor: colors.muted }}>
+                                    <View className="flex-row gap-2">
+                                        {/* Change Role Button */}
+                                        <Pressable
+                                            onPress={() => setShowRoleDialog(true)}
+                                            className="flex-1 py-2 rounded-xl items-center justify-center flex-row"
+                                            style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.primary }}
+                                        >
+                                            <MaterialIcons name="swap-horiz" size={16} color={colors.text} />
+                                            <Text className="text-xs font-bold ml-1" style={{ color: colors.text }}>
+                                                Role
+                                            </Text>
+                                        </Pressable>
+
+                                        {/* Update Status Button */}
+                                        <Pressable
+                                            onPress={() => setShowStatusDialog(true)}
+                                            className="flex-1 py-2 rounded-xl items-center justify-center flex-row"
+                                            style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.primary }}
+                                        >
+                                            <MaterialIcons name="toggle-on" size={16} color={colors.text} />
+                                            <Text className="text-xs font-bold ml-1" style={{ color: colors.text }}>
+                                                Status
+                                            </Text>
+                                        </Pressable>
+
+                                        {/* Delete Account Button */}
+                                        <Pressable
+                                            onPress={() => setShowDeleteDialog(true)}
+                                            className="flex-1 py-2 rounded-xl items-center justify-center flex-row"
+                                            style={{ backgroundColor: "#ef444420", borderWidth: 1, borderColor: colors.error }}
+                                        >
+                                            <MaterialIcons name="delete" size={16} color={colors.error} />
+                                            <Text className="text-xs font-bold ml-1" style={{ color: colors.error }}>
+                                                Delete
+                                            </Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
+                            )}
+
+                            {/* Action Buttons - For Pending Profiles */}
                             {data.data.profile?.status === "pending" && (
-                                <View
-                                    className="p-5 border-t"
-                                    style={{ borderColor: colors.muted }}
-                                >
+                                <View className="p-5 border-t" style={{ borderColor: colors.muted }}>
                                     <View className="flex-row gap-3">
                                         <Pressable
                                             onPress={handleReject}
@@ -564,6 +606,246 @@ export default function UserDetailModal({
                                     </View>
                                 </View>
                             )}
+                            {/* Rejection Reason Dialog */}
+                            <Modal
+                                visible={showRejectionDialog}
+                                transparent
+                                animationType="fade"
+                                onRequestClose={handleCancelReject}
+                            >
+                                <View className="flex-1 bg-black/70 items-center justify-center px-6">
+                                    <View
+                                        className="w-full rounded-3xl p-6"
+                                        style={{ backgroundColor: colors.card, maxWidth: 400 }}
+                                    >
+                                        <View className="flex-row items-center mb-4">
+                                            <MaterialIcons name="error-outline" size={28} color={colors.error} />
+                                            <Text className="text-xl font-bold ml-3" style={{ color: colors.text }}>
+                                                Rejection Reason
+                                            </Text>
+                                        </View>
+
+                                        <Text className="text-sm text-gray-500 mb-4">
+                                            Please provide a reason for rejecting this user. This will be sent to the user.
+                                        </Text>
+
+                                        <TextInput
+                                            value={rejectionReason}
+                                            onChangeText={setRejectionReason}
+                                            placeholder="Enter rejection reason..."
+                                            placeholderTextColor="#999"
+                                            multiline
+                                            numberOfLines={4}
+                                            className="rounded-2xl p-4 mb-4 text-base"
+                                            style={{
+                                                backgroundColor: colors.background,
+                                                color: colors.text,
+                                                textAlignVertical: "top",
+                                                minHeight: 100,
+                                                borderWidth: 1,
+                                                borderColor: colors.muted,
+                                            }}
+                                        />
+
+                                        <View className="flex-row gap-3">
+                                            <Pressable
+                                                onPress={handleCancelReject}
+                                                className="flex-1 py-3 rounded-2xl items-center justify-center"
+                                                style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.muted }}
+                                            >
+                                                <Text className="text-base font-bold" style={{ color: colors.text }}>
+                                                    Cancel
+                                                </Text>
+                                            </Pressable>
+
+                                            <Pressable
+                                                onPress={handleConfirmReject}
+                                                disabled={!rejectionReason.trim() || rejectMutation.isPending}
+                                                className="flex-1 py-3 rounded-2xl items-center justify-center"
+                                                style={{
+                                                    backgroundColor: rejectionReason.trim() ? colors.error : colors.muted,
+                                                    opacity: rejectionReason.trim() ? 1 : 0.5,
+                                                }}
+                                            >
+                                                {rejectMutation.isPending ? (
+                                                    <ActivityIndicator size="small" color="#fff" />
+                                                ) : (
+                                                    <Text className="text-base font-bold text-white">
+                                                        Confirm Reject
+                                                    </Text>
+                                                )}
+                                            </Pressable>
+                                        </View>
+                                    </View>
+                                </View>
+                            </Modal>
+                            {/* Role Change Dialog */}
+                            <Modal visible={showRoleDialog} transparent animationType="fade" onRequestClose={() => setShowRoleDialog(false)}>
+                                <View className="flex-1 bg-black/70 items-center justify-center px-6">
+                                    <View className="w-full rounded-3xl p-6" style={{ backgroundColor: colors.card, maxWidth: 400 }}>
+                                        <View className="flex-row items-center mb-4">
+                                            <MaterialIcons name="swap-horiz" size={28} color={colors.primary} />
+                                            <Text className="text-xl font-bold ml-3" style={{ color: colors.text }}>
+                                                Change User Role
+                                            </Text>
+                                        </View>
+
+                                        <Text className="text-sm text-gray-500 mb-4">
+                                            Select a new role for {data?.data?.user?.firstName} {data?.data.user?.lastName}
+                                        </Text>
+
+                                        <View className="gap-3 mb-4">
+                                            {["customer", "vendor", "admin"].map((role) => (
+                                                <Pressable
+                                                    key={role}
+                                                    onPress={() => handleRoleChange(role)}
+                                                    disabled={data?.data?.user?.role === role || updateRoleMutation.isPending}
+                                                    className="p-4 rounded-2xl flex-row items-center justify-between"
+                                                    style={{
+                                                        backgroundColor: data?.data?.user?.role === role ? colors.primary + "20" : colors.background,
+                                                        borderWidth: 1,
+                                                        borderColor: data?.data?.user?.role === role ? colors.primary : colors.muted,
+                                                        opacity: data?.data?.user?.role === role ? 0.5 : 1,
+                                                    }}
+                                                >
+                                                    <View className="flex-row items-center">
+                                                        <MaterialIcons
+                                                            name={role === "admin" ? "admin-panel-settings" : role === "vendor" ? "store" : "person"}
+                                                            size={24}
+                                                            color={data?.data?.user?.role === role ? colors.primary : colors.text}
+                                                        />
+                                                        <Text className="text-base font-semibold ml-3" style={{ color: colors.text }}>
+                                                            {role.charAt(0).toUpperCase() + role.slice(1)}
+                                                        </Text>
+                                                    </View>
+                                                    {data?.data?.user?.role === role && (
+                                                        <MaterialIcons name="check-circle" size={20} color={colors.primary} />
+                                                    )}
+                                                </Pressable>
+                                            ))}
+                                        </View>
+
+                                        <Pressable
+                                            onPress={() => setShowRoleDialog(false)}
+                                            className="py-3 rounded-2xl items-center justify-center"
+                                            style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.muted }}
+                                        >
+                                            <Text className="text-base font-bold" style={{ color: colors.text }}>
+                                                Cancel
+                                            </Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
+                            </Modal>
+                            {/* Status Change Dialog */}
+                            <Modal visible={showStatusDialog} transparent animationType="fade" onRequestClose={() => setShowStatusDialog(false)}>
+                                <View className="flex-1 bg-black/70 items-center justify-center px-6">
+                                    <View className="w-full rounded-3xl p-6" style={{ backgroundColor: colors.card, maxWidth: 400 }}>
+                                        <View className="flex-row items-center mb-4">
+                                            <MaterialIcons name="toggle-on" size={28} color={colors.primary} />
+                                            <Text className="text-xl font-bold ml-3" style={{ color: colors.text }}>
+                                                Update Account Status
+                                            </Text>
+                                        </View>
+
+                                        <Text className="text-sm text-gray-500 mb-4">
+                                            Select a new status for this account
+                                        </Text>
+
+                                        <View className="gap-3 mb-4">
+                                            {["active", "suspended", "deleted"].map((status) => (
+                                                <Pressable
+                                                    key={status}
+                                                    onPress={() => handleStatusChange(status)}
+                                                    disabled={data?.data?.user?.accountStatus === status || updateStatusMutation.isPending}
+                                                    className="p-4 rounded-2xl flex-row items-center justify-between"
+                                                    style={{
+                                                        backgroundColor: data?.data?.user?.accountStatus === status ? getStatusColor(status) + "20" : colors.background,
+                                                        borderWidth: 1,
+                                                        borderColor: data?.data?.user?.accountStatus === status ? getStatusColor(status) : colors.muted,
+                                                        opacity: data?.data?.user?.accountStatus === status ? 0.5 : 1,
+                                                    }}
+                                                >
+                                                    <View className="flex-row items-center">
+                                                        <MaterialIcons
+                                                            name={status === "active" ? "check-circle" : status === "suspended" ? "block" : "cancel"}
+                                                            size={24}
+                                                            color={data?.data?.user?.accountStatus === status ? getStatusColor(status) : colors.text}
+                                                        />
+                                                        <Text className="text-base font-semibold ml-3" style={{ color: colors.text }}>
+                                                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                                                        </Text>
+                                                    </View>
+                                                    {data?.data?.user?.accountStatus === status && (
+                                                        <MaterialIcons name="check-circle" size={20} color={getStatusColor(status)} />
+                                                    )}
+                                                </Pressable>
+                                            ))}
+                                        </View>
+
+                                        <Pressable
+                                            onPress={() => setShowStatusDialog(false)}
+                                            className="py-3 rounded-2xl items-center justify-center"
+                                            style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.muted }}
+                                        >
+                                            <Text className="text-base font-bold" style={{ color: colors.text }}>
+                                                Cancel
+                                            </Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
+                            </Modal>
+
+                            {/* Delete Confirmation Dialog */}
+                            <Modal visible={showDeleteDialog} transparent animationType="fade" onRequestClose={() => setShowDeleteDialog(false)}>
+                                <View className="flex-1 bg-black/70 items-center justify-center px-6">
+                                    <View className="w-full rounded-3xl p-6" style={{ backgroundColor: colors.card, maxWidth: 400 }}>
+                                        <View className="flex-row items-center mb-4">
+                                            <MaterialIcons name="warning" size={28} color={colors.error} />
+                                            <Text className="text-xl font-bold ml-3" style={{ color: colors.text }}>
+                                                Delete Account
+                                            </Text>
+                                        </View>
+
+                                        <Text className="text-sm text-gray-500 mb-2">
+                                            Are you sure you want to delete this account?
+                                        </Text>
+                                        <Text className="text-sm font-bold mb-4" style={{ color: colors.text }}>
+                                            {data?.data?.user?.firstName} {data?.data?.user?.lastName} ({data?.data?.user?.email})
+                                        </Text>
+                                        <Text className="text-sm text-red-600 mb-6">
+                                            This action cannot be undone. All user data will be permanently deleted.
+                                        </Text>
+
+                                        <View className="flex-row gap-3">
+                                            <Pressable
+                                                onPress={() => setShowDeleteDialog(false)}
+                                                className="flex-1 py-3 rounded-2xl items-center justify-center"
+                                                style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.muted }}
+                                            >
+                                                <Text className="text-base font-bold" style={{ color: colors.text }}>
+                                                    Cancel
+                                                </Text>
+                                            </Pressable>
+
+                                            <Pressable
+                                                onPress={handleDeleteUser}
+                                                disabled={deleteUserMutation.isPending}
+                                                className="flex-1 py-3 rounded-2xl items-center justify-center"
+                                                style={{ backgroundColor: colors.error }}
+                                            >
+                                                {deleteUserMutation.isPending ? (
+                                                    <ActivityIndicator size="small" color="#fff" />
+                                                ) : (
+                                                    <Text className="text-base font-bold text-white">
+                                                        Delete
+                                                    </Text>
+                                                )}
+                                            </Pressable>
+                                        </View>
+                                    </View>
+                                </View>
+                            </Modal>
                         </>
                     ) : (
                         <View className="flex-1 items-center justify-center px-6">
@@ -575,80 +857,6 @@ export default function UserDetailModal({
                     )}
                 </Animated.View>
             </View>
-
-            {/* Rejection Reason Dialog */}
-            <Modal
-                visible={showRejectionDialog}
-                transparent
-                animationType="fade"
-                onRequestClose={handleCancelReject}
-            >
-                <View className="flex-1 bg-black/70 items-center justify-center px-6">
-                    <View
-                        className="w-full rounded-3xl p-6"
-                        style={{ backgroundColor: colors.card, maxWidth: 400 }}
-                    >
-                        <View className="flex-row items-center mb-4">
-                            <MaterialIcons name="error-outline" size={28} color="#ef4444" />
-                            <Text className="text-xl font-bold ml-3" style={{ color: colors.text }}>
-                                Rejection Reason
-                            </Text>
-                        </View>
-
-                        <Text className="text-sm text-gray-500 mb-4">
-                            Please provide a reason for rejecting this user. This will be sent to the user.
-                        </Text>
-
-                        <TextInput
-                            value={rejectionReason}
-                            onChangeText={setRejectionReason}
-                            placeholder="Enter rejection reason..."
-                            placeholderTextColor="#999"
-                            multiline
-                            numberOfLines={4}
-                            className="rounded-2xl p-4 mb-4 text-base"
-                            style={{
-                                backgroundColor: colors.background,
-                                color: colors.text,
-                                textAlignVertical: "top",
-                                minHeight: 100,
-                                borderWidth: 1,
-                                borderColor: colors.muted,
-                            }}
-                        />
-
-                        <View className="flex-row gap-3">
-                            <Pressable
-                                onPress={handleCancelReject}
-                                className="flex-1 py-3 rounded-2xl items-center justify-center"
-                                style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.muted }}
-                            >
-                                <Text className="text-base font-bold" style={{ color: colors.text }}>
-                                    Cancel
-                                </Text>
-                            </Pressable>
-
-                            <Pressable
-                                onPress={handleConfirmReject}
-                                disabled={!rejectionReason.trim() || rejectMutation.isPending}
-                                className="flex-1 py-3 rounded-2xl items-center justify-center"
-                                style={{
-                                    backgroundColor: rejectionReason.trim() ? "#ef4444" : colors.muted,
-                                    opacity: rejectionReason.trim() ? 1 : 0.5,
-                                }}
-                            >
-                                {rejectMutation.isPending ? (
-                                    <ActivityIndicator size="small" color="#fff" />
-                                ) : (
-                                    <Text className="text-base font-bold text-white">
-                                        Confirm Reject
-                                    </Text>
-                                )}
-                            </Pressable>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
         </Modal>
     );
 }

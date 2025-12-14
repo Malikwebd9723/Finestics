@@ -3,12 +3,10 @@ import { View, Text, TouchableOpacity, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeContext } from "context/ThemeProvider";
-import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "context/AuthContext";
 
 const PendingVerificationScreen = () => {
   const { colors } = useThemeContext();
-  const navigation = useNavigation();
   const { logout } = useAuth();
 
   const handleEmail = () => {

@@ -16,6 +16,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import PendingVendorsList from "./components/PendingVendorsList";
 import PendingCustomersList from "./components/PendingCustomersList";
 import AllPendingUserList from "./components/AllPendingUsersList";
+import SearchBar from "components/SearchBar";
 
 type FilterType = "all" | "allPending" | "pendingVendors" | "pendingCustomers";
 
@@ -79,30 +80,7 @@ export default function Users() {
   return (
     <View className="flex-1 pt-2" style={{ backgroundColor: colors.background }}>
       {/* Search & Add Button */}
-      <View className="px-4 mb-4">
-        <View
-          className="flex-row items-center rounded-2xl px-5 py-3 shadow-sm"
-          style={{ backgroundColor: colors.card, elevation: 2 }}
-        >
-          <Ionicons name="search" size={22} color={colors.text} />
-          <TextInput
-            placeholder="Search by name or email..."
-            placeholderTextColor="#999"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            className="flex-1 ml-3 text-base"
-            style={{ color: colors.text }}
-          />
-
-          <Pressable
-            onPress={handleAddUser}
-            className="w-11 h-11 rounded-xl items-center justify-center shadow-md"
-            style={{ backgroundColor: colors.primary, elevation: 4 }}
-          >
-            <Ionicons name="add" size={26} color="#fff" />
-          </Pressable>
-        </View>
-      </View>
+      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} onAddPress={handleAddUser} />
 
       {/* Filter Chips */}
       <View className="px-4 mb-4">

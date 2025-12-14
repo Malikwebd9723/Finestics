@@ -22,8 +22,8 @@ export const ERROR_MESSAGES = [
         message: "Email already exists.",
     },
     {
-        code: "VALIDATION_FAILED",
-        message: "Invalid input data.",
+        code: "ACCOUNT_INACTIVE",
+        message: "Account suspended temporarily.",
     }
 ];
 
