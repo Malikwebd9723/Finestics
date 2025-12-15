@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from '../context/ThemeProvider';
-import { navigationItems } from './NavigationItems';
+import { getNavigationItems } from './NavigationItems';
+import { ActivityIndicator } from 'react-native-paper';
 
 interface NavigationListProps {
   navigation: any;
@@ -11,11 +12,24 @@ interface NavigationListProps {
 
 export default function NavigationList({ navigation, closeDrawer }: NavigationListProps) {
   const { colors } = useThemeContext();
+  const [navigationItems, setNavigationItems] = React.useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchNavigationItems = async () => {
+      const items = await getNavigationItems();
+      setNavigationItems(items);
+      setLoading(false);
+    }
+    fetchNavigationItems();
+  }, []);
 
-  const renderIcon = (iconName: any, color:any, size = 22) => {
+  const renderIcon = (iconName: any, color: any, size = 22) => {
     return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
   };
 
+  if (loading || navigationItems.length === 0) {
+    return <ActivityIndicator/>; // or a loading spinner
+  }
   return (
     <View>
       {navigationItems.map((item, index) => (

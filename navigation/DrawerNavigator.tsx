@@ -1,11 +1,11 @@
 import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useThemeContext } from '../context/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
-import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
+import { DrawerContentScrollView } from '@react-navigation/drawer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 
 // Import your TabNavigator
 import TabNavigator from './TabNavigator';
@@ -56,7 +56,6 @@ function CustomDrawerContent(props: any) {
         )}
       </View>
 
-      {/* Navigation Menu Items */}
       {/* Navigation Menu Items */}
       <View style={styles.menuSection}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>MENU</Text>

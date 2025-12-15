@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Pressable, View, Text } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
@@ -12,29 +12,39 @@ import Categories from '../screens/Admin/Categories';
 import Users from '../screens/Admin/Users';
 import Expense from '../screens/Admin/Expense';
 import Statistics from '../screens/Admin/Statistics';
-
-import { navigationItems } from './NavigationItems';
+import { getNavigationItems } from './NavigationItems';
+import { ActivityIndicator } from 'react-native-paper';
 
 const Tab = createBottomTabNavigator();
 
 // ✔ simplified icon renderer — MaterialCommunityIcons only
-const renderIcon = (icon:any, size:any, color:any) => {
+const renderIcon = (icon: any, size: any, color: any) => {
   return <MaterialCommunityIcons name={icon} size={size} color={color} />;
 };
 
 export default function TabNavigator() {
   const { theme, colors, setTheme } = useThemeContext();
   const navigation = useNavigation<DrawerNavigationProp<any>>();
-
+  const [navigationItems, setNavigationItems] = React.useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchNavigationItems = async () => {
+      const items = await getNavigationItems();
+      setNavigationItems(items);
+      setLoading(false);
+    }
+    fetchNavigationItems();
+  }, []);
+  
   const screenComponents = {
     Dashboard,
     Categories,
     Users,
     Expense,
-    States: Statistics,
+    Statistics,
   };
 
-  const renderHeader = (title:any) => ({
+  const renderHeader = (title: any) => ({
     headerTitleAlign: 'start',
     headerStyle: { backgroundColor: colors.card },
     headerTitleStyle: { color: colors.text, fontWeight: 'bold', fontSize: 18 },
@@ -81,6 +91,10 @@ export default function TabNavigator() {
     headerTitle: title,
   });
 
+
+  if (loading || navigationItems.length === 0) {
+    return <ActivityIndicator/>; // or a loading spinner
+  }
   return (
     <Tab.Navigator
       screenOptions={{
@@ -94,6 +108,7 @@ export default function TabNavigator() {
         },
       }}
     >
+      
       {navigationItems.map((item, index) => (
         <Tab.Screen
           key={index}

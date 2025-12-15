@@ -61,7 +61,7 @@ export default function RootNavigator() {
         return;
       }
 
-      // admin
+      // Main
       if (user.role === 'admin') {
         setTargetRoute('Main');
         setTargetParams(undefined);
@@ -87,11 +87,11 @@ export default function RootNavigator() {
           return;
         }
 
-        const onboardingData = res.data.data.onboardingCompleted;
+        const onboardingCompetionStatus = res.data.data.onboardingCompleted;
         const steps = res.data.data.steps;
 
         // If onboarding is not completed, check which step to show
-        if (!onboardingData) {
+        if (!onboardingCompetionStatus) {
           // Determine which onboarding step the user should see
           let nextScreen = 'RoleSelectionScreen';
 
@@ -122,7 +122,7 @@ export default function RootNavigator() {
           return;
         }
 
-        // Default to Main if everything is complete
+        // Default if everything is complete
         setTargetParams(undefined);
         setInitializing(false);
 
