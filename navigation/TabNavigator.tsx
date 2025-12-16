@@ -14,6 +14,9 @@ import Expense from '../screens/Admin/Expense';
 import Statistics from '../screens/Admin/Statistics';
 import { getNavigationItems } from './NavigationItems';
 import { ActivityIndicator } from 'react-native-paper';
+import Customers from 'screens/Vendor/Customers';
+import ProductsScreen from 'screens/Vendor/ProductsScreen';
+import CustomersDashboard from 'screens/Customers/CustomersDashboard';
 
 const Tab = createBottomTabNavigator();
 
@@ -42,6 +45,9 @@ export default function TabNavigator() {
     Users,
     Expense,
     Statistics,
+    Customers,
+    ProductsScreen,
+    CustomersDashboard,
   };
 
   const renderHeader = (title: any) => ({
@@ -49,36 +55,36 @@ export default function TabNavigator() {
     headerStyle: { backgroundColor: colors.card },
     headerTitleStyle: { color: colors.text, fontWeight: 'bold', fontSize: 18 },
 
-    headerRight: () => (
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
-        <Pressable onPress={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-          <Ionicons
-            name={theme === 'dark' ? 'sunny-outline' : 'moon-outline'}
-            size={22}
-            color={theme === 'dark' ? '#facc15' : colors.text}
-            style={{ marginRight: 20 }}
-          />
-        </Pressable>
+    // headerRight: () => (
+    //   <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
+    //     <Pressable onPress={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+    //       <Ionicons
+    //         name={theme === 'dark' ? 'sunny-outline' : 'moon-outline'}
+    //         size={22}
+    //         color={theme === 'dark' ? '#facc15' : colors.text}
+    //         style={{ marginRight: 20 }}
+    //       />
+    //     </Pressable>
 
-        <View>
-          <Ionicons name="notifications-outline" size={24} color={colors.text} />
-          <View
-            style={{
-              position: 'absolute',
-              top: -5,
-              right: -5,
-              backgroundColor: colors.primary,
-              borderRadius: 10,
-              width: 18,
-              height: 18,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>3</Text>
-          </View>
-        </View>
-      </View>
-    ),
+    //     <View>
+    //       <Ionicons name="notifications-outline" size={24} color={colors.text} />
+    //       <View
+    //         style={{
+    //           position: 'absolute',
+    //           top: -5,
+    //           right: -5,
+    //           backgroundColor: colors.primary,
+    //           borderRadius: 10,
+    //           width: 18,
+    //           height: 18,
+    //           justifyContent: 'center',
+    //           alignItems: 'center',
+    //         }}>
+    //         <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>3</Text>
+    //       </View>
+    //     </View>
+    //   </View>
+    // ),
 
     headerLeft: () => (
       <View style={{ marginLeft: 15 }}>
@@ -104,7 +110,7 @@ export default function TabNavigator() {
         tabBarStyle: {
           backgroundColor: colors.card,
           borderTopWidth: 0,
-          height: 60,
+          height: 70,
         },
       }}
     >

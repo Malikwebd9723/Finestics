@@ -9,15 +9,27 @@ export const navigationItems = [
     icon: 'view-dashboard',
     roles: ['vendor'],
   },
+  // {
+  //   label: 'Categories',
+  //   screen: 'Categories',
+  //   icon: 'format-list-bulleted',
+  //   roles: ['vendor', 'admin'],
+  // },
   {
-    label: 'Categories',
-    screen: 'Categories',
+    label: 'Users',
+    screen: 'Users',
+    icon: 'account-group',
+    roles: ['admin'],
+  },
+  {
+    label: 'Products',
+    screen: 'ProductsScreen',
     icon: 'format-list-bulleted',
     roles: ['vendor', 'admin'],
   },
   {
-    label: 'Users',
-    screen: 'Users',
+    label: 'Customers',
+    screen: 'Customers',
     icon: 'account-group',
     roles: ['admin'],
   },
@@ -32,6 +44,12 @@ export const navigationItems = [
     screen: 'Statistics',
     icon: 'chart-bar',
     roles: ['admin'],
+  },
+  {
+    label: 'Customers Dashboard',
+    screen: 'CustomersDashboard',
+    icon: 'chart-bar',
+    roles: ['customer'],
   },
 ];
 
