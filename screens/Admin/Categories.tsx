@@ -111,8 +111,8 @@ export default function Categories () {
     <View className="flex-1 p-2" style={{ backgroundColor: colors.background }}>
       {/* Search Bar */}
       <SearchBar
-        value={search}
-        onChange={handleSearch}
+        searchQuery={search}
+        setSearchQuery={handleSearch}
         onAddPress={() => Alert.alert("Add Category", "Add Category button pressed")}
       />
 

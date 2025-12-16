@@ -3,11 +3,12 @@ import { config } from 'config';
 
 export const apiRequest = async (
   route: string,
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
   body?: any
 ) => {
   try {
     const accessToken = await AsyncStorage.getItem('accessToken');
+    // const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJ2ZW5kb3JAZXhhbXBsZS5jb20iLCJyb2xlIjoidmVuZG9yIiwiaWF0IjoxNzY1Mjk4NDMwLCJleHAiOjE3NjUzODQ4MzB9.OAv5cNJzrk9b5VeGO7UehwL3XrRJVELcep1QdIJVAeQ";
     const response = await fetch(`${config.BaseUrl}${route}`, {
       method,
       headers: {

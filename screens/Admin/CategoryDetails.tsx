@@ -20,6 +20,7 @@ import { categorySchema } from "../../validations/formValidationSchemas";
 import { pickImageFromGallery } from "utils/imagePicker";
 import SearchBar from "components/SearchBar";
 import { searchbarStyles } from "constants/inputStyles";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Vegetable {
   id: string;
@@ -196,7 +197,7 @@ export default function CategoryDetails() {
   );
 
   return (
-    <View className="flex-1 p-5" style={{ backgroundColor: colors.background }}>
+    <SafeAreaView className="flex-1 p-5" style={{ backgroundColor: colors.background }}>
       {/* Header */}
       <View className="flex-row items-center mb-5">
         <Image
@@ -216,8 +217,8 @@ export default function CategoryDetails() {
 
       {/* Search Bar */}
       <SearchBar
-        value={searchText}
-        onChange={handleSearch}
+        searchQuery={searchText}
+        setSearchQuery={handleSearch}
         onAddPress={openAddModal}
       />
 
@@ -404,6 +405,6 @@ export default function CategoryDetails() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }

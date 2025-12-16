@@ -8,18 +8,21 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { PaperProvider } from 'react-native-paper';
 import { AuthProvider } from 'context/AuthContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 function ThemedApp() {
   const { colors, theme } = useThemeContext();
-
+  const queryClient = new QueryClient()
   return (
     <PaperProvider>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <NavigationContainer>
-          <AuthProvider>
-            <RootNavigator />
-          </AuthProvider>
-        </NavigationContainer>
+        <QueryClientProvider client={queryClient}>
+          <NavigationContainer>
+            <AuthProvider>
+              <RootNavigator />
+            </AuthProvider>
+          </NavigationContainer>
+        </QueryClientProvider>
       </View>
     </PaperProvider>
   );

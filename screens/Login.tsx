@@ -18,6 +18,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { apiRequest } from 'api/clients';
 import { loginSchema } from 'validations/formValidationSchemas';
 import { useAuth } from 'context/AuthContext';
+import { errorHandler } from 'utils/errorHandler';
 
 export default function LoginScreen() {
   const navigation = useNavigation();
@@ -50,10 +51,10 @@ export default function LoginScreen() {
       );
 
       if (!response.success) {
-        ToastAndroid.show(response.data.error.message || 'Login failed', ToastAndroid.SHORT);
+        errorHandler(response.data);
         return;
       }
-
+      
       ToastAndroid.show('Login Successful', ToastAndroid.SHORT);
       login(response.data);
     } catch (error) {
