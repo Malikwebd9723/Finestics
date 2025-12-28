@@ -31,7 +31,7 @@ export const navigationItems = [
     label: 'Customers',
     screen: 'Customers',
     icon: 'account-group',
-    roles: ['admin'],
+    roles: ['vendor'],
   },
   {
     label: 'Expense',
@@ -50,6 +50,12 @@ export const navigationItems = [
     screen: 'CustomersDashboard',
     icon: 'chart-bar',
     roles: ['customer'],
+  },
+  {
+    label: 'Orders Screen',
+    screen: 'OrdersScreen',
+    icon: 'chart-bar',
+    roles: ['admin', 'vendor'],
   },
 ];
 

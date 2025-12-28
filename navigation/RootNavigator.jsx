@@ -18,6 +18,7 @@ import SubscriptionScreen from 'screens/Onboarding/SubscriptionScreen';
 import SubmitOnboardingScreen from 'screens/Onboarding/SubmitOnboardingScreen';
 import PendingVerificationScreen from 'screens/Onboarding/PendingVerificationScreen';
 import CategoryDetails from 'screens/Admin/CategoryDetails';
+import CreateOrderScreen from 'screens/CreateOrderScreen';
 
 const Stack = createNativeStackNavigator();
 const OnboardingStack = createNativeStackNavigator();
@@ -164,6 +165,7 @@ export default function RootNavigator() {
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Signup" component={Signup} />
         <Stack.Screen name="CategoryDetails" component={CategoryDetails}/>
+        <Stack.Screen name="CreateOrderScreen" component={CreateOrderScreen}/>
       </Stack.Navigator>
     );
   }

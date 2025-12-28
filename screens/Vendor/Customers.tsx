@@ -12,6 +12,7 @@ import AllCustomersList from "./components/AllCustomersList";
 export default function Customers() {
   const { colors } = useThemeContext();
   const [searchQuery, setSearchQuery] = useState("");
+  const [formModalVisible, setFormModalVisible] = useState(false);
 
   // Add user handler
   const handleAddUser = () => {
@@ -21,10 +22,10 @@ export default function Customers() {
   return (
     <View className="flex-1 pt-2" style={{ backgroundColor: colors.background }}>
       {/* Search & Add Button */}
-      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} onAddPress={handleAddUser} />
+      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} onAddPress={()=>setFormModalVisible(true)}/>
 
       {/* Dynamic Content */}
-      <AllCustomersList searchQuery={searchQuery} />
+      <AllCustomersList searchQuery={searchQuery} formModalVisible={formModalVisible} setFormModalVisible={setFormModalVisible} />
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
     View,
     Text,
@@ -8,120 +8,34 @@ import {
     Modal,
     ToastAndroid,
     ActivityIndicator,
+    ScrollView,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useThemeContext } from "context/ThemeProvider";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { categorySchema } from "../../validations/formValidationSchemas";
 import SearchBar from "components/SearchBar";
+import { addProducts, deleteProduct, fetchProducts, updateProducts } from "api/actions/productsActions";
+import { fetchTags } from "api/actions/productsActions";
+import ConfirmDeleteModal from "components/DeleteConfirmationModal";
 
-interface Vegetable {
+interface Products {
     id: string;
     name: string;
-    purchase: string;
-    selling: string;
+    buyingPrice: string;
+    sellingPrice: string;
     unit: string;
     category: string;
-    status: "instock" | "outofstock";
+    isActive: boolean;
+    tags?: string[];
 }
 
-// Dummy API Functions
-const fetchVegetables = async (): Promise<Vegetable[]> => {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    return [
-        {
-            id: "1",
-            name: "Tomato",
-            purchase: "10.00",
-            selling: "12.00",
-            unit: "Kg",
-            category: "Vegetables",
-            status: "instock",
-        },
-        {
-            id: "2",
-            name: "Carrot",
-            purchase: "5.00",
-            selling: "6.50",
-            unit: "Kg",
-            category: "Vegetables",
-            status: "instock",
-        },
-        {
-            id: "3",
-            name: "Potato",
-            purchase: "3.00",
-            selling: "4.00",
-            unit: "Kg",
-            category: "Vegetables",
-            status: "instock",
-        },
-        {
-            id: "4",
-            name: "Onion",
-            purchase: "4.00",
-            selling: "5.50",
-            unit: "Kg",
-            category: "Vegetables",
-            status: "instock",
-        },
-        {
-            id: "5",
-            name: "Spinach",
-            purchase: "8.00",
-            selling: "10.00",
-            unit: "Bundle",
-            category: "Vegetables",
-            status: "outofstock",
-        },
-        {
-            id: "6",
-            name: "Cucumber",
-            purchase: "6.00",
-            selling: "7.50",
-            unit: "Kg",
-            category: "Vegetables",
-            status: "instock",
-        },
-        {
-            id: "7",
-            name: "Bell Pepper",
-            purchase: "15.00",
-            selling: "18.00",
-            unit: "Kg",
-            category: "Vegetables",
-            status: "instock",
-        },
-        {
-            id: "8",
-            name: "Cabbage",
-            purchase: "7.00",
-            selling: "9.00",
-            unit: "Piece",
-            category: "Vegetables",
-            status: "outofstock",
-        },
-    ];
-};
-
-const addVegetable = async (data: Partial<Vegetable>): Promise<Vegetable> => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return { ...data, id: Date.now().toString() } as Vegetable;
-};
-
-const updateVegetable = async (id: string, data: Partial<Vegetable>): Promise<Vegetable> => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return { ...data, id } as Vegetable;
-};
-
-const deleteVegetable = async (id: string): Promise<void> => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-};
+interface Tag {
+    id: string;
+    name: string;
+}
 
 export default function ProductsScreen() {
     const { colors } = useThemeContext();
@@ -130,34 +44,51 @@ export default function ProductsScreen() {
     const [searchText, setSearchText] = useState("");
     const [modalVisible, setModalVisible] = useState(false);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-    const [editingItem, setEditingItem] = useState<Vegetable | null>(null);
+    const [editingItem, setEditingItem] = useState<Products | null>(null);
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
-    // Fetch vegetables
-    const { data: vegetables = [], isLoading } = useQuery({
-        queryKey: ["vegetables"],
-        queryFn: fetchVegetables,
+    // Tag states
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [customTagInput, setCustomTagInput] = useState("");
+
+    // Fetch products with real-time updates
+    const { data: products = [], isLoading } = useQuery({
+        queryKey: ["products"],
+        queryFn: fetchProducts,
+        refetchInterval: 5000, // Refetch every 5 seconds for real-time data
+        refetchOnWindowFocus: true,
+    });
+
+    // Fetch tags from API
+    const { data: tags = [], isLoading: tagsLoading } = useQuery({
+        queryKey: ["tags"],
+        queryFn: fetchTags,
     });
 
     // Add mutation
     const addMutation = useMutation({
-        mutationFn: addVegetable,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["vegetables"] });
+        mutationFn: (data: any) => addProducts({ ...data, tags: selectedTags }),
+        onSuccess: (data) => {
+            if (!data.success) {
+                ToastAndroid.show("Failed to add item!", ToastAndroid.SHORT);
+            }
+            queryClient.invalidateQueries({ queryKey: ["products"] });
             ToastAndroid.show("Item added successfully!", ToastAndroid.SHORT);
             setModalVisible(false);
+            setSelectedTags([]);
             reset();
         },
     });
 
     // Update mutation
     const updateMutation = useMutation({
-        mutationFn: ({ id, data }: { id: string; data: Partial<Vegetable> }) =>
-            updateVegetable(id, data),
+        mutationFn: ({ id, data }: { id: string; data: any }) =>
+            updateProducts(id, { ...data, tags: selectedTags }),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["vegetables"] });
+            queryClient.invalidateQueries({ queryKey: ["products"] });
             ToastAndroid.show("Item updated successfully!", ToastAndroid.SHORT);
             setModalVisible(false);
+            setSelectedTags([]);
             reset();
             setEditingItem(null);
         },
@@ -165,9 +96,9 @@ export default function ProductsScreen() {
 
     // Delete mutation
     const deleteMutation = useMutation({
-        mutationFn: deleteVegetable,
+        mutationFn: deleteProduct,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["vegetables"] });
+            queryClient.invalidateQueries({ queryKey: ["products"] });
             ToastAndroid.show("Item deleted successfully!", ToastAndroid.SHORT);
             setDeleteModalVisible(false);
             setItemToDelete(null);
@@ -184,40 +115,47 @@ export default function ProductsScreen() {
         resolver: yupResolver(categorySchema),
         defaultValues: {
             name: "",
-            purchase: "",
-            selling: "",
+            buyingPrice: "",
+            sellingPrice: "",
             unit: "",
-            status: "",
+            isActive: true,
         },
     });
 
-    // Filter vegetables
-    const filteredData = vegetables.filter((item) =>
-        item.name.toLowerCase().includes(searchText.toLowerCase())
-    );
+    // Filter products by name or tags
+    const filteredData = products.data?.filter((item: Products) => {
+        const searchLower = searchText.toLowerCase();
+        const nameMatch = item.name.toLowerCase().includes(searchLower);
+        const tagsMatch = item.tags?.some(tag => tag.toLowerCase().includes(searchLower));
+        return nameMatch || tagsMatch;
+    });
 
     // Open Add Modal
     const openAddModal = () => {
         setEditingItem(null);
+        setSelectedTags([]);
+        setCustomTagInput("");
         reset({
             name: "",
-            purchase: "",
-            selling: "",
+            buyingPrice: "",
+            sellingPrice: "",
             unit: "",
-            status: "",
+            isActive: true,
         });
         setModalVisible(true);
     };
 
     // Open Edit Modal
-    const openEditModal = (item: Vegetable) => {
+    const openEditModal = (item: Products) => {
         setEditingItem(item);
+        setSelectedTags(item.tags || []);
+        setCustomTagInput("");
         reset({
             name: item.name,
-            purchase: item.purchase,
-            selling: item.selling,
+            buyingPrice: item.buyingPrice,
+            sellingPrice: item.sellingPrice,
             unit: item.unit,
-            status: item.status,
+            isActive: item.isActive,
         });
         setModalVisible(true);
     };
@@ -244,15 +182,38 @@ export default function ProductsScreen() {
         }
     };
 
+    // Tag operations
+    const toggleTag = (tagName: string) => {
+        if (selectedTags.includes(tagName)) {
+            setSelectedTags(selectedTags.filter(t => t !== tagName));
+        } else {
+            setSelectedTags([...selectedTags, tagName]);
+        }
+    };
+
+    const removeSelectedTag = (tagName: string) => {
+        setSelectedTags(selectedTags.filter(t => t !== tagName));
+    };
+
+    const addCustomTag = () => {
+        const trimmedTag = customTagInput.trim();
+        if (trimmedTag && !selectedTags.includes(trimmedTag)) {
+            setSelectedTags([...selectedTags, trimmedTag]);
+            setCustomTagInput("");
+        } else if (selectedTags.includes(trimmedTag)) {
+            ToastAndroid.show("Tag already added", ToastAndroid.SHORT);
+        }
+    };
+
     // Calculate profit
-    const calculateProfit = (purchase: string, selling: string): string => {
-        const profit = parseFloat(selling) - parseFloat(purchase);
+    const calculateProfit = (buyingPrice: string, sellingPrice: string): string => {
+        const profit = parseFloat(sellingPrice) - parseFloat(buyingPrice);
         return profit.toFixed(2);
     };
 
     // Render Item
-    const renderItem = ({ item, index }: { item: Vegetable; index: number }) => {
-        const profit = calculateProfit(item.purchase, item.selling);
+    const renderItem = ({ item, index }: { item: Products; index: number }) => {
+        const profit = calculateProfit(item.buyingPrice, item.sellingPrice);
 
         return (
             <TouchableOpacity
@@ -262,7 +223,6 @@ export default function ProductsScreen() {
                 style={{ backgroundColor: colors.card, elevation: 2 }}
             >
                 <View className="flex-row items-center">
-
                     {/* Details */}
                     <View className="flex-1">
                         <View className="flex-row items-center justify-between mb-1">
@@ -272,30 +232,47 @@ export default function ProductsScreen() {
                             <View
                                 className="px-3 py-1 rounded-full"
                                 style={{
-                                    backgroundColor: item.status === "instock" ? "#10b98120" : "#ef444420",
+                                    backgroundColor: item.isActive ? "#10b98120" : "#ef444420",
                                 }}
                             >
                                 <Text
                                     className="text-xs font-semibold"
-                                    style={{ color: item.status === "instock" ? "#10b981" : "#ef4444" }}
+                                    style={{ color: item.isActive ? "#10b981" : "#ef4444" }}
                                 >
-                                    {item.status === "instock" ? "In Stock" : "Out of Stock"}
+                                    {item.isActive ? "In Stock" : "Out of Stock"}
                                 </Text>
                             </View>
                         </View>
 
+                        {/* Tags */}
+                        {item.tags && item.tags.length > 0 && (
+                            <View className="flex-row flex-wrap gap-1 mb-2">
+                                {item.tags.map((tag, idx) => (
+                                    <View
+                                        key={idx}
+                                        className="px-2 py-1 rounded-lg"
+                                        style={{ backgroundColor: colors.primary + "20" }}
+                                    >
+                                        <Text className="text-xs font-medium" style={{ color: colors.primary }}>
+                                            {tag}
+                                        </Text>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+
                         <View className="flex-row items-center justify-between">
                             <View className="flex-row items-center">
                                 <View className="mr-4">
-                                    <Text className="text-xs text-gray-500">Purchase</Text>
+                                    <Text className="text-xs text-gray-500">Price</Text>
                                     <Text className="text-sm font-semibold" style={{ color: colors.text }}>
-                                        ${item.purchase}
+                                        ${item.buyingPrice}
                                     </Text>
                                 </View>
                                 <View className="mr-4">
                                     <Text className="text-xs text-gray-500">Selling</Text>
                                     <Text className="text-sm font-semibold" style={{ color: colors.text }}>
-                                        ${item.selling}
+                                        ${item.sellingPrice}
                                     </Text>
                                 </View>
                                 <View>
@@ -334,7 +311,7 @@ export default function ProductsScreen() {
                 {isLoading ? (
                     <View className="flex-1 items-center justify-center">
                         <ActivityIndicator size="large" color={colors.primary} />
-                        <Text className="mt-4" style={{ color: colors.text }}>Loading vegetables...</Text>
+                        <Text className="mt-4" style={{ color: colors.text }}>Loading products...</Text>
                     </View>
                 ) : (
                     <FlatList
@@ -345,7 +322,7 @@ export default function ProductsScreen() {
                             <View className="items-center justify-center py-16">
                                 <MaterialIcons name="search-off" size={64} color="#d1d5db" />
                                 <Text className="text-center mt-4 text-base" style={{ color: colors.text }}>
-                                    No vegetables found
+                                    No products found
                                 </Text>
                             </View>
                         }
@@ -357,7 +334,7 @@ export default function ProductsScreen() {
                     <View className="flex-1 bg-black/50 justify-end">
                         <View
                             className="rounded-t-3xl p-6"
-                            style={{ backgroundColor: colors.card, maxHeight: "80%" }}
+                            style={{ backgroundColor: colors.card, maxHeight: "85%" }}
                         >
                             {/* Modal Header */}
                             <View className="flex-row items-center justify-between mb-6">
@@ -368,6 +345,8 @@ export default function ProductsScreen() {
                                     onPress={() => {
                                         setModalVisible(false);
                                         setEditingItem(null);
+                                        setSelectedTags([]);
+                                        setCustomTagInput("");
                                         reset();
                                     }}
                                     className="w-10 h-10 rounded-full items-center justify-center"
@@ -377,291 +356,365 @@ export default function ProductsScreen() {
                                 </TouchableOpacity>
                             </View>
 
-                            {/* Form Fields */}
-                            <View className="mb-4">
-                                {/* Name */}
-                                <Controller
-                                    control={control}
-                                    name="name"
-                                    render={({ field }) => (
-                                        <>
-                                            <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
-                                                Item Name
-                                            </Text>
+                            <ScrollView showsVerticalScrollIndicator={false}>
+                                {/* Form Fields */}
+                                <View className="mb-4">
+                                    {/* Name */}
+                                    <Controller
+                                        control={control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <>
+                                                <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
+                                                    Item Name
+                                                </Text>
+                                                <TextInput
+                                                    value={field.value}
+                                                    onChangeText={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    className="rounded-xl p-4 mb-2"
+                                                    style={{
+                                                        backgroundColor: colors.background,
+                                                        color: colors.text,
+                                                        borderWidth: 1,
+                                                        borderColor: errors.name ? "#ef4444" : colors.muted,
+                                                    }}
+                                                    placeholder="Enter item name"
+                                                    placeholderTextColor={colors.placeholder}
+                                                />
+                                                {errors.name && (
+                                                    <Text className="text-xs mb-2" style={{ color: "#ef4444" }}>
+                                                        {errors.name.message}
+                                                    </Text>
+                                                )}
+                                            </>
+                                        )}
+                                    />
+
+                                    {/* buyingPrice & Selling Price */}
+                                    <View className="flex-row gap-3 mb-4">
+                                        <View className="flex-1">
+                                            <Controller
+                                                control={control}
+                                                name="buyingPrice"
+                                                render={({ field }) => (
+                                                    <>
+                                                        <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
+                                                            Price
+                                                        </Text>
+                                                        <TextInput
+                                                            value={field.value}
+                                                            onChangeText={field.onChange}
+                                                            onBlur={field.onBlur}
+                                                            className="rounded-xl p-4 mb-2"
+                                                            style={{
+                                                                backgroundColor: colors.background,
+                                                                color: colors.text,
+                                                                borderWidth: 1,
+                                                                borderColor: errors.buyingPrice ? "#ef4444" : colors.muted,
+                                                            }}
+                                                            placeholder="0.00"
+                                                            placeholderTextColor={colors.placeholder}
+                                                            keyboardType="decimal-pad"
+                                                        />
+                                                        {errors.buyingPrice && (
+                                                            <Text className="text-xs" style={{ color: "#ef4444" }}>
+                                                                {errors.buyingPrice.message}
+                                                            </Text>
+                                                        )}
+                                                    </>
+                                                )}
+                                            />
+                                        </View>
+
+                                        <View className="flex-1">
+                                            <Controller
+                                                control={control}
+                                                name="sellingPrice"
+                                                render={({ field }) => (
+                                                    <>
+                                                        <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
+                                                            Selling Price
+                                                        </Text>
+                                                        <TextInput
+                                                            value={field.value}
+                                                            onChangeText={field.onChange}
+                                                            onBlur={field.onBlur}
+                                                            className="rounded-xl p-4 mb-2"
+                                                            style={{
+                                                                backgroundColor: colors.background,
+                                                                color: colors.text,
+                                                                borderWidth: 1,
+                                                                borderColor: errors.sellingPrice ? "#ef4444" : colors.muted,
+                                                            }}
+                                                            placeholder="0.00"
+                                                            placeholderTextColor={colors.placeholder}
+                                                            keyboardType="decimal-pad"
+                                                        />
+                                                        {errors.sellingPrice && (
+                                                            <Text className="text-xs" style={{ color: "#ef4444" }}>
+                                                                {errors.sellingPrice.message}
+                                                            </Text>
+                                                        )}
+                                                    </>
+                                                )}
+                                            />
+                                        </View>
+                                    </View>
+
+                                    {/* Unit */}
+                                    <Controller
+                                        control={control}
+                                        name="unit"
+                                        render={({ field }) => (
+                                            <>
+                                                <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
+                                                    Unit
+                                                </Text>
+                                                <TextInput
+                                                    value={field.value}
+                                                    onChangeText={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    className="rounded-xl p-4 mb-2"
+                                                    style={{
+                                                        backgroundColor: colors.background,
+                                                        color: colors.text,
+                                                        borderWidth: 1,
+                                                        borderColor: errors.unit ? "#ef4444" : colors.muted,
+                                                    }}
+                                                    placeholder="e.g., Kg, Piece, Bundle"
+                                                    placeholderTextColor={colors.placeholder}
+                                                />
+                                                {errors.unit && (
+                                                    <Text className="text-xs mb-2" style={{ color: "#ef4444" }}>
+                                                        {errors.unit.message}
+                                                    </Text>
+                                                )}
+                                            </>
+                                        )}
+                                    />
+
+                                    {/* Tags Section */}
+                                    <View className="mb-4">
+                                        <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
+                                            Tags (Optional)
+                                        </Text>
+
+                                        {/* Custom Tag Input */}
+                                        <View className="flex-row gap-2 mb-3">
                                             <TextInput
-                                                value={field.value}
-                                                onChangeText={field.onChange}
-                                                onBlur={field.onBlur}
-                                                className="rounded-xl p-4 mb-2"
+                                                value={customTagInput}
+                                                onChangeText={setCustomTagInput}
+                                                onSubmitEditing={addCustomTag}
+                                                className="flex-1 rounded-xl p-3"
                                                 style={{
                                                     backgroundColor: colors.background,
                                                     color: colors.text,
                                                     borderWidth: 1,
-                                                    borderColor: errors.name ? "#ef4444" : colors.muted,
+                                                    borderColor: colors.muted,
                                                 }}
-                                                placeholder="Enter item name"
+                                                placeholder="Type custom tag and press +"
                                                 placeholderTextColor={colors.placeholder}
                                             />
-                                            {errors.name && (
-                                                <Text className="text-xs mb-2" style={{ color: "#ef4444" }}>
-                                                    {errors.name.message}
+                                            <TouchableOpacity
+                                                onPress={addCustomTag}
+                                                disabled={!customTagInput.trim()}
+                                                className="px-4 rounded-xl items-center justify-center"
+                                                style={{
+                                                    backgroundColor: colors.primary,
+                                                    opacity: !customTagInput.trim() ? 0.5 : 1,
+                                                }}
+                                            >
+                                                <MaterialIcons name="add" size={24} color="#fff" />
+                                            </TouchableOpacity>
+                                        </View>
+
+                                        {/* Selected Tags */}
+                                        {selectedTags.length > 0 && (
+                                            <View className="mb-3">
+                                                <Text className="text-xs mb-2" style={{ color: colors.muted }}>
+                                                    Selected Tags ({selectedTags.length}):
                                                 </Text>
-                                            )}
-                                        </>
-                                    )}
-                                />
+                                                <View className="flex-row flex-wrap gap-2">
+                                                    {selectedTags.map((tag, idx) => (
+                                                        <View
+                                                            key={idx}
+                                                            className="flex-row items-center px-3 py-2 rounded-lg"
+                                                            style={{ backgroundColor: colors.primary }}
+                                                        >
+                                                            <Text className="text-sm font-semibold text-white mr-2">
+                                                                {tag}
+                                                            </Text>
+                                                            <TouchableOpacity onPress={() => removeSelectedTag(tag)}>
+                                                                <MaterialIcons name="close" size={16} color="#fff" />
+                                                            </TouchableOpacity>
+                                                        </View>
+                                                    ))}
+                                                </View>
+                                            </View>
+                                        )}
 
-                                {/* Purchase & Selling Price */}
-                                <View className="flex-row gap-3 mb-4">
-                                    <View className="flex-1">
-                                        <Controller
-                                            control={control}
-                                            name="purchase"
-                                            render={({ field }) => (
-                                                <>
-                                                    <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
-                                                        Purchase Price
-                                                    </Text>
-                                                    <TextInput
-                                                        value={field.value}
-                                                        onChangeText={field.onChange}
-                                                        onBlur={field.onBlur}
-                                                        className="rounded-xl p-4 mb-2"
-                                                        style={{
-                                                            backgroundColor: colors.background,
-                                                            color: colors.text,
-                                                            borderWidth: 1,
-                                                            borderColor: errors.purchase ? "#ef4444" : colors.muted,
-                                                        }}
-                                                        placeholder="0.00"
-                                                        placeholderTextColor={colors.placeholder}
-                                                        keyboardType="decimal-pad"
-                                                    />
-                                                    {errors.purchase && (
-                                                        <Text className="text-xs" style={{ color: "#ef4444" }}>
-                                                            {errors.purchase.message}
-                                                        </Text>
-                                                    )}
-                                                </>
-                                            )}
-                                        />
+                                        {/* Available Tags from API */}
+                                        {tagsLoading ? (
+                                            <View className="py-4">
+                                                <ActivityIndicator size="small" color={colors.primary} />
+                                            </View>
+                                        ) : tags.length > 0 ? (
+                                            <>
+                                                <Text className="text-xs mb-2" style={{ color: colors.muted }}>
+                                                    Or select from available tags:
+                                                </Text>
+                                                <View className="flex-row flex-wrap gap-2">
+                                                    {tags.map((tag) => {
+                                                        const isSelected = selectedTags.includes(tag.name);
+                                                        return (
+                                                            <TouchableOpacity
+                                                                key={tag.id}
+                                                                onPress={() => toggleTag(tag)}
+                                                                className="px-3 py-2 rounded-lg"
+                                                                style={{
+                                                                    backgroundColor: isSelected
+                                                                        ? colors.primary + "30"
+                                                                        : colors.background,
+                                                                    borderWidth: 1,
+                                                                    borderColor: isSelected
+                                                                        ? colors.primary
+                                                                        : colors.muted,
+                                                                }}
+                                                            >
+                                                                <Text
+                                                                    className="text-sm font-semibold"
+                                                                    style={{
+                                                                        color: isSelected ? colors.primary : colors.text,
+                                                                    }}
+                                                                >
+                                                                    {tag}
+                                                                </Text>
+                                                            </TouchableOpacity>
+                                                        );
+                                                    })}
+                                                </View>
+                                            </>
+                                        ) : (
+                                            <Text className="text-sm text-center py-2" style={{ color: colors.muted }}>
+                                                No tags available from API
+                                            </Text>
+                                        )}
                                     </View>
 
-                                    <View className="flex-1">
-                                        <Controller
-                                            control={control}
-                                            name="selling"
-                                            render={({ field }) => (
-                                                <>
-                                                    <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
-                                                        Selling Price
-                                                    </Text>
-                                                    <TextInput
-                                                        value={field.value}
-                                                        onChangeText={field.onChange}
-                                                        onBlur={field.onBlur}
-                                                        className="rounded-xl p-4 mb-2"
+                                    {/* Status */}
+                                    <Controller
+                                        control={control}
+                                        name="isActive"
+                                        render={({ field }) => (
+                                            <>
+                                                <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
+                                                    Status
+                                                </Text>
+                                                <View className="flex-row gap-3">
+                                                    <TouchableOpacity
+                                                        onPress={() => field.onChange(true)}
+                                                        className="flex-1 p-4 rounded-xl flex-row items-center justify-center"
                                                         style={{
-                                                            backgroundColor: colors.background,
-                                                            color: colors.text,
+                                                            backgroundColor: field.value === true ? "#10b981" : colors.background,
                                                             borderWidth: 1,
-                                                            borderColor: errors.selling ? "#ef4444" : colors.muted,
+                                                            borderColor: field.value === true ? "#10b981" : colors.muted,
                                                         }}
-                                                        placeholder="0.00"
-                                                        placeholderTextColor={colors.placeholder}
-                                                        keyboardType="decimal-pad"
-                                                    />
-                                                    {errors.selling && (
-                                                        <Text className="text-xs" style={{ color: "#ef4444" }}>
-                                                            {errors.selling.message}
+                                                    >
+                                                        <MaterialIcons
+                                                            name="check-circle"
+                                                            size={20}
+                                                            color={field.value === true ? "#fff" : colors.text}
+                                                        />
+                                                        <Text
+                                                            className="ml-2 font-semibold"
+                                                            style={{ color: field.value === true ? "#fff" : colors.text }}
+                                                        >
+                                                            In Stock
                                                         </Text>
-                                                    )}
-                                                </>
-                                            )}
-                                        />
-                                    </View>
+                                                    </TouchableOpacity>
+
+                                                    <TouchableOpacity
+                                                        onPress={() => field.onChange(false)}
+                                                        className="flex-1 p-4 rounded-xl flex-row items-center justify-center"
+                                                        style={{
+                                                            backgroundColor: field.value === false ? "#ef4444" : colors.background,
+                                                            borderWidth: 1,
+                                                            borderColor: field.value === false ? "#ef4444" : colors.muted,
+                                                        }}
+                                                    >
+                                                        <MaterialIcons
+                                                            name="cancel"
+                                                            size={20}
+                                                            color={field.value === false ? "#fff" : colors.text}
+                                                        />
+                                                        <Text
+                                                            className="ml-2 font-semibold"
+                                                            style={{ color: field.value === false ? "#fff" : colors.text }}
+                                                        >
+                                                            Out of Stock
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                                {errors.isActive && (
+                                                    <Text className="text-xs mt-2" style={{ color: "#ef4444" }}>
+                                                        {errors.isActive.message}
+                                                    </Text>
+                                                )}
+                                            </>
+                                        )}
+                                    />
                                 </View>
 
-                                {/* Unit */}
-                                <Controller
-                                    control={control}
-                                    name="unit"
-                                    render={({ field }) => (
-                                        <>
-                                            <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
-                                                Unit
-                                            </Text>
-                                            <TextInput
-                                                value={field.value}
-                                                onChangeText={field.onChange}
-                                                onBlur={field.onBlur}
-                                                className="rounded-xl p-4 mb-2"
-                                                style={{
-                                                    backgroundColor: colors.background,
-                                                    color: colors.text,
-                                                    borderWidth: 1,
-                                                    borderColor: errors.unit ? "#ef4444" : colors.muted,
-                                                }}
-                                                placeholder="e.g., Kg, Piece, Bundle"
-                                                placeholderTextColor={colors.placeholder}
-                                            />
-                                            {errors.unit && (
-                                                <Text className="text-xs mb-2" style={{ color: "#ef4444" }}>
-                                                    {errors.unit.message}
-                                                </Text>
-                                            )}
-                                        </>
-                                    )}
-                                />
-
-                                {/* Status */}
-                                <Controller
-                                    control={control}
-                                    name="status"
-                                    render={({ field }) => (
-                                        <>
-                                            <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
-                                                Status
-                                            </Text>
-                                            <View className="flex-row gap-3">
-                                                <TouchableOpacity
-                                                    onPress={() => field.onChange("instock")}
-                                                    className="flex-1 p-4 rounded-xl flex-row items-center justify-center"
-                                                    style={{
-                                                        backgroundColor: field.value === "instock" ? "#10b981" : colors.background,
-                                                        borderWidth: 1,
-                                                        borderColor: field.value === "instock" ? "#10b981" : colors.muted,
-                                                    }}
-                                                >
-                                                    <MaterialIcons
-                                                        name="check-circle"
-                                                        size={20}
-                                                        color={field.value === "instock" ? "#fff" : colors.text}
-                                                    />
-                                                    <Text
-                                                        className="ml-2 font-semibold"
-                                                        style={{ color: field.value === "instock" ? "#fff" : colors.text }}
-                                                    >
-                                                        In Stock
-                                                    </Text>
-                                                </TouchableOpacity>
-
-                                                <TouchableOpacity
-                                                    onPress={() => field.onChange("outofstock")}
-                                                    className="flex-1 p-4 rounded-xl flex-row items-center justify-center"
-                                                    style={{
-                                                        backgroundColor: field.value === "outofstock" ? "#ef4444" : colors.background,
-                                                        borderWidth: 1,
-                                                        borderColor: field.value === "outofstock" ? "#ef4444" : colors.muted,
-                                                    }}
-                                                >
-                                                    <MaterialIcons
-                                                        name="cancel"
-                                                        size={20}
-                                                        color={field.value === "outofstock" ? "#fff" : colors.text}
-                                                    />
-                                                    <Text
-                                                        className="ml-2 font-semibold"
-                                                        style={{ color: field.value === "outofstock" ? "#fff" : colors.text }}
-                                                    >
-                                                        Out of Stock
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                            {errors.status && (
-                                                <Text className="text-xs mt-2" style={{ color: "#ef4444" }}>
-                                                    {errors.status.message}
-                                                </Text>
-                                            )}
-                                        </>
-                                    )}
-                                />
-                            </View>
-
-                            {/* Action Buttons */}
-                            <View className="flex-row gap-3 mt-4">
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        setModalVisible(false);
-                                        setEditingItem(null);
-                                        reset();
-                                    }}
-                                    className="flex-1 py-4 rounded-xl items-center"
-                                    style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.muted }}
-                                >
-                                    <Text className="font-bold" style={{ color: colors.text }}>
-                                        Cancel
-                                    </Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    onPress={handleSubmit(submitForm)}
-                                    disabled={addMutation.isPending || updateMutation.isPending}
-                                    className="flex-1 py-4 rounded-xl items-center"
-                                    style={{ backgroundColor: colors.primary }}
-                                >
-                                    {addMutation.isPending || updateMutation.isPending ? (
-                                        <ActivityIndicator size="small" color="#fff" />
-                                    ) : (
-                                        <Text className="font-bold text-white">
-                                            {editingItem ? "Update" : "Add Item"}
+                                {/* Action Buttons */}
+                                <View className="flex-row gap-3 mt-4 mb-4">
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            setModalVisible(false);
+                                            setEditingItem(null);
+                                            setSelectedTags([]);
+                                            setCustomTagInput("");
+                                            reset();
+                                        }}
+                                        className="flex-1 py-4 rounded-xl items-center"
+                                        style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.muted }}
+                                    >
+                                        <Text className="font-bold" style={{ color: colors.text }}>
+                                            Cancel
                                         </Text>
-                                    )}
-                                </TouchableOpacity>
-                            </View>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        onPress={handleSubmit(submitForm)}
+                                        disabled={addMutation.isPending || updateMutation.isPending}
+                                        className="flex-1 py-4 rounded-xl items-center"
+                                        style={{ backgroundColor: colors.primary }}
+                                    >
+                                        {addMutation.isPending || updateMutation.isPending ? (
+                                            <ActivityIndicator size="small" color="#fff" />
+                                        ) : (
+                                            <Text className="font-bold text-white">
+                                                {editingItem ? "Update" : "Add Item"}
+                                            </Text>
+                                        )}
+                                    </TouchableOpacity>
+                                </View>
+                            </ScrollView>
                         </View>
                     </View>
                 </Modal>
 
                 {/* Delete Confirmation Modal */}
-                <Modal visible={deleteModalVisible} transparent animationType="fade">
-                    <View className="flex-1 bg-black/70 items-center justify-center px-6">
-                        <View className="w-full rounded-3xl p-6" style={{ backgroundColor: colors.card, maxWidth: 400 }}>
-                            <View className="items-center mb-4">
-                                <View
-                                    className="w-16 h-16 rounded-full items-center justify-center mb-4"
-                                    style={{ backgroundColor: "#ef444420" }}
-                                >
-                                    <MaterialIcons name="warning" size={32} color="#ef4444" />
-                                </View>
-                                <Text className="text-xl font-bold mb-2" style={{ color: colors.text }}>
-                                    Delete Item?
-                                </Text>
-                                <Text className="text-center text-gray-500">
-                                    Are you sure you want to delete this item? This action cannot be undone.
-                                </Text>
-                            </View>
+                <ConfirmDeleteModal
+                    visible={deleteModalVisible}
+                    loading={deleteMutation.isPending}
+                    onCancel={() => {
+                        setDeleteModalVisible(false);
+                        setItemToDelete(null);
+                    }}
+                    onConfirm={confirmDelete}
+                />
 
-                            <View className="flex-row gap-3">
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        setDeleteModalVisible(false);
-                                        setItemToDelete(null);
-                                    }}
-                                    className="flex-1 py-3 rounded-xl items-center"
-                                    style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.muted }}
-                                >
-                                    <Text className="font-bold" style={{ color: colors.text }}>
-                                        Cancel
-                                    </Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    onPress={confirmDelete}
-                                    disabled={deleteMutation.isPending}
-                                    className="flex-1 py-3 rounded-xl items-center"
-                                    style={{ backgroundColor: "#ef4444" }}
-                                >
-                                    {deleteMutation.isPending ? (
-                                        <ActivityIndicator size="small" color="#fff" />
-                                    ) : (
-                                        <Text className="font-bold text-white">Delete</Text>
-                                    )}
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                </Modal>
             </View>
         </>
     );

@@ -80,7 +80,7 @@ export default function Users() {
   return (
     <View className="flex-1 pt-2" style={{ backgroundColor: colors.background }}>
       {/* Search & Add Button */}
-      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} onAddPress={handleAddUser} />
+      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
       {/* Filter Chips */}
       <View className="px-4 mb-4">

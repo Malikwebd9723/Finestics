@@ -28,13 +28,15 @@ export default function SearchBar({ searchQuery, setSearchQuery, onAddPress }: S
           style={{ color: colors.text }}
         />
 
-        <Pressable
-          onPress={onAddPress}
-          className="w-11 h-11 rounded-xl items-center justify-center shadow-md"
-          style={{ backgroundColor: colors.primary, elevation: 4 }}
-        >
-          <Ionicons name="add" size={26} color="#fff" />
-        </Pressable>
+        {onAddPress && (
+          <Pressable
+            onPress={onAddPress}
+            className="w-11 h-11 rounded-xl items-center justify-center shadow-md"
+            style={{ backgroundColor: colors.primary, elevation: 4 }}
+          >
+            <Ionicons name="add" size={26} color="#fff" />
+          </Pressable>
+        )}
       </View>
     </View>
   );

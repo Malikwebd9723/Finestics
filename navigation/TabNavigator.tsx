@@ -17,6 +17,7 @@ import { ActivityIndicator } from 'react-native-paper';
 import Customers from 'screens/Vendor/Customers';
 import ProductsScreen from 'screens/Vendor/ProductsScreen';
 import CustomersDashboard from 'screens/Customers/CustomersDashboard';
+import OrdersScreen from 'screens/OrdersScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -48,6 +49,7 @@ export default function TabNavigator() {
     Customers,
     ProductsScreen,
     CustomersDashboard,
+    OrdersScreen,
   };
 
   const renderHeader = (title: any) => ({
