@@ -55,7 +55,7 @@ export default function AllUsersList({ searchQuery }: AllUsersListProps) {
     queryKey: ["users", "allUsers"],
     queryFn: fetchAllUsers,
   });
-
+  
   React.useEffect(() => {
     if (isLoading) {
       Animated.loop(
@@ -214,7 +214,7 @@ export default function AllUsersList({ searchQuery }: AllUsersListProps) {
                   </Text>
                   <View className="px-2 py-0.5 rounded-full" style={{ backgroundColor: colors.muted }}>
                     <Text className="text-xs font-semibold" style={{ color: colors.text }}>
-                      {item.role.toUpperCase()}
+                      {item.role ? item.role?.toUpperCase(): "not set"}
                     </Text>
                   </View>
                 </View>
