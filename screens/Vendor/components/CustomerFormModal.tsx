@@ -73,8 +73,8 @@ const paymentTermsOptions = [
 
 const types = [
     { label: "Business", value: "business" },
-    { label: "Residential", value: "residential" },
-    { label: "Warehouse", value: "warehouse" },
+    { label: "Billing", value: "billing" },
+    { label: "Delivery", value: "delivery" },
 ];
 
 export default function CustomerFormModal({

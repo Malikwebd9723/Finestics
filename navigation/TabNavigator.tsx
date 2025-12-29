@@ -15,9 +15,9 @@ import Statistics from '../screens/Admin/Statistics';
 import { getNavigationItems } from './NavigationItems';
 import { ActivityIndicator } from 'react-native-paper';
 import Customers from 'screens/Vendor/Customers';
-import ProductsScreen from 'screens/Vendor/ProductsScreen';
 import CustomersDashboard from 'screens/Customers/CustomersDashboard';
 import OrdersScreen from 'screens/OrdersScreen';
+import ProductsScreen from 'screens/Vendor/ProductsScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -120,7 +120,7 @@ export default function TabNavigator() {
       {navigationItems.map((item, index) => (
         <Tab.Screen
           key={index}
-          name={item.screen}
+          name={item.label}
           component={screenComponents[item.screen]}
           options={{
             ...renderHeader(item.label),

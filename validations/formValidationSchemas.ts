@@ -112,7 +112,7 @@ export const customerSchema = yup.object().shape({
   type: yup
     .string()
     .required("Address type is required")
-    .oneOf(["business", "residential", "warehouse"], "Invalid address type"),
+    .oneOf(["business", "billing", "delivery"], "Invalid address type"),
   label: yup
     .string()
     .required("Address label is required")

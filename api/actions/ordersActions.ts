@@ -74,8 +74,9 @@ export const fetchOrderById = async (orderId: number): Promise<{ success: boolea
 
 // Create new order
 export const createOrder = async (payload: CreateOrderPayload): Promise<{ success: boolean; data: Order }> => {
-  const response = await apiRequest("/orders", "POST", payload);
-  return response.data;
+  // const response = await apiRequest("/vendor-orders", "POST", payload);
+  console.log(payload);
+  // return response.data;
 };
 
 // Update existing order

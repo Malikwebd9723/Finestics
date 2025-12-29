@@ -54,7 +54,7 @@ interface Customer {
     createdAt: string;
     updatedAt: string;
     deletedAt: string | null;
-    addresses?: Address[];
+    address?: Address[];
 }
 
 interface CustomerDetailResponse {
@@ -350,7 +350,7 @@ export default function CustomerDetailModal({
                                 </View>
 
                                 {/* Address Information */}
-                                {data.data.addresses && data.data.addresses.length > 0 && (
+                                {data.data.address && (
                                     <View
                                         className="p-5 rounded-3xl mb-4"
                                         style={{ backgroundColor: colors.background }}
@@ -362,87 +362,72 @@ export default function CustomerDetailModal({
                                             </Text>
                                         </View>
 
-                                        {data.data.addresses.map((address) => (
-                                            <View key={address.id} className="mb-3 last:mb-0">
-                                                <View className="flex-row items-center mb-2">
-                                                    <View
-                                                        className="px-2 py-1 rounded-lg"
-                                                        style={{ backgroundColor: colors.primary + "20" }}
+                                        <View className="mb-3">
+                                            <View className="flex-row items-center mb-2">
+                                                <Text className="text-sm font-semibold" style={{ color: colors.muted }}>
+                                                    Label:
+                                                </Text>
+                                                <View
+                                                    className="px-3 py-1 rounded-lg ml-2"
+                                                    style={{ backgroundColor: colors.primary + "20" }}
+                                                >
+                                                    <Text
+                                                        className="text-xs font-bold"
+                                                        style={{ color: colors.primary }}
                                                     >
-                                                        <Text
-                                                            className="text-xs font-bold"
-                                                            style={{ color: colors.primary }}
-                                                        >
-                                                            {address.label}
-                                                        </Text>
-                                                    </View>
-                                                    <View
-                                                        className="px-2 py-1 rounded-lg ml-2"
-                                                        style={{ backgroundColor: colors.card }}
-                                                    >
-                                                        <Text
-                                                            className="text-xs font-semibold"
-                                                            style={{ color: colors.text }}
-                                                        >
-                                                            {address.type}
-                                                        </Text>
-                                                    </View>
+                                                        {data.data.address.label}
+                                                    </Text>
                                                 </View>
-                                                <Text className="text-sm mb-1" style={{ color: colors.text }}>
-                                                    {address.street}
-                                                </Text>
-                                                <Text className="text-sm mb-1" style={{ color: colors.text }}>
-                                                    {address.city}, {address.state} {address.postalCode}
-                                                </Text>
-                                                <Text className="text-sm" style={{ color: colors.muted }}>
-                                                    {address.country}
-                                                </Text>
-                                                {address.instructions && (
-                                                    <View
-                                                        className="mt-2 p-2 rounded-lg"
-                                                        style={{ backgroundColor: colors.card }}
-                                                    >
-                                                        <Text className="text-xs" style={{ color: colors.muted }}>
-                                                            Instructions: {address.instructions}
-                                                        </Text>
-                                                    </View>
-                                                )}
                                             </View>
-                                        ))}
-                                    </View>
-                                )}
-
-                                {/* Additional Information */}
-                                {(data.data.notes || data.data.deliveryInstructions) && (
-                                    <View
-                                        className="p-5 rounded-3xl mb-4"
-                                        style={{ backgroundColor: colors.background }}
-                                    >
-                                        <View className="flex-row items-center mb-3">
-                                            <MaterialIcons name="info" size={24} color={colors.primary} />
-                                            <Text className="text-lg font-bold ml-2" style={{ color: colors.text }}>
-                                                Additional Information
-                                            </Text>
+                                            <View className="flex-row items-center">
+                                                <Text className="text-sm font-semibold" style={{ color: colors.muted }}>
+                                                    Type:
+                                                </Text>
+                                                <View
+                                                    className="px-3 py-1 rounded-lg ml-2"
+                                                    style={{ backgroundColor: colors.primary + "20" }}
+                                                >
+                                                    <Text
+                                                        className="text-xs font-semibold capitalize"
+                                                        style={{ color: colors.primary }}
+                                                    >
+                                                        {data.data.address.type}
+                                                    </Text>
+                                                </View>
+                                            </View>
                                         </View>
 
-                                        {data.data.notes && data.data.notes !== "None" && (
-                                            <View className="mb-3">
-                                                <Text className="text-sm font-semibold mb-1" style={{ color: colors.text }}>
-                                                    Notes:
-                                                </Text>
-                                                <Text className="text-sm" style={{ color: colors.muted }}>
-                                                    {data.data.notes}
-                                                </Text>
-                                            </View>
-                                        )}
+                                        <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
+                                            Street:
+                                        </Text>
+                                        <Text className="text-sm mb-3" style={{ color: colors.muted }}>
+                                            {data.data.address.street}
+                                        </Text>
 
-                                        {data.data.deliveryInstructions && data.data.deliveryInstructions !== "None" && (
-                                            <View>
-                                                <Text className="text-sm font-semibold mb-1" style={{ color: colors.text }}>
-                                                    Delivery Instructions:
+                                        <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
+                                            City/State/Postal:
+                                        </Text>
+                                        <Text className="text-sm mb-3" style={{ color: colors.muted }}>
+                                            {data.data.address.city}, {data.data.address.state} {data.data.address.postalCode}
+                                        </Text>
+
+                                        <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
+                                            Country:
+                                        </Text>
+                                        <Text className="text-sm mb-3" style={{ color: colors.muted }}>
+                                            {data.data.address.country}
+                                        </Text>
+
+                                        {data.data.address.instructions && data.data.address.instructions !== "None" && (
+                                            <View
+                                                className="mt-2 p-3 rounded-lg"
+                                                style={{ backgroundColor: colors.card }}
+                                            >
+                                                <Text className="text-xs font-semibold mb-1" style={{ color: colors.text }}>
+                                                    Instructions:
                                                 </Text>
-                                                <Text className="text-sm" style={{ color: colors.muted }}>
-                                                    {data.data.deliveryInstructions}
+                                                <Text className="text-xs" style={{ color: colors.muted }}>
+                                                    {data.data.address.instructions}
                                                 </Text>
                                             </View>
                                         )}

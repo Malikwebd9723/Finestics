@@ -9,6 +9,7 @@ import {
     Modal,
     ActivityIndicator,
     Alert,
+    ToastAndroid,
 } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -56,7 +57,7 @@ export default function CreateOrderScreen() {
         queryKey: ["customers"],
         queryFn: fetchAllCustomers,
     });
-console.log(customersData);
+    console.log(customersData);
 
     // Fetch products
     const { data: productsData, isLoading: productsLoading } = useQuery({
@@ -64,7 +65,7 @@ console.log(customersData);
         queryFn: fetchProducts,
     });
 
-    
+
     // Fetch order if editing
     const { data: orderData } = useQuery({
         queryKey: ["order", orderId],
@@ -80,7 +81,7 @@ console.log(customersData);
             setDeliveryFee(order.deliveryFee.toString());
             setDiscount(order.discount.toString());
             setNotes(order.notes || "");
-            
+
             // Map order items to cart
             const cartItems = order.items.map((item) => ({
                 id: item.productId,
@@ -98,9 +99,12 @@ console.log(customersData);
     // Create order mutation
     const createMutation = useMutation({
         mutationFn: createOrder,
-        onSuccess: () => {
+        onSuccess: (data) => {
+            if (!data.success) {
+                ToastAndroid.show("Failed to create order", ToastAndroid.LONG);
+                return;
+            }
             queryClient.invalidateQueries({ queryKey: ["orders"] });
-            Alert.alert("Success", "Order created successfully!");
             navigation.goBack();
         },
         onError: (error: any) => {

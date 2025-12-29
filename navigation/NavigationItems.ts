@@ -25,7 +25,7 @@ export const navigationItems = [
     label: 'Products',
     screen: 'ProductsScreen',
     icon: 'format-list-bulleted',
-    roles: ['vendor', 'admin'],
+    roles: ['vendor'],
   },
   {
     label: 'Customers',
@@ -34,28 +34,28 @@ export const navigationItems = [
     roles: ['vendor'],
   },
   {
-    label: 'Expense',
-    screen: 'Expense',
-    icon: 'cash-multiple',
-    roles: ['admin', 'vendor'],
+    label: 'Orders',
+    screen: 'OrdersScreen',
+    icon: 'chart-bar',
+    roles: ['vendor'],
   },
+  // {
+  //   label: 'Expense',
+  //   screen: 'Expense',
+  //   icon: 'cash-multiple',
+  //   roles: ['admin', 'vendor'],
+  // },
   {
     label: 'Statistics',
     screen: 'Statistics',
     icon: 'chart-bar',
-    roles: ['admin'],
+    roles: ['vendor'],
   },
   {
     label: 'Customers Dashboard',
     screen: 'CustomersDashboard',
     icon: 'chart-bar',
     roles: ['customer'],
-  },
-  {
-    label: 'Orders Screen',
-    screen: 'OrdersScreen',
-    icon: 'chart-bar',
-    roles: ['admin', 'vendor'],
   },
 ];
 
