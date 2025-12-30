@@ -1,3 +1,5 @@
+// screens/Vendor/ProductsScreen.tsx
+
 import React, { useState, useMemo } from "react";
 import {
     View,
