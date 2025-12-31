@@ -1,5 +1,5 @@
 // screens/Vendor/components/CustomerDetailModal.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { deleteCustomer, fetchCustomerDetails } from 'api/actions/customerActions';
 import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
+import CustomerOrderHistory from './CustomerOrderHistory';
 import {
   Customer,
   CustomerDetailResponse,
@@ -44,7 +45,7 @@ export default function CustomerDetailModal({
 }: CustomerDetailModalProps) {
   const { colors } = useThemeContext();
   const queryClient = useQueryClient();
-  const [slideAnim] = useState(new Animated.Value(height));
+  const slideAnim = useRef(new Animated.Value(height)).current;
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   // Fetch customer details
@@ -329,6 +330,11 @@ export default function CustomerDetailModal({
                     )}
                   </SectionCard>
                 )}
+
+                {/* Order History */}
+                <SectionCard title="Order History" icon="receipt-long" colors={colors}>
+                  <CustomerOrderHistory customerId={customerId!} maxOrders={5} />
+                </SectionCard>
 
                 {/* Spacer for bottom buttons */}
                 <View className="h-4" />
