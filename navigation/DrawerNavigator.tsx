@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 // Import your TabNavigator
 import TabNavigator from './TabNavigator';
 import NavigationList from './NavigationList';
+import VendorProfile from '../screens/Vendor/VendorProfile';
 
 const Drawer = createDrawerNavigator();
 
@@ -28,12 +29,18 @@ function CustomDrawerContent(props: any) {
     }
   };
 
+  const navigateTo = (screenName: string) => {
+    props.navigation.closeDrawer();
+    props.navigation.navigate(screenName);
+  };
+
+  const isVendor = user?.role === 'vendor';
+
   return (
     <DrawerContentScrollView
       {...props}
       style={[styles.drawerContent, { backgroundColor: colors.card }]}
-      contentContainerStyle={{ flex: 1 }}
-    >
+      contentContainerStyle={{ flex: 1 }}>
       {/* User Header */}
       <View style={[styles.userSection, { borderBottomColor: colors.border }]}>
         <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
@@ -42,11 +49,9 @@ function CustomDrawerContent(props: any) {
           </Text>
         </View>
         <Text style={[styles.userName, { color: colors.text }]}>
-          {user?.firstName + " " + user?.lastName || ''}
+          {user?.firstName + ' ' + user?.lastName || ''}
         </Text>
-        <Text style={[styles.userEmail, { color: colors.muted }]}>
-          {user?.email || ''}
-        </Text>
+        <Text style={[styles.userEmail, { color: colors.muted }]}>{user?.email || ''}</Text>
         {user?.role && (
           <View style={[styles.roleBadge, { backgroundColor: colors.primary + '20' }]}>
             <Text style={[styles.roleText, { color: colors.muted }]}>
@@ -64,8 +69,23 @@ function CustomDrawerContent(props: any) {
           navigation={props.navigation}
           closeDrawer={() => props.navigation.closeDrawer()}
         />
-      </View>
 
+        {/* Vendor-specific menu items */}
+        {isVendor && (
+          <>
+            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 16 }]}>
+              BUSINESS
+            </Text>
+            <TouchableOpacity
+              onPress={() => navigateTo('VendorProfile')}
+              style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
+              activeOpacity={0.7}>
+              <Ionicons name="business-outline" size={22} color={colors.text} />
+              <Text style={[styles.menuItemText, { color: colors.text }]}>Business Profile</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
 
       {/* Additional Options */}
       <View style={[styles.bottomSection, { borderTopColor: colors.border }]}>
@@ -77,8 +97,7 @@ function CustomDrawerContent(props: any) {
             setTheme(theme === 'dark' ? 'light' : 'dark');
           }}
           style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <Ionicons
             name={theme === 'dark' ? 'sunny-outline' : 'moon-outline'}
             size={22}
@@ -96,8 +115,7 @@ function CustomDrawerContent(props: any) {
             // Navigate to notifications if you have a screen
           }}
           style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <View>
             <Ionicons name="notifications-outline" size={22} color={colors.text} />
             <View
@@ -115,29 +133,22 @@ function CustomDrawerContent(props: any) {
               <Text style={{ color: 'white', fontSize: 9, fontWeight: 'bold' }}>3</Text>
             </View>
           </View>
-          <Text style={[styles.menuItemText, { color: colors.text }]}>
-            Notifications
-          </Text>
+          <Text style={[styles.menuItemText, { color: colors.text }]}>Notifications</Text>
         </TouchableOpacity>
 
         {/* Logout */}
         <TouchableOpacity
           onPress={handleLogout}
           style={[styles.menuItem, { backgroundColor: '#ef444410' }]}
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <Ionicons name="log-out-outline" size={22} color="#ef4444" />
-          <Text style={[styles.menuItemText, { color: '#ef4444', fontWeight: '600' }]}>
-            Logout
-          </Text>
+          <Text style={[styles.menuItemText, { color: '#ef4444', fontWeight: '600' }]}>Logout</Text>
         </TouchableOpacity>
       </View>
 
       {/* Footer */}
       <View style={[styles.footer, { borderTopColor: colors.border }]}>
-        <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-          Version 1.0.0
-        </Text>
+        <Text style={[styles.footerText, { color: colors.textSecondary }]}>Version 1.0.0</Text>
       </View>
     </DrawerContentScrollView>
   );
@@ -157,12 +168,20 @@ export default function DrawerNavigator() {
         },
         headerShown: false, // Hide drawer header since TabNavigator has its own
         drawerType: 'front', // Drawer slides over content
-      }}
-    >
+      }}>
       {/* Main Tab Navigator */}
+      <Drawer.Screen name="MainTabs" component={TabNavigator} />
+
+      {/* Vendor Profile Screen */}
       <Drawer.Screen
-        name="MainTabs"
-        component={TabNavigator}
+        name="VendorProfile"
+        component={VendorProfile}
+        options={{
+          headerShown: true,
+          headerTitle: 'Business Profile',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
       />
     </Drawer.Navigator>
   );

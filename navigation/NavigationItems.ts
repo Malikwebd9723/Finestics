@@ -1,30 +1,15 @@
 // navigation/navigationItems.ts
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 export type UserRole = 'admin' | 'customer' | 'vendor';
 
 export const navigationItems = [
+  // ==================== VENDOR TABS ====================
   {
     label: 'Dashboard',
     screen: 'Dashboard',
     icon: 'view-dashboard',
-    roles: ['vendor'],
-  },
-  // {
-  //   label: 'Categories',
-  //   screen: 'Categories',
-  //   icon: 'format-list-bulleted',
-  //   roles: ['vendor', 'admin'],
-  // },
-  {
-    label: 'Users',
-    screen: 'Users',
-    icon: 'account-group',
-    roles: ['admin'],
-  },
-  {
-    label: 'Products',
-    screen: 'ProductsScreen',
-    icon: 'format-list-bulleted',
     roles: ['vendor'],
   },
   {
@@ -34,43 +19,67 @@ export const navigationItems = [
     roles: ['vendor'],
   },
   {
-    label: 'Orders',
-    screen: 'OrdersScreen',
-    icon: 'chart-bar',
+    label: 'Products',
+    screen: 'ProductsScreen',
+    icon: 'package-variant',
     roles: ['vendor'],
   },
-  // {
-  //   label: 'Expense',
-  //   screen: 'Expense',
-  //   icon: 'cash-multiple',
-  //   roles: ['admin', 'vendor'],
-  // },
+  {
+    label: 'Orders',
+    screen: 'OrdersScreen',
+    icon: 'cart',
+    roles: ['vendor'],
+  },
   {
     label: 'Statistics',
     screen: 'Statistics',
     icon: 'chart-bar',
     roles: ['vendor'],
   },
+
+  // ==================== ADMIN TABS ====================
   {
-    label: 'Customers Dashboard',
+    label: 'Dashboard',
+    screen: 'AdminDashboard',
+    icon: 'view-dashboard',
+    roles: ['admin'],
+  },
+  {
+    label: 'Users',
+    screen: 'Users',
+    icon: 'account-group',
+    roles: ['admin'],
+  },
+  {
+    label: 'Categories',
+    screen: 'Categories',
+    icon: 'format-list-bulleted',
+    roles: ['admin'],
+  },
+
+  // ==================== CUSTOMER TABS ====================
+  {
+    label: 'Dashboard',
     screen: 'CustomersDashboard',
-    icon: 'chart-bar',
+    icon: 'view-dashboard',
     roles: ['customer'],
   },
 ];
 
-// navigation/getNavigationItems.ts
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+/**
+ * Get navigation items filtered by user role
+ */
 export const getNavigationItems = async () => {
-  const userString = await AsyncStorage.getItem('user');
+  try {
+    const userString = await AsyncStorage.getItem('user');
+    if (!userString) return [];
 
-  if (!userString) return [];
+    const user = JSON.parse(userString);
+    const role: UserRole = user.role;
 
-  const user = JSON.parse(userString);
-  const role: UserRole = user.role;
-
-  return navigationItems.filter(item =>
-    item.roles.includes(role)
-  );
+    return navigationItems.filter((item) => item.roles.includes(role));
+  } catch (error) {
+    console.error('Error getting navigation items:', error);
+    return [];
+  }
 };
