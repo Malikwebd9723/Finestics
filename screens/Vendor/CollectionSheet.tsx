@@ -1,0 +1,425 @@
+// screens/Vendor/CollectionSheet.tsx
+import React, { useState, useMemo } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
+  Share,
+  Platform,
+} from 'react-native';
+import { useQuery } from '@tanstack/react-query';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useThemeContext } from 'context/ThemeProvider';
+import { fetchCollectionSheet } from 'api/actions/orderActions';
+import { formatPrice } from 'types/order.types';
+
+interface CollectionItem {
+  productId: number;
+  productName: string;
+  unit: string;
+  totalQuantity: number;
+  avgBuyingPrice: number;
+  orders: {
+    orderId: number;
+    orderNumber: string;
+    customerName: string;
+    quantity: number;
+  }[];
+}
+
+interface CollectionSheetData {
+  date: string;
+  totalOrders: number;
+  items: CollectionItem[];
+}
+
+export default function CollectionSheet() {
+  const { colors } = useThemeContext();
+  const navigation = useNavigation<any>();
+
+  // Date state
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Expanded items state
+  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+
+  // Format date for API
+  const dateString = selectedDate.toISOString().split('T')[0];
+
+  // Fetch collection sheet
+  const { data, isLoading, error, refetch, isRefetching } = useQuery<{ data: CollectionSheetData }>(
+    {
+      queryKey: ['collectionSheet', dateString],
+      queryFn: () => fetchCollectionSheet(dateString),
+    }
+  );
+
+  const collectionSheet = data?.data;
+
+  // Calculate totals
+  const totals = useMemo(() => {
+    if (!collectionSheet?.items) return { items: 0, quantity: 0, cost: 0 };
+
+    return collectionSheet.items.reduce(
+      (acc, item) => ({
+        items: acc.items + 1,
+        quantity: acc.quantity + item.totalQuantity,
+        cost: acc.cost + item.totalQuantity * item.avgBuyingPrice,
+      }),
+      { items: 0, quantity: 0, cost: 0 }
+    );
+  }, [collectionSheet]);
+
+  // Toggle item expansion
+  const toggleExpand = (productId: number) => {
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
+  };
+
+  // Date change handler
+  const handleDateChange = (event: any, date?: Date) => {
+    setShowDatePicker(false);
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
+
+  // Navigate dates
+  const navigateDate = (direction: 'prev' | 'next') => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
+    setSelectedDate(newDate);
+  };
+
+  // Share collection sheet
+  const handleShare = async () => {
+    if (!collectionSheet?.items?.length) return;
+
+    let text = `📋 Collection Sheet - ${formatDisplayDate(selectedDate)}\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+    collectionSheet.items.forEach((item, index) => {
+      text += `${index + 1}. ${item.productName}\n`;
+      text += `   Qty: ${item.totalQuantity} ${item.unit}\n`;
+      text += `   Est. Cost: ${formatPrice(item.totalQuantity * item.avgBuyingPrice)}\n\n`;
+    });
+
+    text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `Total Items: ${totals.items}\n`;
+    text += `Est. Total Cost: ${formatPrice(totals.cost)}\n`;
+    text += `Orders: ${collectionSheet.totalOrders}`;
+
+    try {
+      await Share.share({ message: text });
+    } catch (error) {
+      console.error('Share error:', error);
+    }
+  };
+
+  // Format date for display
+  const formatDisplayDate = (date: Date) => {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    }
+    if (date.toDateString() === tomorrow.toDateString()) {
+      return 'Tomorrow';
+    }
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  return (
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
+      {/* Header */}
+      <View
+        className="flex-row items-center justify-between border-b px-4 py-3"
+        style={{ borderColor: colors.border }}>
+        <View className="flex-row items-center">
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            className="mr-3 p-1"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <View>
+            <Text className="text-xl font-bold" style={{ color: colors.text }}>
+              Collection Sheet
+            </Text>
+            <Text className="text-xs" style={{ color: colors.muted }}>
+              Items to collect from market
+            </Text>
+          </View>
+        </View>
+
+        {/* Share Button */}
+        <TouchableOpacity
+          onPress={handleShare}
+          disabled={!collectionSheet?.items?.length}
+          className="p-2"
+          style={{ opacity: collectionSheet?.items?.length ? 1 : 0.5 }}>
+          <Ionicons name="share-outline" size={22} color={colors.primary} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Date Selector */}
+      <View
+        className="flex-row items-center justify-between px-4 py-3"
+        style={{ backgroundColor: colors.card }}>
+        <TouchableOpacity
+          onPress={() => navigateDate('prev')}
+          className="rounded-full p-2"
+          style={{ backgroundColor: colors.background }}>
+          <Ionicons name="chevron-back" size={20} color={colors.text} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setShowDatePicker(true)}
+          className="flex-row items-center rounded-lg px-4 py-2"
+          style={{ backgroundColor: colors.background }}>
+          <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+          <Text className="ml-2 font-semibold" style={{ color: colors.text }}>
+            {formatDisplayDate(selectedDate)}
+          </Text>
+          <MaterialIcons name="arrow-drop-down" size={20} color={colors.muted} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => navigateDate('next')}
+          className="rounded-full p-2"
+          style={{ backgroundColor: colors.background }}>
+          <Ionicons name="chevron-forward" size={20} color={colors.text} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Summary Stats */}
+      {collectionSheet && (
+        <View className="flex-row gap-2 px-4 py-3">
+          <View
+            className="flex-1 rounded-xl p-3"
+            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+            <Text className="text-xs" style={{ color: colors.muted }}>
+              Orders
+            </Text>
+            <Text className="text-lg font-bold" style={{ color: colors.text }}>
+              {collectionSheet.totalOrders}
+            </Text>
+          </View>
+          <View
+            className="flex-1 rounded-xl p-3"
+            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+            <Text className="text-xs" style={{ color: colors.muted }}>
+              Items
+            </Text>
+            <Text className="text-lg font-bold" style={{ color: colors.text }}>
+              {totals.items}
+            </Text>
+          </View>
+          <View
+            className="flex-1 rounded-xl p-3"
+            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+            <Text className="text-xs" style={{ color: colors.muted }}>
+              Est. Cost
+            </Text>
+            <Text className="text-lg font-bold" style={{ color: colors.primary }}>
+              {formatPrice(totals.cost)}
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {/* Content */}
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }>
+        {isLoading ? (
+          <View className="items-center py-20">
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text className="mt-4" style={{ color: colors.muted }}>
+              Loading collection sheet...
+            </Text>
+          </View>
+        ) : error ? (
+          <View className="items-center py-20">
+            <Ionicons name="alert-circle" size={48} color={colors.error} />
+            <Text className="mt-4 text-center" style={{ color: colors.text }}>
+              Failed to load collection sheet
+            </Text>
+            <TouchableOpacity
+              onPress={() => refetch()}
+              className="mt-4 rounded-lg px-6 py-2"
+              style={{ backgroundColor: colors.primary }}>
+              <Text className="font-semibold text-white">Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : !collectionSheet?.items?.length ? (
+          <View className="items-center py-20">
+            <MaterialIcons name="shopping-basket" size={64} color={colors.muted} />
+            <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
+              No items to collect
+            </Text>
+            <Text className="mt-2 px-8 text-center" style={{ color: colors.muted }}>
+              No orders scheduled for delivery on {formatDisplayDate(selectedDate)}
+            </Text>
+          </View>
+        ) : (
+          <View className="gap-3">
+            {collectionSheet.items.map((item, index) => (
+              <CollectionItemCard
+                key={item.productId}
+                item={item}
+                index={index + 1}
+                isExpanded={expandedItems.has(item.productId)}
+                onToggle={() => toggleExpand(item.productId)}
+                colors={colors}
+              />
+            ))}
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Date Picker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleDateChange}
+        />
+      )}
+    </SafeAreaView>
+  );
+}
+
+// Collection Item Card
+interface CollectionItemCardProps {
+  item: CollectionItem;
+  index: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+  colors: any;
+}
+
+function CollectionItemCard({
+  item,
+  index,
+  isExpanded,
+  onToggle,
+  colors,
+}: CollectionItemCardProps) {
+  const estimatedCost = item.totalQuantity * item.avgBuyingPrice;
+
+  return (
+    <View
+      className="overflow-hidden rounded-xl"
+      style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+      {/* Main Row */}
+      <TouchableOpacity onPress={onToggle} activeOpacity={0.7} className="p-4">
+        <View className="flex-row items-start">
+          {/* Index */}
+          <View
+            className="mr-3 h-8 w-8 items-center justify-center rounded-full"
+            style={{ backgroundColor: colors.primary + '20' }}>
+            <Text className="text-sm font-bold" style={{ color: colors.primary }}>
+              {index}
+            </Text>
+          </View>
+
+          {/* Item Info */}
+          <View className="flex-1">
+            <Text className="text-base font-semibold" style={{ color: colors.text }}>
+              {item.productName}
+            </Text>
+            <View className="mt-1 flex-row items-center gap-3">
+              <Text className="text-sm" style={{ color: colors.muted }}>
+                {item.orders.length} order{item.orders.length !== 1 ? 's' : ''}
+              </Text>
+              <Text className="text-sm" style={{ color: colors.muted }}>
+                ~{formatPrice(item.avgBuyingPrice)}/{item.unit}
+              </Text>
+            </View>
+          </View>
+
+          {/* Quantity */}
+          <View className="items-end">
+            <View className="rounded-lg px-3 py-1.5" style={{ backgroundColor: colors.primary }}>
+              <Text className="font-bold text-white">
+                {item.totalQuantity} {item.unit}
+              </Text>
+            </View>
+            <Text className="mt-1 text-xs" style={{ color: colors.muted }}>
+              ~{formatPrice(estimatedCost)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Expand Indicator */}
+        <View className="mt-2 flex-row items-center justify-center">
+          <Ionicons
+            name={isExpanded ? 'chevron-up' : 'chevron-down'}
+            size={16}
+            color={colors.muted}
+          />
+        </View>
+      </TouchableOpacity>
+
+      {/* Expanded Order Details */}
+      {isExpanded && (
+        <View className="border-t px-4 pb-4 pt-2" style={{ borderColor: colors.border }}>
+          <Text className="mb-2 text-xs font-semibold" style={{ color: colors.muted }}>
+            ORDER BREAKDOWN
+          </Text>
+          <View className="gap-2">
+            {item.orders.map((order) => (
+              <View
+                key={order.orderId}
+                className="flex-row items-center justify-between rounded-lg p-2"
+                style={{ backgroundColor: colors.background }}>
+                <View className="flex-1">
+                  <Text className="text-sm font-medium" style={{ color: colors.text }}>
+                    {order.customerName}
+                  </Text>
+                  <Text className="text-xs" style={{ color: colors.muted }}>
+                    {order.orderNumber}
+                  </Text>
+                </View>
+                <Text className="font-semibold" style={{ color: colors.text }}>
+                  {order.quantity} {item.unit}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
