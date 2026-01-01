@@ -21,6 +21,10 @@ import {
   OrdersApiResponse,
   ORDER_STATUSES,
   PAYMENT_STATUSES,
+  SORT_OPTIONS,
+  SortField,
+  SortOrder,
+  DateFilterField,
   formatPrice,
   formatShortDate,
   getStatusColor,
@@ -47,6 +51,7 @@ interface OrdersListProps {
   isSelectionMode: boolean;
   selectedOrders: Set<number>;
   onSelectAll: (orderIds: number[]) => void;
+  onViewCustomerOrders?: () => void;
 }
 
 export default function OrdersList({
@@ -70,6 +75,19 @@ export default function OrdersList({
   const [showFilters, setShowFilters] = useState(false);
   const [showDateFrom, setShowDateFrom] = useState(false);
   const [showDateTo, setShowDateTo] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+
+  // Sorting state
+  const [sortBy, setSortBy] = useState<SortField>('orderDate');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('DESC');
+  const [showSortOptions, setShowSortOptions] = useState(false);
+
+  // Date filter field
+  const [dateFilterField, setDateFilterField] = useState<DateFilterField>('orderDate');
+
+  // Quick date navigation
+  const [quickDate, setQuickDate] = useState<Date>(new Date());
+  const [showQuickDatePicker, setShowQuickDatePicker] = useState(false);
 
   // Fetch vans for filter
   const { data: vansData } = useQuery({
@@ -92,6 +110,9 @@ export default function OrdersList({
         vanName: vanFilter,
         dateFrom: dateFromStr,
         dateTo: dateToStr,
+        dateFilterField,
+        sortBy,
+        sortOrder,
       },
     ],
     queryFn: () =>
@@ -101,6 +122,9 @@ export default function OrdersList({
         vanName: vanFilter || undefined,
         dateFrom: dateFromStr,
         dateTo: dateToStr,
+        dateFilterField,
+        sortBy,
+        sortOrder,
         limit: 100,
       }),
   });
@@ -120,15 +144,45 @@ export default function OrdersList({
     });
   }, [data, searchQuery]);
 
-  // Stats
+  // Enhanced Stats
   const stats = useMemo(() => {
-    if (!data?.data) return { total: 0, today: 0, pending: 0, totalAmount: 0 };
+    if (!data?.data) {
+      return {
+        total: 0,
+        today: 0,
+        pending: 0,
+        confirmed: 0,
+        collected: 0,
+        delivered: 0,
+        completed: 0,
+        cancelled: 0,
+        totalAmount: 0,
+        paidAmount: 0,
+        balanceAmount: 0,
+        unpaidOrders: 0,
+        partialOrders: 0,
+        paidOrders: 0,
+      };
+    }
     const orders = data.data;
     return {
       total: orders.length,
       today: orders.filter((o) => isToday(o.orderDate)).length,
       pending: orders.filter((o) => o.status === 'pending').length,
+      confirmed: orders.filter((o) => o.status === 'confirmed').length,
+      collected: orders.filter((o) => o.status === 'collected').length,
+      delivered: orders.filter((o) => o.status === 'delivered').length,
+      completed: orders.filter((o) => o.status === 'completed').length,
+      cancelled: orders.filter((o) => o.status === 'cancelled').length,
       totalAmount: orders.reduce((sum, o) => sum + parseFloat((o.totalAmount as string) || '0'), 0),
+      paidAmount: orders.reduce((sum, o) => sum + parseFloat((o.paidAmount as string) || '0'), 0),
+      balanceAmount: orders.reduce(
+        (sum, o) => sum + parseFloat((o.balanceAmount as string) || '0'),
+        0
+      ),
+      unpaidOrders: orders.filter((o) => o.paymentStatus === 'unpaid').length,
+      partialOrders: orders.filter((o) => o.paymentStatus === 'partial').length,
+      paidOrders: orders.filter((o) => o.paymentStatus === 'paid').length,
     };
   }, [data]);
 
@@ -156,10 +210,55 @@ export default function OrdersList({
     onDateRangeChange(null, null);
   };
 
+  // Quick date navigation handlers
+  const handleQuickDateChange = (event: any, date?: Date) => {
+    setShowQuickDatePicker(false);
+    if (date) {
+      setQuickDate(date);
+      onDateRangeChange(date, date);
+    }
+  };
+
+  const navigateQuickDate = (direction: 'prev' | 'next') => {
+    const newDate = new Date(quickDate);
+    newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
+    setQuickDate(newDate);
+    onDateRangeChange(newDate, newDate);
+  };
+
+  const setToday = () => {
+    const today = new Date();
+    setQuickDate(today);
+    onDateRangeChange(today, today);
+  };
+
+  const clearQuickDate = () => {
+    onDateRangeChange(null, null);
+  };
+
+  const formatQuickDate = (date: Date) => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (date.toDateString() === today.toDateString()) return 'Today';
+    if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+    if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
   // Handle select all visible
   const handleSelectAllVisible = () => {
     const allIds = filteredOrders.map((o) => o.id);
     onSelectAll(allIds);
+  };
+
+  // Toggle sort order
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === 'ASC' ? 'DESC' : 'ASC'));
   };
 
   // Loading state
@@ -188,9 +287,68 @@ export default function OrdersList({
     );
   }
 
-  return (
-    <View className="flex-1">
-      {/* Filter Toggle & Stats */}
+  // Header Component - Now scrolls with the list
+  const ListHeader = () => (
+    <View>
+      {/* Quick Date Navigation */}
+      <View
+        className="flex-row items-center justify-between px-4 py-2"
+        style={{ backgroundColor: colors.card, borderBottomWidth: 1, borderColor: colors.border }}>
+        <TouchableOpacity
+          onPress={() => navigateQuickDate('prev')}
+          className="rounded-full p-2"
+          style={{ backgroundColor: colors.background }}>
+          <Ionicons name="chevron-back" size={18} color={colors.text} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setShowQuickDatePicker(true)}
+          className="flex-row items-center rounded-lg px-4 py-2"
+          style={{ backgroundColor: colors.background }}>
+          <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+          <Text className="mx-2 font-semibold" style={{ color: colors.text }}>
+            {dateFrom && dateTo && dateFrom.toDateString() === dateTo.toDateString()
+              ? formatQuickDate(dateFrom)
+              : 'All Dates'}
+          </Text>
+          <MaterialIcons name="arrow-drop-down" size={18} color={colors.muted} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => navigateQuickDate('next')}
+          className="rounded-full p-2"
+          style={{ backgroundColor: colors.background }}>
+          <Ionicons name="chevron-forward" size={18} color={colors.text} />
+        </TouchableOpacity>
+
+        {/* Today & Clear buttons */}
+        <View className="flex-row gap-1">
+          <TouchableOpacity
+            onPress={setToday}
+            className="rounded-lg px-3 py-2"
+            style={{
+              backgroundColor: isToday(quickDate.toISOString())
+                ? colors.primary
+                : colors.background,
+            }}>
+            <Text
+              className="text-xs font-semibold"
+              style={{ color: isToday(quickDate.toISOString()) ? '#fff' : colors.text }}>
+              Today
+            </Text>
+          </TouchableOpacity>
+          {(dateFrom || dateTo) && (
+            <TouchableOpacity
+              onPress={clearQuickDate}
+              className="items-center justify-center rounded-lg px-2"
+              style={{ backgroundColor: colors.background }}>
+              <Ionicons name="close" size={16} color={colors.muted} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* Filter Toggle, Sort & Stats */}
       <View className="px-4 py-3">
         <View className="mb-3 flex-row items-center justify-between">
           <View className="flex-row items-center gap-3">
@@ -219,6 +377,26 @@ export default function OrdersList({
               </TouchableOpacity>
             )}
 
+            {/* Sort Button */}
+            <TouchableOpacity
+              onPress={() => setShowSortOptions(!showSortOptions)}
+              className="flex-row items-center rounded-full px-3 py-1.5"
+              style={{
+                backgroundColor: colors.card,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}>
+              <MaterialIcons
+                name={sortOrder === 'DESC' ? 'arrow-downward' : 'arrow-upward'}
+                size={14}
+                color={colors.text}
+              />
+              <Text className="ml-1 text-xs font-semibold" style={{ color: colors.text }}>
+                {SORT_OPTIONS.find((s) => s.value === sortBy)?.label || 'Sort'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Filters Button */}
             <TouchableOpacity
               onPress={() => setShowFilters(!showFilters)}
               className="flex-row items-center rounded-full px-3 py-1.5"
@@ -241,38 +419,247 @@ export default function OrdersList({
           </View>
         </View>
 
-        {/* Quick Stats */}
-        <View className="flex-row gap-2">
-          <View className="flex-1 rounded-xl p-3" style={{ backgroundColor: colors.card }}>
-            <Text className="text-xs" style={{ color: colors.muted }}>
-              Today
-            </Text>
-            <Text className="text-lg font-bold" style={{ color: colors.text }}>
-              {stats.today}
-            </Text>
+        {/* Sort Options Dropdown */}
+        {showSortOptions && (
+          <View
+            className="mb-3 rounded-xl p-3"
+            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+            <View className="mb-2 flex-row items-center justify-between">
+              <Text className="text-xs font-semibold" style={{ color: colors.muted }}>
+                SORT BY
+              </Text>
+              <TouchableOpacity
+                onPress={toggleSortOrder}
+                className="flex-row items-center rounded-lg px-2 py-1"
+                style={{ backgroundColor: colors.background }}>
+                <MaterialIcons
+                  name={sortOrder === 'DESC' ? 'arrow-downward' : 'arrow-upward'}
+                  size={14}
+                  color={colors.primary}
+                />
+                <Text className="ml-1 text-xs font-medium" style={{ color: colors.primary }}>
+                  {sortOrder === 'DESC' ? 'Newest First' : 'Oldest First'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View className="flex-row gap-2">
+                {SORT_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option.value}
+                    onPress={() => {
+                      setSortBy(option.value);
+                      setShowSortOptions(false);
+                    }}
+                    className="rounded-full px-3 py-1.5"
+                    style={{
+                      backgroundColor: sortBy === option.value ? colors.primary : colors.background,
+                      borderWidth: 1,
+                      borderColor: sortBy === option.value ? colors.primary : colors.border,
+                    }}>
+                    <Text
+                      className="text-xs font-semibold"
+                      style={{ color: sortBy === option.value ? '#fff' : colors.text }}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
           </View>
-          <View className="flex-1 rounded-xl p-3" style={{ backgroundColor: colors.card }}>
-            <Text className="text-xs" style={{ color: colors.muted }}>
-              Pending
-            </Text>
-            <Text className="text-lg font-bold" style={{ color: '#f59e0b' }}>
-              {stats.pending}
-            </Text>
+        )}
+
+        {/* Quick Stats - Expandable */}
+        <TouchableOpacity
+          onPress={() => setShowSummary(!showSummary)}
+          activeOpacity={0.8}
+          className="rounded-xl"
+          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+          {/* Main Stats Row */}
+          <View className="flex-row">
+            <View className="flex-1 border-r p-3" style={{ borderColor: colors.border }}>
+              <Text className="text-xs" style={{ color: colors.muted }}>
+                Today
+              </Text>
+              <Text className="text-lg font-bold" style={{ color: colors.text }}>
+                {stats.today}
+              </Text>
+            </View>
+            <View className="flex-1 border-r p-3" style={{ borderColor: colors.border }}>
+              <Text className="text-xs" style={{ color: colors.muted }}>
+                Pending
+              </Text>
+              <Text className="text-lg font-bold" style={{ color: '#f59e0b' }}>
+                {stats.pending}
+              </Text>
+            </View>
+            <View className="flex-1 p-3">
+              <Text className="text-xs" style={{ color: colors.muted }}>
+                Value
+              </Text>
+              <Text className="text-lg font-bold" style={{ color: colors.primary }}>
+                {formatPrice(stats.totalAmount)}
+              </Text>
+            </View>
           </View>
-          <View className="flex-1 rounded-xl p-3" style={{ backgroundColor: colors.card }}>
-            <Text className="text-xs" style={{ color: colors.muted }}>
-              Value
+
+          {/* Expand Indicator */}
+          <View
+            className="flex-row items-center justify-center border-t py-1"
+            style={{ borderColor: colors.border }}>
+            <Text className="mr-1 text-xs" style={{ color: colors.muted }}>
+              {showSummary ? 'Less' : 'More details'}
             </Text>
-            <Text className="text-lg font-bold" style={{ color: colors.primary }}>
-              {formatPrice(stats.totalAmount)}
-            </Text>
+            <Ionicons
+              name={showSummary ? 'chevron-up' : 'chevron-down'}
+              size={14}
+              color={colors.muted}
+            />
           </View>
-        </View>
+
+          {/* Expanded Stats */}
+          {showSummary && (
+            <View className="border-t p-3" style={{ borderColor: colors.border }}>
+              {/* Status Breakdown */}
+              <Text className="mb-2 text-xs font-semibold" style={{ color: colors.muted }}>
+                ORDER STATUS
+              </Text>
+              <View className="mb-3 flex-row flex-wrap gap-2">
+                {ORDER_STATUSES.map((status) => (
+                  <View
+                    key={status.value}
+                    className="flex-row items-center rounded-full px-2.5 py-1"
+                    style={{ backgroundColor: status.color + '15' }}>
+                    <View
+                      className="mr-1.5 h-2 w-2 rounded-full"
+                      style={{ backgroundColor: status.color }}
+                    />
+                    <Text className="text-xs font-medium" style={{ color: status.color }}>
+                      {status.label}: {stats[status.value as keyof typeof stats] || 0}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* Payment Breakdown */}
+              <Text className="mb-2 text-xs font-semibold" style={{ color: colors.muted }}>
+                PAYMENT STATUS
+              </Text>
+              <View className="mb-3 flex-row flex-wrap gap-2">
+                <View
+                  className="flex-row items-center rounded-full px-2.5 py-1"
+                  style={{ backgroundColor: '#ef4444' + '15' }}>
+                  <View
+                    className="mr-1.5 h-2 w-2 rounded-full"
+                    style={{ backgroundColor: '#ef4444' }}
+                  />
+                  <Text className="text-xs font-medium" style={{ color: '#ef4444' }}>
+                    Unpaid: {stats.unpaidOrders}
+                  </Text>
+                </View>
+                <View
+                  className="flex-row items-center rounded-full px-2.5 py-1"
+                  style={{ backgroundColor: '#f59e0b' + '15' }}>
+                  <View
+                    className="mr-1.5 h-2 w-2 rounded-full"
+                    style={{ backgroundColor: '#f59e0b' }}
+                  />
+                  <Text className="text-xs font-medium" style={{ color: '#f59e0b' }}>
+                    Partial: {stats.partialOrders}
+                  </Text>
+                </View>
+                <View
+                  className="flex-row items-center rounded-full px-2.5 py-1"
+                  style={{ backgroundColor: '#10b981' + '15' }}>
+                  <View
+                    className="mr-1.5 h-2 w-2 rounded-full"
+                    style={{ backgroundColor: '#10b981' }}
+                  />
+                  <Text className="text-xs font-medium" style={{ color: '#10b981' }}>
+                    Paid: {stats.paidOrders}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Financial Summary */}
+              <Text className="mb-2 text-xs font-semibold" style={{ color: colors.muted }}>
+                FINANCIAL SUMMARY
+              </Text>
+              <View className="flex-row gap-2">
+                <View
+                  className="flex-1 rounded-lg p-2"
+                  style={{ backgroundColor: colors.background }}>
+                  <Text className="text-xs" style={{ color: colors.muted }}>
+                    Total Value
+                  </Text>
+                  <Text className="font-bold" style={{ color: colors.text }}>
+                    {formatPrice(stats.totalAmount)}
+                  </Text>
+                </View>
+                <View
+                  className="flex-1 rounded-lg p-2"
+                  style={{ backgroundColor: colors.background }}>
+                  <Text className="text-xs" style={{ color: colors.muted }}>
+                    Collected
+                  </Text>
+                  <Text className="font-bold" style={{ color: colors.success }}>
+                    {formatPrice(stats.paidAmount)}
+                  </Text>
+                </View>
+                <View
+                  className="flex-1 rounded-lg p-2"
+                  style={{ backgroundColor: colors.background }}>
+                  <Text className="text-xs" style={{ color: colors.muted }}>
+                    Outstanding
+                  </Text>
+                  <Text className="font-bold" style={{ color: colors.error }}>
+                    {formatPrice(stats.balanceAmount)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Filters Panel */}
       {showFilters && (
         <View className="px-4 pb-3">
+          {/* Date Filter Field Toggle */}
+          <View className="mb-3 flex-row items-center gap-2">
+            <Text className="text-xs font-semibold" style={{ color: colors.muted }}>
+              Filter by:
+            </Text>
+            <TouchableOpacity
+              onPress={() => setDateFilterField('orderDate')}
+              className="rounded-full px-3 py-1"
+              style={{
+                backgroundColor: dateFilterField === 'orderDate' ? colors.primary : colors.card,
+                borderWidth: 1,
+                borderColor: dateFilterField === 'orderDate' ? colors.primary : colors.border,
+              }}>
+              <Text
+                className="text-xs font-medium"
+                style={{ color: dateFilterField === 'orderDate' ? '#fff' : colors.text }}>
+                Order Date
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setDateFilterField('deliveryDate')}
+              className="rounded-full px-3 py-1"
+              style={{
+                backgroundColor: dateFilterField === 'deliveryDate' ? colors.primary : colors.card,
+                borderWidth: 1,
+                borderColor: dateFilterField === 'deliveryDate' ? colors.primary : colors.border,
+              }}>
+              <Text
+                className="text-xs font-medium"
+                style={{ color: dateFilterField === 'deliveryDate' ? '#fff' : colors.text }}>
+                Delivery Date
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Date Range Filter */}
           <Text className="mb-2 text-xs font-semibold" style={{ color: colors.muted }}>
             Date Range
@@ -474,7 +861,11 @@ export default function OrdersList({
           )}
         </View>
       )}
+    </View>
+  );
 
+  return (
+    <View className="flex-1">
       {/* Date Pickers */}
       {showDateFrom && (
         <DateTimePicker
@@ -495,13 +886,21 @@ export default function OrdersList({
           maximumDate={new Date()}
         />
       )}
+      {showQuickDatePicker && (
+        <DateTimePicker
+          value={quickDate}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleQuickDateChange}
+        />
+      )}
 
-      {/* Orders List */}
+      {/* Orders List - Header now scrolls with content */}
       <FlatList
         data={filteredOrders}
         keyExtractor={(item) => item.id.toString()}
+        ListHeaderComponent={ListHeader}
         contentContainerStyle={{
-          paddingHorizontal: 16,
           paddingBottom: isSelectionMode ? 120 : 100,
         }}
         showsVerticalScrollIndicator={false}
@@ -514,7 +913,7 @@ export default function OrdersList({
           />
         }
         ListEmptyComponent={
-          <View className="items-center justify-center py-20">
+          <View className="items-center justify-center px-4 py-20">
             <MaterialIcons name="receipt-long" size={72} color={colors.muted} />
             <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
               No orders found
@@ -527,14 +926,16 @@ export default function OrdersList({
           </View>
         }
         renderItem={({ item }) => (
-          <OrderCard
-            order={item}
-            colors={colors}
-            onPress={() => onViewOrder(item.id)}
-            onLongPress={() => onLongPressOrder(item.id)}
-            isSelectionMode={isSelectionMode}
-            isSelected={selectedOrders.has(item.id)}
-          />
+          <View className="px-4">
+            <OrderCard
+              order={item}
+              colors={colors}
+              onPress={() => onViewOrder(item.id)}
+              onLongPress={() => onLongPressOrder(item.id)}
+              isSelectionMode={isSelectionMode}
+              isSelected={selectedOrders.has(item.id)}
+            />
+          </View>
         )}
       />
     </View>
@@ -561,7 +962,9 @@ function OrderCard({
 }: OrderCardProps) {
   const statusColor = getStatusColor(order.status);
   const paymentColor = getPaymentStatusColor(order.paymentStatus);
-  const itemCount = order.items?.length || 0;
+
+  // count items
+  // const itemCount = order.items?.length || 0;
 
   return (
     <Pressable
@@ -644,12 +1047,12 @@ function OrderCard({
                 {formatShortDate(order.orderDate)}
               </Text>
             </View>
-            <View className="flex-row items-center">
+            {/* <View className="flex-row items-center">
               <MaterialIcons name="shopping-basket" size={14} color={colors.muted} />
               <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
-                {itemCount} items
+                {itemCount} item{itemCount !== 1 ? 's' : ''}
               </Text>
-            </View>
+            </View> */}
             {order.vanName && (
               <View className="flex-row items-center">
                 <MaterialIcons name="local-shipping" size={14} color={colors.muted} />

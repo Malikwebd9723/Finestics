@@ -20,7 +20,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useThemeContext } from 'context/ThemeProvider';
-import { createOrder, updateOrder, fetchOrderDetails } from 'api/actions/orderActions';
+import {
+  createOrder,
+  updateOrder,
+  fetchOrderDetails,
+  addOrderItem,
+  addMultipleOrderItems,
+  removeOrderItem,
+  updateOrderItem,
+} from 'api/actions/orderActions';
 import { fetchVans } from 'api/actions/vendorActions';
 import CustomerSelectModal from './components/CustomerSelectModal';
 import ProductSelectModal from './components/ProductSelectModal';
@@ -36,6 +44,12 @@ import {
 import { Customer } from 'types/customer.types';
 import { Product } from 'types/product.types';
 
+// Extended CartItem for edit mode
+interface ExtendedCartItem extends CartItem {
+  itemId?: number;
+  isOriginal?: boolean;
+}
+
 export default function CreateOrderScreen() {
   const { colors } = useThemeContext();
   const navigation = useNavigation<any>();
@@ -47,7 +61,8 @@ export default function CreateOrderScreen() {
 
   // State
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<ExtendedCartItem[]>([]);
+  const [originalItems, setOriginalItems] = useState<any[]>([]);
   const [orderDate, setOrderDate] = useState<Date>(new Date());
   const [deliveryDate, setDeliveryDate] = useState<Date | null>(null);
   const [deliveryFee, setDeliveryFee] = useState('0');
@@ -102,14 +117,17 @@ export default function CreateOrderScreen() {
       setPaymentMethod(order.paymentMethod || 'cash');
 
       if (order.items) {
-        const cartItems: CartItem[] = order.items.map((item: any) => ({
+        setOriginalItems(order.items);
+        const cartItems: ExtendedCartItem[] = order.items.map((item: any) => ({
           productId: item.productId,
+          itemId: item.id,
           name: item.productName,
           unit: item.unit,
           buyingPrice: parseFloat(item.buyingPrice as string),
           sellingPrice: parseFloat(item.sellingPrice as string),
           quantity: parseFloat(item.orderedQuantity as string),
           notes: item.notes || undefined,
+          isOriginal: true,
         }));
         setCart(cartItems);
       }
@@ -121,7 +139,7 @@ export default function CreateOrderScreen() {
     return calculateCartTotal(cart, parseFloat(deliveryFee) || 0, parseFloat(discount) || 0);
   }, [cart, deliveryFee, discount]);
 
-  // Create mutation
+  // Mutations
   const createMutation = useMutation({
     mutationFn: (payload: CreateOrderPayload) => createOrder(payload),
     onSuccess: (response) => {
@@ -134,12 +152,10 @@ export default function CreateOrderScreen() {
       navigation.goBack();
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Failed to create order';
-      Alert.alert('Error', message);
+      Alert.alert('Error', error?.response?.data?.message || 'Failed to create order');
     },
   });
 
-  // Update mutation
   const updateMutation = useMutation({
     mutationFn: (payload: UpdateOrderPayload) => updateOrder(orderId, payload),
     onSuccess: (response) => {
@@ -153,12 +169,36 @@ export default function CreateOrderScreen() {
       navigation.goBack();
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Failed to update order';
-      Alert.alert('Error', message);
+      Alert.alert('Error', error?.response?.data?.message || 'Failed to update order');
     },
   });
 
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+  const addItemMutation = useMutation({
+    mutationFn: (data: { productId: number; orderedQuantity: number; sellingPrice?: number }) =>
+      addOrderItem(orderId, data),
+  });
+
+  const addMultipleItemsMutation = useMutation({
+    mutationFn: (items: { productId: number; orderedQuantity: number; sellingPrice?: number }[]) =>
+      addMultipleOrderItems(orderId, items),
+  });
+
+  const removeItemMutation = useMutation({
+    mutationFn: (itemId: number) => removeOrderItem(orderId, itemId),
+  });
+
+  const updateItemMutation = useMutation({
+    mutationFn: ({ itemId, data }: { itemId: number; data: any }) =>
+      updateOrderItem(orderId, itemId, data),
+  });
+
+  const isSubmitting =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    addItemMutation.isPending ||
+    addMultipleItemsMutation.isPending ||
+    removeItemMutation.isPending ||
+    updateItemMutation.isPending;
 
   // Cart operations
   const addToCart = (product: Product) => {
@@ -178,13 +218,37 @@ export default function CreateOrderScreen() {
           buyingPrice: parseFloat(product.buyingPrice as string) || 0,
           sellingPrice: parseFloat(product.sellingPrice as string) || 0,
           quantity: 1,
+          isOriginal: false,
         },
       ];
     });
   };
 
   const removeFromCart = (productId: number) => {
-    setCart((prev) => prev.filter((item) => item.productId !== productId));
+    const item = cart.find((i) => i.productId === productId);
+
+    if (isEditMode && item?.isOriginal && item?.itemId) {
+      Alert.alert('Remove Item', 'This will permanently remove this item from the order.', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            removeItemMutation.mutate(item.itemId!, {
+              onSuccess: () => {
+                setCart((prev) => prev.filter((i) => i.productId !== productId));
+                ToastAndroid.show('Item removed', ToastAndroid.SHORT);
+              },
+              onError: (error: any) => {
+                Alert.alert('Error', error?.response?.data?.message || 'Failed to remove item');
+              },
+            });
+          },
+        },
+      ]);
+    } else {
+      setCart((prev) => prev.filter((item) => item.productId !== productId));
+    }
   };
 
   const updateQuantity = (productId: number, quantity: number) => {
@@ -209,30 +273,16 @@ export default function CreateOrderScreen() {
   // Date handlers
   const handleOrderDateChange = (event: any, selectedDate?: Date) => {
     setShowOrderDatePicker(false);
-    if (selectedDate) {
-      setOrderDate(selectedDate);
-    }
+    if (selectedDate) setOrderDate(selectedDate);
   };
 
   const handleDeliveryDateChange = (event: any, selectedDate?: Date) => {
     setShowDeliveryDatePicker(false);
-    if (selectedDate) {
-      setDeliveryDate(selectedDate);
-    }
+    if (selectedDate) setDeliveryDate(selectedDate);
   };
 
-  const formatDateDisplay = (date: Date | null) => {
-    if (!date) return 'Not set';
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  // Submit order
-  const handleSubmit = () => {
+  // Submit
+  const handleSubmit = async () => {
     if (!selectedCustomer) {
       Alert.alert('Validation Error', 'Please select a customer');
       return;
@@ -243,14 +293,49 @@ export default function CreateOrderScreen() {
     }
 
     if (isEditMode) {
-      const payload: UpdateOrderPayload = {
-        deliveryDate: deliveryDate ? deliveryDate.toISOString() : undefined,
-        deliveryFee: parseFloat(deliveryFee) || 0,
-        discount: parseFloat(discount) || 0,
-        notes: notes || undefined,
-        vanName: vanName || undefined,
-      };
-      updateMutation.mutate(payload);
+      try {
+        const newItems = cart.filter((item) => !item.isOriginal);
+        const modifiedItems = cart.filter((item) => {
+          if (!item.isOriginal) return false;
+          const original = originalItems.find((o) => o.id === item.itemId);
+          if (!original) return false;
+          return (
+            parseFloat(original.orderedQuantity) !== item.quantity ||
+            parseFloat(original.sellingPrice) !== item.sellingPrice
+          );
+        });
+
+        if (newItems.length > 0) {
+          const itemsToAdd = newItems.map((item) => ({
+            productId: item.productId,
+            orderedQuantity: item.quantity,
+            sellingPrice: item.sellingPrice,
+          }));
+          if (itemsToAdd.length === 1) {
+            await addItemMutation.mutateAsync(itemsToAdd[0]);
+          } else {
+            await addMultipleItemsMutation.mutateAsync(itemsToAdd);
+          }
+        }
+
+        for (const item of modifiedItems) {
+          await updateItemMutation.mutateAsync({
+            itemId: item.itemId!,
+            data: { orderedQuantity: item.quantity, sellingPrice: item.sellingPrice },
+          });
+        }
+
+        const payload: UpdateOrderPayload = {
+          deliveryDate: deliveryDate ? deliveryDate.toISOString() : undefined,
+          deliveryFee: parseFloat(deliveryFee) || 0,
+          discount: parseFloat(discount) || 0,
+          notes: notes || undefined,
+          vanName: vanName || undefined,
+        };
+        updateMutation.mutate(payload);
+      } catch (error: any) {
+        Alert.alert('Error', error?.response?.data?.message || 'Failed to update order');
+      }
     } else {
       const payload: CreateOrderPayload = {
         customerId: selectedCustomer.id,
@@ -268,12 +353,10 @@ export default function CreateOrderScreen() {
           notes: item.notes,
         })),
       };
-
       createMutation.mutate(payload);
     }
   };
 
-  // Loading state for edit mode
   if (isEditMode && isLoadingOrder) {
     return (
       <SafeAreaView
@@ -296,10 +379,7 @@ export default function CreateOrderScreen() {
         <View
           className="flex-row items-center border-b px-4 py-3"
           style={{ borderColor: colors.border }}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            className="mr-3 p-1"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3 p-1">
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text className="text-xl font-bold" style={{ color: colors.text }}>
@@ -347,20 +427,17 @@ export default function CreateOrderScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Add Items Button */}
-              {!isEditMode && (
-                <TouchableOpacity
-                  onPress={() => setProductModalVisible(true)}
-                  disabled={isSubmitting}
-                  className="mb-4 flex-row items-center justify-center rounded-xl p-4"
-                  style={{
-                    backgroundColor: colors.primary,
-                    opacity: isSubmitting ? 0.5 : 1,
-                  }}>
-                  <MaterialIcons name="add-shopping-cart" size={20} color="#fff" />
-                  <Text className="ml-2 font-bold text-white">Add Items to Cart</Text>
-                </TouchableOpacity>
-              )}
+              {/* Add Items Button - ALWAYS VISIBLE */}
+              <TouchableOpacity
+                onPress={() => setProductModalVisible(true)}
+                disabled={isSubmitting}
+                className="mb-4 flex-row items-center justify-center rounded-xl p-4"
+                style={{ backgroundColor: colors.primary, opacity: isSubmitting ? 0.5 : 1 }}>
+                <MaterialIcons name="add-shopping-cart" size={20} color="#fff" />
+                <Text className="ml-2 font-bold text-white">
+                  {isEditMode ? 'Add More Items' : 'Add Items to Cart'}
+                </Text>
+              </TouchableOpacity>
 
               {/* Cart Header */}
               {cart.length > 0 && (
@@ -390,7 +467,8 @@ export default function CreateOrderScreen() {
             <CartItemCard
               item={item}
               colors={colors}
-              disabled={isSubmitting || isEditMode}
+              disabled={isSubmitting}
+              isEditMode={isEditMode}
               onRemove={() => removeFromCart(item.productId)}
               onUpdateQuantity={(qty) => updateQuantity(item.productId, qty)}
               onUpdatePrice={(price) => updateItemPrice(item.productId, price)}
@@ -401,9 +479,8 @@ export default function CreateOrderScreen() {
               <View className="mt-4 px-4">
                 {/* Order Details */}
                 <View className="mb-4">
-                  {/* Order Date & Delivery Date */}
+                  {/* Dates */}
                   <View className="mb-3 flex-row gap-3">
-                    {/* Order Date */}
                     <View className="flex-1">
                       <Text className="mb-2 text-sm font-semibold" style={{ color: colors.text }}>
                         Order Date
@@ -427,8 +504,6 @@ export default function CreateOrderScreen() {
                         <Ionicons name="calendar-outline" size={18} color={colors.muted} />
                       </TouchableOpacity>
                     </View>
-
-                    {/* Delivery Date */}
                     <View className="flex-1">
                       <Text className="mb-2 text-sm font-semibold" style={{ color: colors.text }}>
                         Delivery Date
@@ -487,7 +562,7 @@ export default function CreateOrderScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  {/* Delivery Fee & Discount */}
+                  {/* Fees */}
                   <View className="mb-3 flex-row gap-3">
                     <View className="flex-1">
                       <Text className="mb-2 text-sm font-semibold" style={{ color: colors.text }}>
@@ -636,7 +711,7 @@ export default function CreateOrderScreen() {
                   </View>
                 </View>
 
-                {/* Action Buttons */}
+                {/* Actions */}
                 <View className="mb-4 flex-row gap-3">
                   <TouchableOpacity
                     onPress={() => navigation.goBack()}
@@ -652,15 +727,11 @@ export default function CreateOrderScreen() {
                       Cancel
                     </Text>
                   </TouchableOpacity>
-
                   <TouchableOpacity
                     onPress={handleSubmit}
                     disabled={isSubmitting}
                     className="flex-1 flex-row items-center justify-center rounded-xl py-3.5"
-                    style={{
-                      backgroundColor: colors.primary,
-                      opacity: isSubmitting ? 0.7 : 1,
-                    }}>
+                    style={{ backgroundColor: colors.primary, opacity: isSubmitting ? 0.7 : 1 }}>
                     {isSubmitting ? (
                       <ActivityIndicator size="small" color="#fff" />
                     ) : (
@@ -693,7 +764,6 @@ export default function CreateOrderScreen() {
           maximumDate={new Date()}
         />
       )}
-
       {showDeliveryDatePicker && (
         <DateTimePicker
           value={deliveryDate || new Date()}
@@ -704,15 +774,13 @@ export default function CreateOrderScreen() {
         />
       )}
 
-      {/* Customer Selection Modal */}
+      {/* Modals */}
       <CustomerSelectModal
         visible={customerModalVisible}
         selectedCustomerId={selectedCustomer?.id || null}
         onSelect={setSelectedCustomer}
         onClose={() => setCustomerModalVisible(false)}
       />
-
-      {/* Product Selection Modal */}
       <ProductSelectModal
         visible={productModalVisible}
         cart={cart}
@@ -721,8 +789,6 @@ export default function CreateOrderScreen() {
         onUpdateQuantity={updateQuantity}
         onClose={() => setProductModalVisible(false)}
       />
-
-      {/* Van Selection Modal */}
       <VanSelectModal
         visible={vanModalVisible}
         vans={vans}
@@ -738,11 +804,12 @@ export default function CreateOrderScreen() {
   );
 }
 
-// Cart Item Card Component
+// Cart Item Card
 interface CartItemCardProps {
-  item: CartItem;
+  item: ExtendedCartItem;
   colors: any;
   disabled: boolean;
+  isEditMode: boolean;
   onRemove: () => void;
   onUpdateQuantity: (qty: number) => void;
   onUpdatePrice: (price: string) => void;
@@ -752,6 +819,7 @@ function CartItemCard({
   item,
   colors,
   disabled,
+  isEditMode,
   onRemove,
   onUpdateQuantity,
   onUpdatePrice,
@@ -764,29 +832,34 @@ function CartItemCard({
       style={{
         backgroundColor: colors.card,
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: item.isOriginal ? colors.border : colors.primary,
       }}>
       <View className="mb-3 flex-row items-start justify-between">
         <View className="mr-3 flex-1">
-          <Text className="text-base font-semibold" style={{ color: colors.text }}>
-            {item.name}
-          </Text>
+          <View className="flex-row items-center">
+            <Text className="text-base font-semibold" style={{ color: colors.text }}>
+              {item.name}
+            </Text>
+            {!item.isOriginal && isEditMode && (
+              <View
+                className="ml-2 rounded-full px-2 py-0.5"
+                style={{ backgroundColor: colors.primary + '20' }}>
+                <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
+                  NEW
+                </Text>
+              </View>
+            )}
+          </View>
           <Text className="mt-0.5 text-xs" style={{ color: colors.muted }}>
             {item.unit}
           </Text>
         </View>
-        {!disabled && (
-          <TouchableOpacity
-            onPress={onRemove}
-            className="p-1"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Ionicons name="trash-outline" size={18} color="#ef4444" />
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity onPress={onRemove} disabled={disabled} className="p-1">
+          <Ionicons name="trash-outline" size={18} color="#ef4444" />
+        </TouchableOpacity>
       </View>
 
       <View className="flex-row items-center justify-between">
-        {/* Price Input */}
         <View className="flex-row items-center">
           <Text className="mr-2 text-xs" style={{ color: colors.muted }}>
             Price:
@@ -806,8 +879,6 @@ function CartItemCard({
             }}
           />
         </View>
-
-        {/* Quantity Controls */}
         <View className="flex-row items-center">
           <TouchableOpacity
             onPress={() => onUpdateQuantity(item.quantity - 1)}
@@ -818,10 +889,7 @@ function CartItemCard({
           </TouchableOpacity>
           <TextInput
             value={item.quantity.toString()}
-            onChangeText={(text) => {
-              const qty = parseFloat(text) || 0;
-              onUpdateQuantity(qty);
-            }}
+            onChangeText={(text) => onUpdateQuantity(parseFloat(text) || 0)}
             keyboardType="decimal-pad"
             editable={!disabled}
             className="mx-2 w-12 rounded-lg py-1.5"
@@ -844,7 +912,6 @@ function CartItemCard({
         </View>
       </View>
 
-      {/* Item Total */}
       <View
         className="mt-3 flex-row items-center justify-between border-t pt-3"
         style={{ borderColor: colors.border }}>
@@ -859,24 +926,8 @@ function CartItemCard({
   );
 }
 
-// Van Selection Modal
-interface VanSelectModalProps {
-  visible: boolean;
-  vans: string[];
-  selectedVan: string;
-  onSelect: (van: string) => void;
-  onClose: () => void;
-  colors: any;
-}
-
-function VanSelectModal({
-  visible,
-  vans,
-  selectedVan,
-  onSelect,
-  onClose,
-  colors,
-}: VanSelectModalProps) {
+// Van Select Modal
+function VanSelectModal({ visible, vans, selectedVan, onSelect, onClose, colors }: any) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity
@@ -890,7 +941,6 @@ function VanSelectModal({
           <Text className="mb-4 text-lg font-bold" style={{ color: colors.text }}>
             Select Van
           </Text>
-
           {vans.length === 0 ? (
             <View className="items-center py-6">
               <Ionicons name="car-outline" size={40} color={colors.muted} />
@@ -900,7 +950,6 @@ function VanSelectModal({
             </View>
           ) : (
             <View className="gap-2">
-              {/* No Van Option */}
               <TouchableOpacity
                 onPress={() => onSelect('')}
                 className="flex-row items-center rounded-lg p-3"
@@ -920,8 +969,7 @@ function VanSelectModal({
                   No Van Assigned
                 </Text>
               </TouchableOpacity>
-
-              {vans.map((van) => (
+              {vans.map((van: string) => (
                 <TouchableOpacity
                   key={van}
                   onPress={() => onSelect(van)}
@@ -946,7 +994,6 @@ function VanSelectModal({
               ))}
             </View>
           )}
-
           <TouchableOpacity
             onPress={onClose}
             className="mt-4 items-center rounded-lg py-3"

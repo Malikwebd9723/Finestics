@@ -10,6 +10,7 @@ import OrderDetailModal from './components/OrderDetailModal';
 import PaymentModal from './components/PaymentModal';
 import BulkActionsBar from './components/BulkActionsBar';
 import VanOrdersModal from './components/VanOrdersModal';
+import CustomerOrdersModal from './components/CustomerOrdersModal';
 
 export default function Orders() {
   const { colors } = useThemeContext();
@@ -27,6 +28,7 @@ export default function Orders() {
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [vanOrdersModalVisible, setVanOrdersModalVisible] = useState(false);
+  const [customerOrdersModalVisible, setCustomerOrdersModalVisible] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
 
   // Bulk selection state
@@ -122,6 +124,10 @@ export default function Orders() {
     setVanOrdersModalVisible(true);
   };
 
+  const handleViewCustomerOrders = () => {
+    setCustomerOrdersModalVisible(true);
+  };
+
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       {/* Selection Mode Header */}
@@ -144,7 +150,7 @@ export default function Orders() {
           <SearchBar
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            placeholder="Search orders..."
+            placeholder="Search orders, customers..."
           />
 
           {/* Quick Action Buttons */}
@@ -159,7 +165,7 @@ export default function Orders() {
               }}>
               <MaterialIcons name="shopping-basket" size={16} color={colors.primary} />
               <Text className="ml-1.5 text-sm font-medium" style={{ color: colors.text }}>
-                Collection Sheet
+                Collection
               </Text>
             </TouchableOpacity>
 
@@ -174,6 +180,21 @@ export default function Orders() {
               <Ionicons name="car" size={16} color={colors.primary} />
               <Text className="ml-1.5 text-sm font-medium" style={{ color: colors.text }}>
                 By Van
+              </Text>
+            </TouchableOpacity>
+
+            {/* NEW: By Customer Button */}
+            <TouchableOpacity
+              onPress={handleViewCustomerOrders}
+              className="flex-row items-center rounded-lg px-3 py-2"
+              style={{
+                backgroundColor: colors.card,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}>
+              <Ionicons name="person" size={16} color={colors.primary} />
+              <Text className="ml-1.5 text-sm font-medium" style={{ color: colors.text }}>
+                By Customer
               </Text>
             </TouchableOpacity>
           </View>
@@ -197,6 +218,7 @@ export default function Orders() {
         isSelectionMode={isSelectionMode}
         selectedOrders={selectedOrders}
         onSelectAll={handleSelectAll}
+        onViewCustomerOrders={handleViewCustomerOrders}
       />
 
       {/* Bulk Actions Bar */}
@@ -247,6 +269,19 @@ export default function Orders() {
         onClose={() => setVanOrdersModalVisible(false)}
         onViewOrder={(orderId) => {
           setVanOrdersModalVisible(false);
+          setTimeout(() => {
+            setSelectedOrderId(orderId);
+            setDetailModalVisible(true);
+          }, 300);
+        }}
+      />
+
+      {/* Customer Orders Modal (NEW) */}
+      <CustomerOrdersModal
+        visible={customerOrdersModalVisible}
+        onClose={() => setCustomerOrdersModalVisible(false)}
+        onViewOrder={(orderId) => {
+          setCustomerOrdersModalVisible(false);
           setTimeout(() => {
             setSelectedOrderId(orderId);
             setDetailModalVisible(true);

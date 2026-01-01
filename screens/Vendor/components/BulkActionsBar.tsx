@@ -9,11 +9,12 @@ import {
   ActivityIndicator,
   ToastAndroid,
   Alert,
+  TextInput,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
-import { bulkUpdateStatus, bulkAssignVan } from 'api/actions/orderActions';
+import { bulkUpdateStatus, bulkAssignVan, bulkCancel } from 'api/actions/orderActions';
 import { fetchVans } from 'api/actions/vendorActions';
 import { ORDER_STATUSES, OrderStatus } from 'types/order.types';
 
@@ -33,6 +34,8 @@ export default function BulkActionsBar({
 
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [vanModalVisible, setVanModalVisible] = useState(false);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   // Fetch vans
   const { data: vansData } = useQuery({
@@ -76,14 +79,37 @@ export default function BulkActionsBar({
     },
   });
 
+  // Bulk cancel mutation (NEW)
+  const cancelMutation = useMutation({
+    mutationFn: ({ reason }: { reason?: string }) => bulkCancel(selectedOrderIds, reason),
+    onSuccess: (response) => {
+      ToastAndroid.show(
+        `${response?.data?.cancelled || selectedOrderIds.length} orders cancelled`,
+        ToastAndroid.SHORT
+      );
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      setCancelModalVisible(false);
+      setCancelReason('');
+      onComplete();
+    },
+    onError: (error: any) => {
+      Alert.alert('Error', error?.response?.data?.message || 'Failed to cancel orders');
+    },
+  });
+
   const handleStatusSelect = (status: OrderStatus) => {
-    Alert.alert('Update Status', `Change ${selectedOrderIds.length} order(s) to "${status}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Update',
-        onPress: () => statusMutation.mutate({ status }),
-      },
-    ]);
+    const actionWord = status === 'cancelled' ? 'cancel' : `mark as "${status}"`;
+    Alert.alert(
+      'Update Status',
+      `${actionWord.charAt(0).toUpperCase() + actionWord.slice(1)} ${selectedOrderIds.length} order(s)?`,
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: 'Yes',
+          onPress: () => statusMutation.mutate({ status }),
+        },
+      ]
+    );
   };
 
   const handleVanSelect = (vanName: string) => {
@@ -96,10 +122,11 @@ export default function BulkActionsBar({
     ]);
   };
 
-  const isLoading = statusMutation.isPending || vanMutation.isPending;
+  const handleBulkCancel = () => {
+    cancelMutation.mutate({ reason: cancelReason.trim() || undefined });
+  };
 
-  // Allowed statuses for bulk update (not cancelled)
-  const allowedStatuses = ORDER_STATUSES.filter((s) => !['cancelled'].includes(s.value));
+  const isLoading = statusMutation.isPending || vanMutation.isPending || cancelMutation.isPending;
 
   return (
     <>
@@ -137,14 +164,25 @@ export default function BulkActionsBar({
           </Text>
         </TouchableOpacity>
 
-        {/* Cancel */}
+        {/* Bulk Cancel (NEW) */}
+        <TouchableOpacity
+          onPress={() => setCancelModalVisible(true)}
+          disabled={isLoading}
+          className="items-center px-4 py-2">
+          <MaterialIcons name="cancel" size={22} color={colors.error} />
+          <Text className="mt-1 text-xs font-medium" style={{ color: colors.error }}>
+            Cancel
+          </Text>
+        </TouchableOpacity>
+
+        {/* Deselect */}
         <TouchableOpacity
           onPress={onCancel}
           disabled={isLoading}
           className="items-center px-4 py-2">
-          <Ionicons name="close-circle-outline" size={22} color={colors.error} />
-          <Text className="mt-1 text-xs font-medium" style={{ color: colors.error }}>
-            Cancel
+          <Ionicons name="close-circle-outline" size={22} color={colors.muted} />
+          <Text className="mt-1 text-xs font-medium" style={{ color: colors.muted }}>
+            Deselect
           </Text>
         </TouchableOpacity>
       </View>
@@ -178,7 +216,7 @@ export default function BulkActionsBar({
               </View>
             ) : (
               <ScrollView className="max-h-80">
-                {allowedStatuses.map((status) => (
+                {ORDER_STATUSES.map((status) => (
                   <TouchableOpacity
                     key={status.value}
                     onPress={() => handleStatusSelect(status.value as OrderStatus)}
@@ -206,7 +244,7 @@ export default function BulkActionsBar({
               className="mx-4 mt-4 items-center rounded-xl py-3"
               style={{ backgroundColor: colors.background }}>
               <Text className="font-semibold" style={{ color: colors.text }}>
-                Cancel
+                Close
               </Text>
             </TouchableOpacity>
           </View>
@@ -274,10 +312,102 @@ export default function BulkActionsBar({
               className="mx-4 mt-4 items-center rounded-xl py-3"
               style={{ backgroundColor: colors.background }}>
               <Text className="font-semibold" style={{ color: colors.text }}>
-                Cancel
+                Close
               </Text>
             </TouchableOpacity>
           </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Bulk Cancel Modal (NEW) */}
+      <Modal
+        visible={cancelModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCancelModalVisible(false)}>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setCancelModalVisible(false)}
+          className="flex-1 justify-end"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+            <View className="rounded-t-3xl pb-8 pt-4" style={{ backgroundColor: colors.card }}>
+              <View className="mb-4 items-center">
+                <View
+                  className="h-1 w-10 rounded-full"
+                  style={{ backgroundColor: colors.border }}
+                />
+              </View>
+
+              <Text className="mb-2 px-4 text-lg font-bold" style={{ color: colors.text }}>
+                Cancel Orders
+              </Text>
+              <Text className="mb-4 px-4 text-sm" style={{ color: colors.muted }}>
+                Cancel {selectedOrderIds.length} selected order(s)? This action can be undone by
+                changing the status back.
+              </Text>
+
+              {cancelMutation.isPending ? (
+                <View className="items-center py-8">
+                  <ActivityIndicator size="large" color={colors.error} />
+                  <Text className="mt-2" style={{ color: colors.muted }}>
+                    Cancelling orders...
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  {/* Optional Reason Input */}
+                  <View className="mb-4 px-4">
+                    <Text className="mb-2 text-sm font-medium" style={{ color: colors.text }}>
+                      Reason (Optional)
+                    </Text>
+                    <TextInput
+                      value={cancelReason}
+                      onChangeText={setCancelReason}
+                      placeholder="Enter cancellation reason..."
+                      placeholderTextColor={colors.placeholder}
+                      multiline
+                      numberOfLines={2}
+                      className="rounded-xl px-4 py-3"
+                      style={{
+                        backgroundColor: colors.background,
+                        color: colors.text,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        minHeight: 60,
+                        textAlignVertical: 'top',
+                      }}
+                    />
+                  </View>
+
+                  {/* Action Buttons */}
+                  <View className="flex-row gap-3 px-4">
+                    <TouchableOpacity
+                      onPress={() => {
+                        setCancelModalVisible(false);
+                        setCancelReason('');
+                      }}
+                      className="flex-1 items-center rounded-xl py-3"
+                      style={{
+                        backgroundColor: colors.background,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                      }}>
+                      <Text className="font-semibold" style={{ color: colors.text }}>
+                        No, Keep
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={handleBulkCancel}
+                      className="flex-1 items-center rounded-xl py-3"
+                      style={{ backgroundColor: colors.error }}>
+                      <Text className="font-semibold text-white">Yes, Cancel</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            </View>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
     </>

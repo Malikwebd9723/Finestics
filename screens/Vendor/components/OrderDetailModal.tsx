@@ -27,6 +27,7 @@ import {
   Order,
   OrderDetailResponse,
   OrderStatus,
+  ORDER_STATUSES,
   formatPrice,
   formatDate,
   formatDateTime,
@@ -39,6 +40,7 @@ import {
   getNextStatuses,
   canUpdateOrder,
   canCancelOrder,
+  canReopenOrder,
 } from 'types/order.types';
 
 const { height } = Dimensions.get('window');
@@ -138,7 +140,10 @@ export default function OrderDetailModal({
 
   const statusColor = order ? getStatusColor(order.status) : '#6b7280';
   const paymentColor = order ? getPaymentStatusColor(order.paymentStatus) : '#6b7280';
-  const nextStatuses = order ? getNextStatuses(order.status) : [];
+
+  // Get available statuses (all except current)
+  const availableStatuses = order ? getNextStatuses(order.status) : [];
+  const isCancelled = order?.status === 'cancelled';
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
@@ -201,20 +206,17 @@ export default function OrderDetailModal({
                     </Text>
                     <TouchableOpacity
                       onPress={() => setStatusMenuVisible(!statusMenuVisible)}
-                      disabled={nextStatuses.length === 0}
                       className="flex-row items-center rounded-full px-3 py-1.5"
                       style={{ backgroundColor: statusColor + '20' }}>
                       <Text className="text-sm font-bold" style={{ color: statusColor }}>
                         {getStatusLabel(order.status)}
                       </Text>
-                      {nextStatuses.length > 0 && (
-                        <MaterialIcons name="arrow-drop-down" size={18} color={statusColor} />
-                      )}
+                      <MaterialIcons name="arrow-drop-down" size={18} color={statusColor} />
                     </TouchableOpacity>
                   </View>
 
-                  {/* Status Menu Dropdown */}
-                  {statusMenuVisible && nextStatuses.length > 0 && (
+                  {/* Status Menu Dropdown - Now shows ALL statuses */}
+                  {statusMenuVisible && (
                     <View
                       className="mb-3 rounded-xl p-2"
                       style={{
@@ -225,9 +227,9 @@ export default function OrderDetailModal({
                       <Text
                         className="mb-2 px-2 text-xs font-semibold"
                         style={{ color: colors.muted }}>
-                        Change Status To:
+                        {isCancelled ? 'Reopen Order As:' : 'Change Status To:'}
                       </Text>
-                      {nextStatuses.map((status) => {
+                      {availableStatuses.map((status) => {
                         const color = getStatusColor(status);
                         return (
                           <TouchableOpacity
@@ -240,7 +242,7 @@ export default function OrderDetailModal({
                               className="mr-2 h-3 w-3 rounded-full"
                               style={{ backgroundColor: color }}
                             />
-                            <Text className="font-semibold" style={{ color }}>
+                            <Text className="flex-1 font-semibold" style={{ color }}>
                               {getStatusLabel(status)}
                             </Text>
                             {statusMutation.isPending && (
@@ -253,6 +255,27 @@ export default function OrderDetailModal({
                           </TouchableOpacity>
                         );
                       })}
+                    </View>
+                  )}
+
+                  {/* Cancelled Info */}
+                  {isCancelled && order.cancelledAt && (
+                    <View
+                      className="mb-3 rounded-lg p-3"
+                      style={{ backgroundColor: colors.error + '10' }}>
+                      <View className="flex-row items-center">
+                        <MaterialIcons name="cancel" size={16} color={colors.error} />
+                        <Text
+                          className="ml-2 text-sm font-semibold"
+                          style={{ color: colors.error }}>
+                          Cancelled on {formatDate(order.cancelledAt)}
+                        </Text>
+                      </View>
+                      {order.cancellationReason && (
+                        <Text className="mt-1 text-sm" style={{ color: colors.muted }}>
+                          Reason: {order.cancellationReason}
+                        </Text>
+                      )}
                     </View>
                   )}
 
@@ -469,16 +492,19 @@ export default function OrderDetailModal({
               <View className="border-t px-5 py-4" style={{ borderColor: colors.border }}>
                 {/* Primary Actions Row */}
                 <View className="mb-3 flex-row gap-3">
-                  {order.paymentStatus !== 'paid' && (
-                    <TouchableOpacity
-                      onPress={() => onRecordPayment(orderId!)}
-                      className="flex-1 flex-row items-center justify-center rounded-xl py-3"
-                      style={{ backgroundColor: colors.success }}>
-                      <MaterialIcons name="payment" size={18} color="#fff" />
-                      <Text className="ml-2 text-sm font-bold text-white">Record Payment</Text>
-                    </TouchableOpacity>
-                  )}
-                  {canUpdateOrder(order.status) && (
+                  {/* Record Payment - Always show (allows adjustments) */}
+                  <TouchableOpacity
+                    onPress={() => onRecordPayment(orderId!)}
+                    className="flex-1 flex-row items-center justify-center rounded-xl py-3"
+                    style={{ backgroundColor: colors.success }}>
+                    <MaterialIcons name="payment" size={18} color="#fff" />
+                    <Text className="ml-2 text-sm font-bold text-white">
+                      {order.paymentStatus === 'paid' ? 'Adjust Payment' : 'Record Payment'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Edit - for non-completed, non-cancelled */}
+                  {canUpdateOrder(order.status) && !isCancelled && (
                     <TouchableOpacity
                       onPress={() => {
                         onClose();
@@ -517,6 +543,7 @@ export default function OrderDetailModal({
                     )}
                   </TouchableOpacity>
 
+                  {/* Cancel button - only for non-cancelled orders */}
                   {canCancelOrder(order.status) && (
                     <TouchableOpacity
                       onPress={() => setCancelModalVisible(true)}
@@ -534,6 +561,24 @@ export default function OrderDetailModal({
                       </Text>
                     </TouchableOpacity>
                   )}
+
+                  {/* Reopen hint for cancelled orders */}
+                  {isCancelled && (
+                    <View
+                      className="flex-1 flex-row items-center justify-center rounded-xl py-3"
+                      style={{
+                        backgroundColor: colors.primary + '15',
+                        borderWidth: 1,
+                        borderColor: colors.primary,
+                      }}>
+                      <Ionicons name="refresh" size={16} color={colors.primary} />
+                      <Text
+                        className="ml-1.5 text-sm font-semibold"
+                        style={{ color: colors.primary }}>
+                        Use status to reopen
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </View>
 
@@ -542,7 +587,7 @@ export default function OrderDetailModal({
                 visible={cancelModalVisible}
                 loading={cancelMutation.isPending}
                 title="Cancel Order?"
-                message="Are you sure you want to cancel this order? This action cannot be undone."
+                message="Are you sure you want to cancel this order? You can reopen it later by changing the status."
                 onCancel={() => setCancelModalVisible(false)}
                 onConfirm={() => cancelMutation.mutate()}
               />

@@ -5,6 +5,7 @@ import {
   UpdateOrderPayload,
   RecordPaymentPayload,
   OrderStatus,
+  OrdersQueryParams,
 } from 'types/order.types';
 
 // Base path for vendor orders
@@ -13,19 +14,9 @@ const BASE_PATH = '/vendor-orders';
 // ==================== ORDERS CRUD ====================
 
 /**
- * Fetch all orders with optional filters
+ * Fetch all orders with optional filters (ENHANCED)
  */
-export const fetchAllOrders = async (params?: {
-  page?: number;
-  limit?: number;
-  status?: string;
-  paymentStatus?: string;
-  customerId?: number;
-  vanName?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  search?: string;
-}) => {
+export const fetchAllOrders = async (params?: OrdersQueryParams) => {
   const queryParams = new URLSearchParams();
 
   if (params) {
@@ -70,7 +61,7 @@ export const updateOrder = async (orderId: number, data: UpdateOrderPayload) => 
 // ==================== ORDER ACTIONS ====================
 
 /**
- * Update order status
+ * Update order status (no restrictions now)
  */
 export const updateOrderStatus = async (orderId: number, status: OrderStatus) => {
   const res = await apiRequest(`${BASE_PATH}/${orderId}/status`, 'PATCH', { status });
@@ -78,7 +69,7 @@ export const updateOrderStatus = async (orderId: number, status: OrderStatus) =>
 };
 
 /**
- * Record payment for order
+ * Record payment for order (supports adjustments)
  */
 export const recordPayment = async (orderId: number, data: RecordPaymentPayload) => {
   const res = await apiRequest(`${BASE_PATH}/${orderId}/payment`, 'POST', data);
@@ -86,7 +77,7 @@ export const recordPayment = async (orderId: number, data: RecordPaymentPayload)
 };
 
 /**
- * Cancel order
+ * Cancel order (reason optional)
  */
 export const cancelOrder = async (orderId: number, reason?: string) => {
   const res = await apiRequest(`${BASE_PATH}/${orderId}/cancel`, 'POST', { reason });
@@ -187,8 +178,8 @@ export const fetchCollectionSheet = async (date: string) => {
  */
 export const fetchOrdersByVan = async (vanName: string, date?: string) => {
   const url = date
-    ? `${BASE_PATH}/by-van/${vanName}?date=${date}`
-    : `${BASE_PATH}/by-van/${vanName}`;
+    ? `${BASE_PATH}/by-van/${encodeURIComponent(vanName)}?date=${date}`
+    : `${BASE_PATH}/by-van/${encodeURIComponent(vanName)}`;
   const res = await apiRequest(url, 'GET');
   return res.data;
 };
@@ -204,7 +195,7 @@ export const fetchDailySummary = async (date: string) => {
 // ==================== BULK OPERATIONS ====================
 
 /**
- * Bulk update order status
+ * Bulk update order status (no restrictions)
  */
 export const bulkUpdateStatus = async (orderIds: number[], status: OrderStatus) => {
   const res = await apiRequest(`${BASE_PATH}/bulk/status`, 'POST', { orderIds, status });
@@ -219,10 +210,44 @@ export const bulkAssignVan = async (orderIds: number[], vanName: string) => {
   return res.data;
 };
 
+/**
+ * Bulk cancel orders (NEW)
+ */
+export const bulkCancel = async (orderIds: number[], reason?: string) => {
+  const res = await apiRequest(`${BASE_PATH}/bulk/cancel`, 'POST', { orderIds, reason });
+  return res.data;
+};
+
 // ==================== CUSTOMER ORDERS ====================
 
 /**
- * Get customer's order history
+ * Get orders by customer ID (NEW - uses order routes)
+ */
+export const fetchOrdersByCustomer = async (
+  customerId: number,
+  params?: { page?: number; limit?: number; status?: string }
+) => {
+  const queryParams = new URLSearchParams();
+
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, value.toString());
+      }
+    });
+  }
+
+  const queryString = queryParams.toString();
+  const url = queryString
+    ? `${BASE_PATH}/customer/${customerId}?${queryString}`
+    : `${BASE_PATH}/customer/${customerId}`;
+
+  const res = await apiRequest(url, 'GET');
+  return res.data;
+};
+
+/**
+ * Get customer's order history (legacy - keeping for backward compatibility)
  */
 export const fetchCustomerOrders = async (
   customerId: number,

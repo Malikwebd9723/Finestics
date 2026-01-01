@@ -33,14 +33,21 @@ export const updateOrderSchema = yup.object({
   notes: yup.string().trim().nullable(),
   deliveryAddress: yup.string().trim().nullable(),
   vanName: yup.string().trim().nullable(),
+  allowCompletedEdit: yup.boolean(), // NEW: flag to allow editing completed orders
 });
 
+// UPDATED: Allow negative amounts for refunds/adjustments
 export const recordPaymentSchema = yup.object({
-  amount: yup.number().required('Amount is required').positive('Amount must be positive'),
+  amount: yup
+    .number()
+    .required('Amount is required')
+    .test('non-zero', 'Amount cannot be zero', (value) => value !== 0),
   paymentMethod: yup
     .string()
     .oneOf(['cash', 'bank_transfer', 'upi', 'cheque', null, ''])
     .nullable(),
+  isAdjustment: yup.boolean().default(false), // NEW: flag for refunds/adjustments
+  notes: yup.string().trim().nullable(), // NEW: payment notes
 });
 
 export const cartItemSchema = yup.object({
@@ -53,6 +60,42 @@ export const cartItemSchema = yup.object({
   notes: yup.string().nullable(),
 });
 
+// NEW: Bulk cancel schema
+export const bulkCancelSchema = yup.object({
+  orderIds: yup
+    .array()
+    .of(yup.number().required().positive())
+    .min(1, 'Select at least one order')
+    .required(),
+  reason: yup.string().trim().nullable(),
+});
+
+// NEW: Bulk status update schema
+export const bulkStatusSchema = yup.object({
+  orderIds: yup
+    .array()
+    .of(yup.number().required().positive())
+    .min(1, 'Select at least one order')
+    .required(),
+  status: yup
+    .string()
+    .oneOf(['pending', 'confirmed', 'collected', 'delivered', 'completed', 'cancelled'])
+    .required('Status is required'),
+});
+
+// NEW: Bulk van assignment schema
+export const bulkAssignVanSchema = yup.object({
+  orderIds: yup
+    .array()
+    .of(yup.number().required().positive())
+    .min(1, 'Select at least one order')
+    .required(),
+  vanName: yup.string().trim().required('Van name is required'),
+});
+
 export type CreateOrderSchema = yup.InferType<typeof createOrderSchema>;
 export type UpdateOrderSchema = yup.InferType<typeof updateOrderSchema>;
 export type RecordPaymentSchema = yup.InferType<typeof recordPaymentSchema>;
+export type BulkCancelSchema = yup.InferType<typeof bulkCancelSchema>;
+export type BulkStatusSchema = yup.InferType<typeof bulkStatusSchema>;
+export type BulkAssignVanSchema = yup.InferType<typeof bulkAssignVanSchema>;

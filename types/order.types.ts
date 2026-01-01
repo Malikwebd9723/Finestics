@@ -79,6 +79,11 @@ export type PaymentMethod = 'cash' | 'bank_transfer' | 'upi' | 'cheque' | 'credi
 
 export type ItemStatus = 'pending' | 'delivered' | 'partially_delivered' | 'cancelled';
 
+// Sort options
+export type SortField = 'orderDate' | 'deliveryDate' | 'createdAt' | 'totalAmount' | 'orderNumber';
+export type SortOrder = 'ASC' | 'DESC';
+export type DateFilterField = 'orderDate' | 'deliveryDate';
+
 // ==================== CONSTANTS ====================
 
 export const ORDER_STATUSES: { label: string; value: OrderStatus; color: string }[] = [
@@ -111,15 +116,14 @@ export const ITEM_STATUSES: { label: string; value: ItemStatus; color: string }[
   { label: 'Cancelled', value: 'cancelled', color: '#ef4444' },
 ];
 
-// Valid status transitions
-export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  pending: ['confirmed', 'cancelled'],
-  confirmed: ['collected', 'cancelled'],
-  collected: ['delivered', 'cancelled'],
-  delivered: ['completed'],
-  completed: [],
-  cancelled: [],
-};
+// Sort options for UI
+export const SORT_OPTIONS: { label: string; value: SortField }[] = [
+  { label: 'Order Date', value: 'orderDate' },
+  { label: 'Delivery Date', value: 'deliveryDate' },
+  { label: 'Created', value: 'createdAt' },
+  { label: 'Amount', value: 'totalAmount' },
+  { label: 'Order #', value: 'orderNumber' },
+];
 
 // ==================== API TYPES ====================
 
@@ -176,6 +180,43 @@ export interface CollectionSheetItem {
   }[];
 }
 
+// Customer orders response (NEW)
+export interface CustomerOrdersResponse {
+  success: boolean;
+  data: {
+    customer: {
+      id: number;
+      businessName: string;
+      contactPerson: string;
+      phone: string;
+      currentBalance: string | number;
+    };
+    stats: {
+      totalOrders: number;
+      totalSpent: number;
+      totalPaid: number;
+      totalBalance: number;
+    };
+    orders: Order[];
+    totalItems: number;
+    currentPage: number;
+    totalPages: number;
+    limit: number;
+  };
+}
+
+// Bulk operation responses (NEW)
+export interface BulkOperationResponse {
+  success: boolean;
+  message: string;
+  data: {
+    updated?: number;
+    cancelled?: number;
+    orderNumbers: string[];
+    vanName?: string;
+  };
+}
+
 // ==================== FORM TYPES ====================
 
 export interface CreateOrderPayload {
@@ -205,11 +246,30 @@ export interface UpdateOrderPayload {
   notes?: string | null;
   deliveryAddress?: string | null;
   vanName?: string | null;
+  allowCompletedEdit?: boolean; // NEW: flag to allow editing completed orders
 }
 
 export interface RecordPaymentPayload {
   amount: number;
   paymentMethod?: PaymentMethod | null;
+  isAdjustment?: boolean; // NEW: flag for refunds/adjustments
+  notes?: string | null; // NEW: payment notes
+}
+
+// Query params for fetching orders (NEW)
+export interface OrdersQueryParams {
+  page?: number;
+  limit?: number;
+  status?: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  customerId?: number;
+  vanName?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  dateFilterField?: DateFilterField;
+  search?: string;
+  sortBy?: SortField;
+  sortOrder?: SortOrder;
 }
 
 // ==================== CART TYPES ====================
@@ -293,16 +353,49 @@ export const getItemStatusColor = (status: ItemStatus): string => {
   return found?.color || '#6b7280';
 };
 
+/**
+ * Get available next statuses (UPDATED - no restrictions, all statuses available)
+ * Returns all statuses except the current one
+ */
 export const getNextStatuses = (currentStatus: OrderStatus): OrderStatus[] => {
-  return STATUS_TRANSITIONS[currentStatus] || [];
+  return ORDER_STATUSES.map((s) => s.value).filter((s) => s !== currentStatus);
 };
 
+/**
+ * Get available statuses for cancelled orders (reopen options)
+ */
+export const getReopenStatuses = (): OrderStatus[] => {
+  return ['pending', 'confirmed', 'collected', 'delivered', 'completed'];
+};
+
+/**
+ * Check if order can be updated (UPDATED - more permissive)
+ * Now allows updating most orders except completed (unless flagged)
+ */
 export const canUpdateOrder = (status: OrderStatus): boolean => {
-  return ['pending', 'confirmed'].includes(status);
+  return status !== 'completed';
 };
 
+/**
+ * Check if order can be cancelled (UPDATED - any non-cancelled order)
+ */
 export const canCancelOrder = (status: OrderStatus): boolean => {
-  return !['completed', 'cancelled'].includes(status);
+  return status !== 'cancelled';
+};
+
+/**
+ * Check if order can be reopened (NEW)
+ */
+export const canReopenOrder = (status: OrderStatus): boolean => {
+  return status === 'cancelled';
+};
+
+/**
+ * Check if order allows payment adjustments (NEW)
+ */
+export const canAdjustPayment = (status: OrderStatus): boolean => {
+  // Allow payment adjustments on all orders
+  return true;
 };
 
 export const getOrderItemsCount = (items?: OrderItem[]): number => {
