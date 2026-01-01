@@ -1,3 +1,5 @@
+// navigation/RootNavigator.jsx
+
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -18,7 +20,8 @@ import SubscriptionScreen from 'screens/Onboarding/SubscriptionScreen';
 import SubmitOnboardingScreen from 'screens/Onboarding/SubmitOnboardingScreen';
 import PendingVerificationScreen from 'screens/Onboarding/PendingVerificationScreen';
 import CategoryDetails from 'screens/Admin/CategoryDetails';
-import CreateOrderScreen from 'screens/CreateOrderScreen';
+import CreateOrderScreen from 'screens/Vendor/CreateOrderScreen';
+import CollectionSheet from '../screens/Vendor/CollectionSheet';
 
 const Stack = createNativeStackNavigator();
 const OnboardingStack = createNativeStackNavigator();
@@ -79,7 +82,7 @@ export default function RootNavigator() {
           setInitializing(false);
           return;
         }
-        
+
         // If profile is approved, user should go to Main
         if (profileStatus === 'active') {
           setTargetRoute('Main');
@@ -126,7 +129,6 @@ export default function RootNavigator() {
         // Default if everything is complete
         setTargetParams(undefined);
         setInitializing(false);
-
       } catch (error) {
         console.error('Error determining route:', error);
         setTargetRoute('Login');
@@ -164,8 +166,9 @@ export default function RootNavigator() {
         <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Signup" component={Signup} />
-        <Stack.Screen name="CategoryDetails" component={CategoryDetails}/>
-        <Stack.Screen name="CreateOrderScreen" component={CreateOrderScreen}/>
+        <Stack.Screen name="CategoryDetails" component={CategoryDetails} />
+        <Stack.Screen name="CreateOrderScreen" component={CreateOrderScreen} />
+        <Stack.Screen name="CollectionSheet" component={CollectionSheet} />
       </Stack.Navigator>
     );
   }
