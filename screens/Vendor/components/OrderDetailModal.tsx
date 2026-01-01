@@ -42,6 +42,7 @@ import {
   canCancelOrder,
   canReopenOrder,
 } from 'types/order.types';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { height } = Dimensions.get('window');
 
@@ -147,7 +148,7 @@ export default function OrderDetailModal({
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <View className="flex-1 bg-black/50">
+      <SafeAreaView className="flex-1 bg-black/50">
         <Pressable className="flex-1" onPress={onClose} />
 
         <Animated.View
@@ -594,7 +595,7 @@ export default function OrderDetailModal({
             </>
           )}
         </Animated.View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }

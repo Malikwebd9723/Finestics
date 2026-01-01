@@ -33,6 +33,7 @@ import {
   PAYMENT_TERMS,
   ADDRESS_TYPES,
 } from 'types/customer.types';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface CustomerFormModalProps {
   visible: boolean;
@@ -247,7 +248,7 @@ export default function CustomerFormModal({
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1">
-        <View className="flex-1 justify-end bg-black/50">
+        <SafeAreaView className="flex-1 justify-end bg-black/50">
           <View
             className="rounded-t-3xl"
             style={{ backgroundColor: colors.card, maxHeight: '92%' }}>
@@ -666,7 +667,7 @@ export default function CustomerFormModal({
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </SafeAreaView>
       </KeyboardAvoidingView>
 
       {/* Delete Confirmation Modal */}

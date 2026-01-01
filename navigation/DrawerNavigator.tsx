@@ -170,14 +170,14 @@ export default function DrawerNavigator() {
         drawerType: 'front', // Drawer slides over content
       }}>
       {/* Main Tab Navigator */}
-      <Drawer.Screen name="MainTabs" component={TabNavigator} />
+      <Drawer.Screen name="MainTabs" component={TabNavigator}/>
 
       {/* Vendor Profile Screen */}
       <Drawer.Screen
         name="VendorProfile"
         component={VendorProfile}
         options={{
-          headerShown: true,
+          headerShown: false,
           headerTitle: 'Business Profile',
           headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.text,

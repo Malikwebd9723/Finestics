@@ -23,6 +23,7 @@ import {
   addVan,
   removeVan,
 } from 'api/actions/vendorActions';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function VendorProfile() {
   const { colors } = useThemeContext();
@@ -171,7 +172,7 @@ export default function VendorProfile() {
             tintColor={colors.primary}
           />
         }>
-        <View className="px-4 py-5">
+        <SafeAreaView className="px-4 py-5">
           {/* Header */}
           <View className="mb-6 flex-row items-center justify-between">
             <View>
@@ -519,7 +520,7 @@ export default function VendorProfile() {
 
           {/* Bottom Spacer - Extra space for keyboard */}
           <View className="h-10" />
-        </View>
+        </SafeAreaView>
       </ScrollView>
     </KeyboardAvoidingView>
   );

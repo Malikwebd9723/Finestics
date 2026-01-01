@@ -22,6 +22,7 @@ import {
   PaymentMethod,
   formatPrice,
 } from 'types/order.types';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface PaymentModalProps {
   visible: boolean;
@@ -102,7 +103,7 @@ export default function PaymentModal({ visible, orderId, onClose }: PaymentModal
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1">
-        <View className="flex-1 justify-end bg-black/50">
+        <SafeAreaView className="flex-1 justify-end bg-black/50">
           <View className="rounded-t-3xl" style={{ backgroundColor: colors.card }}>
             {/* Header */}
             <View
@@ -268,7 +269,7 @@ export default function PaymentModal({ visible, orderId, onClose }: PaymentModal
               </View>
             )}
           </View>
-        </View>
+        </SafeAreaView>
       </KeyboardAvoidingView>
     </Modal>
   );

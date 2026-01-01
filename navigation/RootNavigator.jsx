@@ -22,6 +22,8 @@ import PendingVerificationScreen from 'screens/Onboarding/PendingVerificationScr
 import CategoryDetails from 'screens/Admin/CategoryDetails';
 import CreateOrderScreen from 'screens/Vendor/CreateOrderScreen';
 import CollectionSheet from '../screens/Vendor/CollectionSheet';
+import CustomerOrdersScreen from 'screens/Vendor/CustomerOrdersScreen';
+import VanOrdersScreen from 'screens/Vendor/VanOrdersScreen';
 
 const Stack = createNativeStackNavigator();
 const OnboardingStack = createNativeStackNavigator();
@@ -169,6 +171,8 @@ export default function RootNavigator() {
         <Stack.Screen name="CategoryDetails" component={CategoryDetails} />
         <Stack.Screen name="CreateOrderScreen" component={CreateOrderScreen} />
         <Stack.Screen name="CollectionSheet" component={CollectionSheet} />
+        <Stack.Screen name="CustomerOrdersScreen" component={CustomerOrdersScreen} />
+        <Stack.Screen name="VanOrdersScreen" component={VanOrdersScreen} />
       </Stack.Navigator>
     );
   }

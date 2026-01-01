@@ -10,7 +10,7 @@ import OrderDetailModal from './components/OrderDetailModal';
 import PaymentModal from './components/PaymentModal';
 import BulkActionsBar from './components/BulkActionsBar';
 import VanOrdersModal from './components/VanOrdersModal';
-import CustomerOrdersModal from './components/CustomerOrdersModal';
+import CustomerOrdersModal from './components/CustomerOrderDetailsModal';
 
 export default function Orders() {
   const { colors } = useThemeContext();
@@ -170,7 +170,7 @@ export default function Orders() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={handleViewVanOrders}
+              onPress={()=> navigation.navigate('VanOrdersScreen')}
               className="flex-row items-center rounded-lg px-3 py-2"
               style={{
                 backgroundColor: colors.card,
@@ -185,7 +185,7 @@ export default function Orders() {
 
             {/* NEW: By Customer Button */}
             <TouchableOpacity
-              onPress={handleViewCustomerOrders}
+              onPress={()=> navigation.navigate('CustomerOrdersScreen')}
               className="flex-row items-center rounded-lg px-3 py-2"
               style={{
                 backgroundColor: colors.card,
@@ -277,7 +277,7 @@ export default function Orders() {
       />
 
       {/* Customer Orders Modal (NEW) */}
-      <CustomerOrdersModal
+      {/* <CustomerOrdersModal
         visible={customerOrdersModalVisible}
         onClose={() => setCustomerOrdersModalVisible(false)}
         onViewOrder={(orderId) => {
@@ -287,7 +287,7 @@ export default function Orders() {
             setDetailModalVisible(true);
           }, 300);
         }}
-      />
+      /> */}
     </View>
   );
 }

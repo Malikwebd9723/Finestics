@@ -17,6 +17,7 @@ import { useThemeContext } from 'context/ThemeProvider';
 import { fetchVans } from 'api/actions/vendorActions';
 import { fetchOrdersByVan } from 'api/actions/orderActions';
 import { formatPrice, formatShortDate, getStatusColor, getStatusLabel } from 'types/order.types';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface VanOrdersModalProps {
   visible: boolean;
@@ -89,7 +90,7 @@ export default function VanOrdersModal({ visible, onClose, onViewOrder }: VanOrd
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1" style={{ backgroundColor: colors.background }}>
+      <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
         {/* Header */}
         <View
           className="flex-row items-center justify-between border-b px-4 py-3"
@@ -268,7 +269,7 @@ export default function VanOrdersModal({ visible, onClose, onViewOrder }: VanOrd
             onChange={handleDateChange}
           />
         )}
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }

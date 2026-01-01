@@ -29,6 +29,7 @@ import {
 import { FormInput, FormTextArea, FormSection, FormRow } from './FormInputFields';
 import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
 import { ProductFormData, ProductDetailResponse, PRODUCT_UNITS } from 'types/product.types';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface ProductFormModalProps {
   visible: boolean;
@@ -239,9 +240,9 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : "height"}
         className="flex-1">
-        <View className="flex-1 justify-end bg-black/50">
+        <SafeAreaView className="flex-1 justify-end bg-black/50">
           <View
             className="rounded-t-3xl"
             style={{ backgroundColor: colors.card, maxHeight: '92%' }}>
@@ -591,7 +592,7 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </SafeAreaView>
       </KeyboardAvoidingView>
 
       {/* Delete Confirmation Modal */}

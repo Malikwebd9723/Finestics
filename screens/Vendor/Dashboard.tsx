@@ -9,6 +9,8 @@ import { fetchAllOrders } from 'api/actions/orderActions';
 import { fetchAllProducts } from 'api/actions/productActions';
 import { fetchAllCustomers } from 'api/actions/customerActions';
 import { formatPrice, isToday } from 'types/order.types';
+import OrderDetailModal from './components/OrderDetailModal';
+import PaymentModal from './components/PaymentModal';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
@@ -92,6 +94,38 @@ export default function Dashboard() {
   const navigateToProducts = () => navigation.navigate('Products');
   const navigateToCustomers = () => navigation.navigate('Customers');
   const navigateToCreateOrder = () => navigation.navigate('CreateOrderScreen');
+
+
+  // Order Detail Modal State
+  const [detailModalVisible, setDetailModalVisible] = React.useState(false);
+  const [selectedOrderId, setSelectedOrderId] = React.useState<number | null>(null);
+  // Payment Modal State
+  const [paymentModalVisible, setPaymentModalVisible] = React.useState(false);
+  const [selectedPaymentOrderId, setSelectedPaymentOrderId] = React.useState<number | null>(null);
+
+  const handleCloseDetailModal = () => {
+    setDetailModalVisible(false);
+    setSelectedOrderId(null);
+  };
+  const handleEditOrder = (orderId: number) => {
+    handleCloseDetailModal();
+    navigation.navigate('CreateOrderScreen', { orderId });
+  };
+  const handleRecordPayment = (orderId: number) => {
+    handleCloseDetailModal();
+    setSelectedPaymentOrderId(orderId);
+    setPaymentModalVisible(true);
+  }
+
+  const handleOrderOpen = (orderId: number) => {
+    setSelectedOrderId(orderId);
+    setDetailModalVisible(true);
+  };
+
+  const handleClosePaymentModal = () => {
+    setPaymentModalVisible(false);
+    setSelectedPaymentOrderId(null);
+  };
 
   return (
     <ScrollView
@@ -308,7 +342,7 @@ export default function Dashboard() {
               {recentOrders.map((order: any, index: number) => (
                 <TouchableOpacity
                   key={order.id}
-                  onPress={navigateToOrders}
+                  onPress={() => handleOrderOpen(order.id)}
                   activeOpacity={0.7}
                   className="p-4"
                   style={{
@@ -340,6 +374,19 @@ export default function Dashboard() {
         {/* Bottom Spacer */}
         <View className="h-6" />
       </View>
+      <OrderDetailModal
+        visible={detailModalVisible}
+        orderId={selectedOrderId}
+        onClose={handleCloseDetailModal}
+        onEdit={handleEditOrder}
+        onRecordPayment={handleRecordPayment}
+      />
+      <PaymentModal
+        visible={paymentModalVisible}
+        orderId={selectedPaymentOrderId}
+        onClose={handleClosePaymentModal}
+      />
+
     </ScrollView>
   );
 }

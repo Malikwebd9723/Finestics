@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAllCustomers } from 'api/actions/customerActions';
 import { Customer } from 'types/customer.types';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface CustomerSelectModalProps {
   visible: boolean;
@@ -60,7 +61,7 @@ export default function CustomerSelectModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/50">
+      <SafeAreaView className="flex-1 justify-end bg-black/50">
         <View className="rounded-t-3xl" style={{ backgroundColor: colors.card, maxHeight: '80%' }}>
           {/* Header */}
           <View
@@ -168,7 +169,7 @@ export default function CustomerSelectModal({
             />
           )}
         </View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }

@@ -15,6 +15,7 @@ import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAllProducts } from 'api/actions/productActions';
 import { Product, formatPrice } from 'types/product.types';
 import { CartItem } from 'types/order.types';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface ProductSelectModalProps {
   visible: boolean;
@@ -66,7 +67,7 @@ export default function ProductSelectModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/50">
+      <SafeAreaView className="flex-1 justify-end bg-black/50">
         <View className="rounded-t-3xl" style={{ backgroundColor: colors.card, maxHeight: '85%' }}>
           {/* Header */}
           <View
@@ -239,7 +240,7 @@ export default function ProductSelectModal({
             </View>
           )}
         </View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }

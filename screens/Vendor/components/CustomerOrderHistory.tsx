@@ -13,6 +13,7 @@ import {
   getPaymentStatusColor,
   getPaymentStatusLabel,
 } from 'types/order.types';
+import { useNavigation } from '@react-navigation/native';
 
 interface CustomerOrderHistoryProps {
   customerId: number;
@@ -26,7 +27,7 @@ export default function CustomerOrderHistory({
   maxOrders = 5,
 }: CustomerOrderHistoryProps) {
   const { colors } = useThemeContext();
-
+  const navigation = useNavigation();
   // Fetch customer orders
   const { data, isLoading, error } = useQuery({
     queryKey: ['customerOrders', customerId],
@@ -36,6 +37,13 @@ export default function CustomerOrderHistory({
 
   const orders = data?.data?.orders || [];
   const customer = data?.data?.customer;
+
+    const handleViewCustomerOrders = () => {
+    navigation.navigate('CustomerOrdersScreen', {
+      customer: customer,
+      openOrdersModal: true,
+    });
+  };
 
   if (isLoading) {
     return (
@@ -165,7 +173,7 @@ export default function CustomerOrderHistory({
 
       {/* View All Link */}
       {data?.data?.totalItems > maxOrders && (
-        <TouchableOpacity className="mt-3 items-center py-2">
+        <TouchableOpacity className="mt-3 items-center py-2" onPress={handleViewCustomerOrders}>
           <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
             View All {data.data.totalItems} Orders →
           </Text>
