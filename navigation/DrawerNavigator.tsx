@@ -1,6 +1,6 @@
 import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useThemeContext } from '../context/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
@@ -42,7 +42,8 @@ function CustomDrawerContent(props: any) {
       style={[styles.drawerContent, { backgroundColor: colors.card }]}
       contentContainerStyle={{ flex: 1 }}>
       {/* User Header */}
-      <View style={[styles.userSection, { borderBottomColor: colors.border }]}>
+      <ScrollView>
+        <View style={[styles.userSection, { borderBottomColor: colors.border }]}>
         <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
           <Text style={styles.avatarText}>
             {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'N/A'}
@@ -150,6 +151,7 @@ function CustomDrawerContent(props: any) {
       <View style={[styles.footer, { borderTopColor: colors.border }]}>
         <Text style={[styles.footerText, { color: colors.textSecondary }]}>Version 1.0.0</Text>
       </View>
+      </ScrollView>
     </DrawerContentScrollView>
   );
 }

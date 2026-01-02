@@ -24,6 +24,7 @@ import {
   removeVan,
 } from 'api/actions/vendorActions';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 
 export default function VendorProfile() {
   const { colors } = useThemeContext();
@@ -36,7 +37,7 @@ export default function VendorProfile() {
   // Van management
   const [newVanName, setNewVanName] = useState('');
   const [showAddVan, setShowAddVan] = useState(false);
-
+  const navigation = useNavigation();
   // Fetch profile
   const {
     data: profileData,
@@ -175,13 +176,22 @@ export default function VendorProfile() {
         <SafeAreaView className="px-4 py-5">
           {/* Header */}
           <View className="mb-6 flex-row items-center justify-between">
-            <View>
-              <Text className="text-2xl font-bold" style={{ color: colors.text }}>
+            <View
+              className="flex-row items-center"
+              >
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                className="mr-3 p-1">
+                <Ionicons name="arrow-back" size={24} color={colors.text} />
+              </TouchableOpacity>
+              <View>
+                <Text className="text-2xl font-bold" style={{ color: colors.text }}>
                 Business Profile
               </Text>
               <Text className="mt-1 text-sm" style={{ color: colors.muted }}>
                 Manage your business information
               </Text>
+              </View>
             </View>
             {!isEditing ? (
               <TouchableOpacity
