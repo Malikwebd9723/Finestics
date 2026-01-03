@@ -21,6 +21,7 @@ import {
   updateOrderStatus,
   cancelOrder,
   duplicateOrder,
+  deleteOrder,
 } from 'api/actions/orderActions';
 import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
 import {
@@ -41,6 +42,7 @@ import {
   canUpdateOrder,
   canCancelOrder,
   canReopenOrder,
+  canDeleteOrder,
 } from 'types/order.types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Print from 'expo-print';
@@ -215,6 +217,7 @@ export default function OrderDetailModal({
   const queryClient = useQueryClient();
   const [slideAnim] = useState(new Animated.Value(height));
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [statusMenuVisible, setStatusMenuVisible] = useState(false);
 
   // Fetch order details
@@ -265,6 +268,20 @@ export default function OrderDetailModal({
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Failed to duplicate order';
+      Alert.alert('Error', message);
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteOrder(orderId!),
+    onSuccess: () => {
+      ToastAndroid.show('Order deleted!', ToastAndroid.SHORT);
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      onClose();
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to delete order';
       Alert.alert('Error', message);
     },
   });
@@ -679,7 +696,9 @@ export default function OrderDetailModal({
                 </View>
 
                 {/* Secondary Actions Row */}
+                {/* Secondary Actions Row */}
                 <View className="flex-row gap-3">
+                  {/* Duplicate - always available */}
                   <TouchableOpacity
                     onPress={() => duplicateMutation.mutate()}
                     disabled={duplicateMutation.isPending}
@@ -703,8 +722,8 @@ export default function OrderDetailModal({
                     )}
                   </TouchableOpacity>
 
-                  {/* Cancel button - only for non-cancelled orders */}
-                  {canCancelOrder(order.status) && (
+                  {/* Cancel button - only for non-cancelled, non-pending orders */}
+                  {canCancelOrder(order.status) && !canDeleteOrder(order.status) && (
                     <TouchableOpacity
                       onPress={() => setCancelModalVisible(true)}
                       className="flex-1 flex-row items-center justify-center rounded-xl py-3"
@@ -722,24 +741,59 @@ export default function OrderDetailModal({
                     </TouchableOpacity>
                   )}
 
-                  {/* Reopen hint for cancelled orders */}
-                  {isCancelled && (
-                    <View
+                  {/* For pending: show both Cancel and Delete */}
+                  {order.status === 'pending' && (
+                    <>
+                      <TouchableOpacity
+                        onPress={() => setCancelModalVisible(true)}
+                        className="flex-1 flex-row items-center justify-center rounded-xl py-3"
+                        style={{
+                          backgroundColor: colors.error + '15',
+                          borderWidth: 1,
+                          borderColor: colors.error,
+                        }}>
+                        <MaterialIcons name="cancel" size={16} color={colors.error} />
+                        <Text
+                          className="ml-1.5 text-sm font-semibold"
+                          style={{ color: colors.error }}>
+                          Cancel
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => setDeleteModalVisible(true)}
+                        className="flex-1 flex-row items-center justify-center rounded-xl py-3"
+                        style={{
+                          backgroundColor: colors.error,
+                        }}>
+                        <MaterialIcons name="delete" size={16} color="#fff" />
+                        <Text className="ml-1.5 text-sm font-semibold text-white">Delete</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+
+                  {/* Delete button - only for cancelled orders */}
+                  {order.status === 'cancelled' && (
+                    <TouchableOpacity
+                      onPress={() => setDeleteModalVisible(true)}
                       className="flex-1 flex-row items-center justify-center rounded-xl py-3"
                       style={{
-                        backgroundColor: colors.primary + '15',
-                        borderWidth: 1,
-                        borderColor: colors.primary,
+                        backgroundColor: colors.error,
                       }}>
-                      <Ionicons name="refresh" size={16} color={colors.primary} />
-                      <Text
-                        className="ml-1.5 text-sm font-semibold"
-                        style={{ color: colors.primary }}>
-                        Use status to reopen
-                      </Text>
-                    </View>
+                      <MaterialIcons name="delete" size={16} color="#fff" />
+                      <Text className="ml-1.5 text-sm font-semibold text-white">Delete</Text>
+                    </TouchableOpacity>
                   )}
                 </View>
+
+                {/* Reopen hint for cancelled orders - separate row if needed */}
+                {isCancelled && (
+                  <View className="mt-3 flex-row items-center justify-center">
+                    <Ionicons name="information-circle-outline" size={14} color={colors.muted} />
+                    <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
+                      Use status dropdown above to reopen this order
+                    </Text>
+                  </View>
+                )}
               </View>
 
               {/* Cancel Confirmation Modal */}
@@ -750,6 +804,16 @@ export default function OrderDetailModal({
                 message="Are you sure you want to cancel this order? You can reopen it later by changing the status."
                 onCancel={() => setCancelModalVisible(false)}
                 onConfirm={() => cancelMutation.mutate()}
+              />
+
+              {/* Delete Confirmation Modal */}
+              <ConfirmDeleteModal
+                visible={deleteModalVisible}
+                loading={deleteMutation.isPending}
+                title="Delete Order?"
+                message="This will permanently delete the order. This action cannot be undone."
+                onCancel={() => setDeleteModalVisible(false)}
+                onConfirm={() => deleteMutation.mutate()}
               />
             </>
           )}

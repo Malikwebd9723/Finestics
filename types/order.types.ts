@@ -377,13 +377,6 @@ export const canUpdateOrder = (status: OrderStatus): boolean => {
 };
 
 /**
- * Check if order can be cancelled (UPDATED - any non-cancelled order)
- */
-export const canCancelOrder = (status: OrderStatus): boolean => {
-  return status !== 'cancelled';
-};
-
-/**
  * Check if order can be reopened (NEW)
  */
 export const canReopenOrder = (status: OrderStatus): boolean => {
@@ -426,4 +419,12 @@ export const isToday = (dateString: string | null): boolean => {
 
 export const getTodayDateString = (): string => {
   return new Date().toISOString().split('T')[0];
+};
+
+export const canCancelOrder = (status: OrderStatus): boolean => {
+  return status !== 'cancelled' && status !== 'completed';
+};
+
+export const canDeleteOrder = (status: OrderStatus): boolean => {
+  return status === 'cancelled' || status === 'pending';
 };
