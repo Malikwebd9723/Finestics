@@ -15,7 +15,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchVans } from 'api/actions/vendorActions';
 import { fetchOrdersByVan } from 'api/actions/orderActions';
-import { formatPrice, formatShortDate, getStatusColor, getStatusLabel } from 'types/order.types';
+import { formatPrice, getStatusColor, getStatusLabel } from 'types/order.types';
+import OrderTableView, { ViewToggle } from './components/OrderTableView';
 import VanOrderDetailsModal from './components/VanOrdersDetailModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -27,6 +28,7 @@ export default function VanOrdersScreen({ navigation }: any) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
 
   // Fetch vans
   const { data: vansData, isLoading: vansLoading } = useQuery({
@@ -53,8 +55,9 @@ export default function VanOrdersScreen({ navigation }: any) {
 
   const orders = ordersData?.data || [];
 
-  // Calculate totals for selected van
-  const totals = orders.reduce(
+  // Calculate totals for selected van (exclude cancelled)
+  const activeOrders = orders.filter((o: any) => o.status !== 'cancelled');
+  const totals = activeOrders.reduce(
     (acc: any, order: any) => ({
       count: acc.count + 1,
       amount: acc.amount + parseFloat(order.totalAmount || 0),
@@ -104,7 +107,7 @@ export default function VanOrdersScreen({ navigation }: any) {
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <View>
-            <Text className="text-2xl font-bold" style={{ color: colors.text }}>
+            <Text className="text-xl font-bold" style={{ color: colors.text }}>
               Orders by Van
             </Text>
             <Text className="text-xs" style={{ color: colors.muted }}>
@@ -185,87 +188,105 @@ export default function VanOrdersScreen({ navigation }: any) {
         </View>
       ) : (
         <>
-          {/* Stats Bar */}
-          <View className="flex-row gap-2 px-4 py-3">
-            <View
-              className="flex-1 rounded-xl p-3"
-              style={{
-                backgroundColor: colors.card,
-                borderWidth: 1,
-                borderColor: colors.border,
-              }}>
-              <Text className="text-xs" style={{ color: colors.muted }}>
-                Orders
+          {/* Stats Bar + View Toggle */}
+          <View className="px-4 py-3">
+            <View className="mb-3 flex-row items-center justify-between">
+              <Text className="text-sm font-semibold" style={{ color: colors.muted }}>
+                {orders.length} orders for {selectedVan}
               </Text>
-              <Text className="text-lg font-bold" style={{ color: colors.text }}>
-                {totals.count}
-              </Text>
+              <ViewToggle viewMode={viewMode} onToggle={setViewMode} />
             </View>
-            <View
-              className="flex-1 rounded-xl p-3"
-              style={{
-                backgroundColor: colors.card,
-                borderWidth: 1,
-                borderColor: colors.border,
-              }}>
-              <Text className="text-xs" style={{ color: colors.muted }}>
-                Total
-              </Text>
-              <Text className="text-lg font-bold" style={{ color: colors.primary }}>
-                {formatPrice(totals.amount)}
-              </Text>
-            </View>
-            <View
-              className="flex-1 rounded-xl p-3"
-              style={{
-                backgroundColor: colors.card,
-                borderWidth: 1,
-                borderColor: colors.border,
-              }}>
-              <Text className="text-xs" style={{ color: colors.muted }}>
-                To Collect
-              </Text>
-              <Text
-                className="text-lg font-bold"
-                style={{ color: totals.balance > 0 ? '#f59e0b' : colors.success }}>
-                {formatPrice(totals.balance)}
-              </Text>
+
+            <View className="flex-row gap-2">
+              <View
+                className="flex-1 rounded-xl p-3"
+                style={{
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  Active Orders
+                </Text>
+                <Text className="text-lg font-bold" style={{ color: colors.text }}>
+                  {totals.count}
+                </Text>
+              </View>
+              <View
+                className="flex-1 rounded-xl p-3"
+                style={{
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  Total
+                </Text>
+                <Text className="text-lg font-bold" style={{ color: colors.primary }}>
+                  {formatPrice(totals.amount)}
+                </Text>
+              </View>
+              <View
+                className="flex-1 rounded-xl p-3"
+                style={{
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  To Collect
+                </Text>
+                <Text
+                  className="text-lg font-bold"
+                  style={{ color: totals.balance > 0 ? '#f59e0b' : colors.success }}>
+                  {formatPrice(totals.balance)}
+                </Text>
+              </View>
             </View>
           </View>
 
-          {/* Orders List */}
-          <ScrollView
-            className="flex-1"
-            contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
-            refreshControl={
-              <RefreshControl
-                refreshing={isRefetching}
-                onRefresh={refetch}
-                colors={[colors.primary]}
-                tintColor={colors.primary}
-              />
-            }>
-            {orders.length === 0 ? (
-              <View className="items-center py-16">
-                <MaterialIcons name="receipt-long" size={48} color={colors.muted} />
-                <Text className="mt-4 text-center" style={{ color: colors.muted }}>
-                  No orders assigned to {selectedVan} for {formatDisplayDate(selectedDate)}
-                </Text>
-              </View>
-            ) : (
-              <View className="gap-3">
-                {orders.map((order: any, index: number) => (
-                  <VanOrderCard
-                    key={order.id}
-                    order={order}
-                    index={index + 1}
-                    colors={colors}
-                    onPress={() => handleViewOrder(order.id)}
-                  />
-                ))}
-              </View>
-            )}
-          </ScrollView>
+          {/* Orders List - Card or Table View */}
+          {viewMode === 'table' ? (
+            <OrderTableView
+              orders={orders}
+              onViewOrder={handleViewOrder}
+              showIndex={true}
+              compact={true}
+            />
+          ) : (
+            <ScrollView
+              className="flex-1"
+              contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefetching}
+                  onRefresh={refetch}
+                  colors={[colors.primary]}
+                  tintColor={colors.primary}
+                />
+              }>
+              {orders.length === 0 ? (
+                <View className="items-center py-16">
+                  <MaterialIcons name="receipt-long" size={48} color={colors.muted} />
+                  <Text className="mt-4 text-center" style={{ color: colors.muted }}>
+                    No orders assigned to {selectedVan} for {formatDisplayDate(selectedDate)}
+                  </Text>
+                </View>
+              ) : (
+                <View className="gap-3">
+                  {orders.map((order: any, index: number) => (
+                    <VanOrderCard
+                      key={order.id}
+                      order={order}
+                      index={index + 1}
+                      colors={colors}
+                      onPress={() => handleViewOrder(order.id)}
+                    />
+                  ))}
+                </View>
+              )}
+            </ScrollView>
+          )}
         </>
       )}
 
@@ -302,6 +323,7 @@ interface VanOrderCardProps {
 function VanOrderCard({ order, index, colors, onPress }: VanOrderCardProps) {
   const statusColor = getStatusColor(order.status);
   const itemCount = order.items?.length || 0;
+  const isCancelled = order.status === 'cancelled';
 
   return (
     <TouchableOpacity
@@ -309,9 +331,9 @@ function VanOrderCard({ order, index, colors, onPress }: VanOrderCardProps) {
       activeOpacity={0.7}
       className="rounded-xl p-4"
       style={{
-        backgroundColor: colors.card,
+        backgroundColor: isCancelled ? colors.error + '05' : colors.card,
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: isCancelled ? colors.error + '30' : colors.border,
       }}>
       {/* Header */}
       <View className="mb-2 flex-row items-center justify-between">
@@ -323,7 +345,9 @@ function VanOrderCard({ order, index, colors, onPress }: VanOrderCardProps) {
               {index}
             </Text>
           </View>
-          <Text className="font-bold" style={{ color: colors.primary }}>
+          <Text
+            className="font-bold"
+            style={{ color: isCancelled ? colors.muted : colors.primary }}>
             {order.orderNumber}
           </Text>
         </View>
@@ -336,7 +360,7 @@ function VanOrderCard({ order, index, colors, onPress }: VanOrderCardProps) {
 
       {/* Customer */}
       <View className="mb-3">
-        <Text className="font-semibold" style={{ color: colors.text }}>
+        <Text className="font-semibold" style={{ color: isCancelled ? colors.muted : colors.text }}>
           {order.customer?.businessName || 'Unknown'}
         </Text>
         <Text className="text-sm" style={{ color: colors.muted }}>
@@ -381,7 +405,14 @@ function VanOrderCard({ order, index, colors, onPress }: VanOrderCardProps) {
         className="flex-row items-center justify-between border-t pt-2"
         style={{ borderColor: colors.border }}>
         <View className="flex-row items-center gap-2">
-          {parseFloat(order.balanceAmount) > 0 ? (
+          {isCancelled ? (
+            <View className="flex-row items-center">
+              <MaterialIcons name="cancel" size={14} color={colors.error} />
+              <Text className="ml-1 text-xs font-medium" style={{ color: colors.error }}>
+                Cancelled
+              </Text>
+            </View>
+          ) : parseFloat(order.balanceAmount) > 0 ? (
             <View className="flex-row items-center">
               <MaterialIcons name="payments" size={14} color="#f59e0b" />
               <Text className="ml-1 text-xs font-medium" style={{ color: '#f59e0b' }}>
@@ -397,7 +428,12 @@ function VanOrderCard({ order, index, colors, onPress }: VanOrderCardProps) {
             </View>
           )}
         </View>
-        <Text className="font-bold" style={{ color: colors.text }}>
+        <Text
+          className="font-bold"
+          style={{
+            color: isCancelled ? colors.muted : colors.text,
+            textDecorationLine: isCancelled ? 'line-through' : 'none',
+          }}>
           {formatPrice(order.totalAmount)}
         </Text>
       </View>
