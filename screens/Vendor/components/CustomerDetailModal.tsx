@@ -15,13 +15,11 @@ import {
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
-import {
-  deleteCustomer,
-  fetchCustomerDetails,
-  fetchCustomerSummary,
-} from 'api/actions/customerActions';
+import { deleteCustomer, fetchCustomerSummary } from 'api/actions/customerActions';
 import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
 import CustomerOrderHistory from './CustomerOrderHistory';
+import OrderDetailModal from './OrderDetailModal'; // ADD THIS
+import PaymentModal from './PaymentModal'; // ADD THIS
 import {
   Customer,
   CustomerDetailResponse,
@@ -32,6 +30,7 @@ import {
   formatDate,
 } from 'types/customer.types';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native'; // ADD THIS
 
 const { height } = Dimensions.get('window');
 
@@ -50,8 +49,14 @@ export default function CustomerDetailModal({
 }: CustomerDetailModalProps) {
   const { colors } = useThemeContext();
   const queryClient = useQueryClient();
+  const navigation = useNavigation<any>();
   const slideAnim = useRef(new Animated.Value(height)).current;
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
+  // ADD: Order detail modal state
+  const [orderDetailVisible, setOrderDetailVisible] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
 
   // Fetch customer details
   const { data, isLoading, error } = useQuery<CustomerDetailResponse>({
@@ -94,6 +99,34 @@ export default function CustomerDetailModal({
       }).start();
     }
   }, [visible, slideAnim]);
+
+  // ADD: Order handlers
+  const handleViewOrder = (orderId: number) => {
+    setSelectedOrderId(orderId);
+    setOrderDetailVisible(true);
+  };
+
+  const handleCloseOrderDetail = () => {
+    setOrderDetailVisible(false);
+    setSelectedOrderId(null);
+  };
+
+  const handleEditOrder = (orderId: number) => {
+    handleCloseOrderDetail();
+    onClose();
+    setTimeout(() => {
+      navigation.navigate('CreateOrderScreen', { orderId });
+    }, 300);
+  };
+
+  const handleRecordPayment = (orderId: number) => {
+    setSelectedOrderId(orderId);
+    setPaymentModalVisible(true);
+  };
+
+  const handleClosePaymentModal = () => {
+    setPaymentModalVisible(false);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -358,9 +391,13 @@ export default function CustomerDetailModal({
                   </SectionCard>
                 )}
 
-                {/* Order History */}
+                {/* Order History - NOW WITH onViewOrder */}
                 <SectionCard title="Order History" icon="receipt-long" colors={colors}>
-                  <CustomerOrderHistory customerId={customerId!} maxOrders={5} />
+                  <CustomerOrderHistory
+                    customerId={customerId!}
+                    maxOrders={5}
+                    onViewOrder={handleViewOrder} // ADD THIS
+                  />
                 </SectionCard>
 
                 {/* Spacer for bottom buttons */}
@@ -414,6 +451,22 @@ export default function CustomerDetailModal({
             </View>
           )}
         </Animated.View>
+
+        {/* ADD: Order Detail Modal */}
+        <OrderDetailModal
+          visible={orderDetailVisible}
+          orderId={selectedOrderId}
+          onClose={handleCloseOrderDetail}
+          onEdit={handleEditOrder}
+          onRecordPayment={handleRecordPayment}
+        />
+
+        {/* ADD: Payment Modal */}
+        <PaymentModal
+          visible={paymentModalVisible}
+          orderId={selectedOrderId}
+          onClose={handleClosePaymentModal}
+        />
       </SafeAreaView>
     </Modal>
   );
