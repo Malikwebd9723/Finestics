@@ -1,10 +1,10 @@
 // screens/Vendor/components/CustomerOrderHistory.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
-import { fetchCustomerOrders } from 'api/actions/orderActions';
+import { fetchCustomerOrders } from 'api/actions/customerActions';
 import {
   formatPrice,
   formatShortDate,
@@ -27,21 +27,25 @@ export default function CustomerOrderHistory({
   maxOrders = 5,
 }: CustomerOrderHistoryProps) {
   const { colors } = useThemeContext();
-  const navigation = useNavigation();
-  // Fetch customer orders
+  const navigation = useNavigation<any>();
+
+  // Fetch customer orders using correct endpoint
   const { data, isLoading, error } = useQuery({
-    queryKey: ['customerOrders', customerId],
+    queryKey: ['customerOrderHistory', customerId, maxOrders],
     queryFn: () => fetchCustomerOrders(customerId, { limit: maxOrders }),
     enabled: !!customerId,
   });
 
-  const orders = data?.data?.orders || [];
-  const customer = data?.data?.customer;
+  // Extract data - adjust based on actual API response structure
+  const responseData = data?.data;
+  const orders = responseData?.orders || [];
+  const stats = responseData?.stats;
+  const pagination = responseData?.pagination;
+  const totalOrders = stats?.totalOrders || pagination?.total || orders.length;
 
-    const handleViewCustomerOrders = () => {
+  const handleViewAllOrders = () => {
     navigation.navigate('CustomerOrdersScreen', {
-      customer: customer,
-      openOrdersModal: true,
+      customerId: customerId,
     });
   };
 
@@ -77,26 +81,37 @@ export default function CustomerOrderHistory({
   return (
     <View>
       {/* Stats Summary */}
-      {customer && (
+      {stats && (
         <View className="mb-4 flex-row gap-2">
-          <View className="flex-1 rounded-lg p-3" style={{ backgroundColor: colors.background }}>
+          <View className="flex-1 rounded-lg p-3" style={{ backgroundColor: colors.card }}>
             <Text className="text-xs" style={{ color: colors.muted }}>
               Total Orders
             </Text>
             <Text className="text-lg font-bold" style={{ color: colors.text }}>
-              {data?.data?.totalItems || orders.length}
+              {stats.totalOrders || totalOrders}
             </Text>
           </View>
-          <View className="flex-1 rounded-lg p-3" style={{ backgroundColor: colors.background }}>
+          <View className="flex-1 rounded-lg p-3" style={{ backgroundColor: colors.card }}>
+            <Text className="text-xs" style={{ color: colors.muted }}>
+              Total Spent
+            </Text>
+            <Text className="text-lg font-bold" style={{ color: colors.primary }}>
+              {formatPrice(stats.totalSpent || 0)}
+            </Text>
+          </View>
+          <View className="flex-1 rounded-lg p-3" style={{ backgroundColor: colors.card }}>
             <Text className="text-xs" style={{ color: colors.muted }}>
               Balance
             </Text>
             <Text
               className="text-lg font-bold"
               style={{
-                color: parseFloat(customer.currentBalance) > 0 ? colors.error : colors.success,
+                color:
+                  parseFloat(stats.totalBalance || stats.totalOutstanding || 0) > 0
+                    ? colors.error
+                    : colors.success,
               }}>
-              {formatPrice(customer.currentBalance)}
+              {formatPrice(stats.totalBalance || stats.totalOutstanding || 0)}
             </Text>
           </View>
         </View>
@@ -110,7 +125,7 @@ export default function CustomerOrderHistory({
             onPress={() => onViewOrder?.(order.id)}
             activeOpacity={0.7}
             className="flex-row items-center rounded-lg p-3"
-            style={{ backgroundColor: colors.background }}>
+            style={{ backgroundColor: colors.card }}>
             {/* Order Info */}
             <View className="flex-1">
               <View className="mb-1 flex-row items-center gap-2">
@@ -132,7 +147,7 @@ export default function CustomerOrderHistory({
                   {formatShortDate(order.orderDate)}
                 </Text>
                 <Text className="text-xs" style={{ color: colors.muted }}>
-                  {order.items?.length || 0} items
+                  {order.items?.length || order.itemCount || 0} items
                 </Text>
                 <View
                   className="rounded px-1.5 py-0.5"
@@ -151,7 +166,7 @@ export default function CustomerOrderHistory({
               <Text className="font-bold" style={{ color: colors.text }}>
                 {formatPrice(order.totalAmount)}
               </Text>
-              {parseFloat(order.balanceAmount) > 0 && (
+              {parseFloat(order.balanceAmount || 0) > 0 && (
                 <Text className="text-xs" style={{ color: colors.error }}>
                   Due: {formatPrice(order.balanceAmount)}
                 </Text>
@@ -172,10 +187,10 @@ export default function CustomerOrderHistory({
       </View>
 
       {/* View All Link */}
-      {data?.data?.totalItems > maxOrders && (
-        <TouchableOpacity className="mt-3 items-center py-2" onPress={handleViewCustomerOrders}>
+      {totalOrders > maxOrders && (
+        <TouchableOpacity className="mt-3 items-center py-2" onPress={handleViewAllOrders}>
           <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
-            View All {data.data.totalItems} Orders →
+            View All {totalOrders} Orders →
           </Text>
         </TouchableOpacity>
       )}

@@ -15,7 +15,11 @@ import {
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
-import { deleteCustomer, fetchCustomerDetails } from 'api/actions/customerActions';
+import {
+  deleteCustomer,
+  fetchCustomerDetails,
+  fetchCustomerSummary,
+} from 'api/actions/customerActions';
 import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
 import CustomerOrderHistory from './CustomerOrderHistory';
 import {
@@ -51,8 +55,8 @@ export default function CustomerDetailModal({
 
   // Fetch customer details
   const { data, isLoading, error } = useQuery<CustomerDetailResponse>({
-    queryKey: ['customers', customerId],
-    queryFn: () => fetchCustomerDetails(customerId!),
+    queryKey: ['customerSummary', customerId],
+    queryFn: () => fetchCustomerSummary(customerId!),
     enabled: !!customerId && visible,
   });
 
@@ -244,11 +248,33 @@ export default function CustomerDetailModal({
                   <InfoRow
                     icon="account-balance"
                     label="Current Balance"
-                    value={formatCurrency(customer.currentBalance)}
+                    value={formatCurrency(
+                      customer.stats?.totalOutstanding || customer.currentBalance || 0
+                    )}
                     colors={colors}
-                    highlight={parseFloat(customer.currentBalance) > 0}
+                    highlight={
+                      parseFloat(
+                        customer.stats?.totalOutstanding || customer.currentBalance || '0'
+                      ) > 0
+                    }
                     highlightColor={colors.error}
                   />
+                  {customer.stats && (
+                    <>
+                      <InfoRow
+                        icon="receipt-long"
+                        label="Total Orders"
+                        value={customer.stats.totalOrders?.toString() || '0'}
+                        colors={colors}
+                      />
+                      <InfoRow
+                        icon="payments"
+                        label="Total Spent"
+                        value={formatCurrency(customer.stats.totalSpent || 0)}
+                        colors={colors}
+                      />
+                    </>
+                  )}
                 </SectionCard>
 
                 {/* Address Information */}
