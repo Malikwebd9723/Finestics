@@ -165,24 +165,37 @@ export default function OrdersList({
       };
     }
     const orders = data.data;
+
+    // Exclude cancelled for financial calculations
+    const activeOrders = orders.filter((o) => o.status !== 'cancelled');
+
     return {
       total: orders.length,
       today: orders.filter((o) => isToday(o.orderDate)).length,
+      // Status counts (include all)
       pending: orders.filter((o) => o.status === 'pending').length,
       confirmed: orders.filter((o) => o.status === 'confirmed').length,
       collected: orders.filter((o) => o.status === 'collected').length,
       delivered: orders.filter((o) => o.status === 'delivered').length,
       completed: orders.filter((o) => o.status === 'completed').length,
       cancelled: orders.filter((o) => o.status === 'cancelled').length,
-      totalAmount: orders.reduce((sum, o) => sum + parseFloat((o.totalAmount as string) || '0'), 0),
-      paidAmount: orders.reduce((sum, o) => sum + parseFloat((o.paidAmount as string) || '0'), 0),
-      balanceAmount: orders.reduce(
+      // Financial stats (exclude cancelled)
+      totalAmount: activeOrders.reduce(
+        (sum, o) => sum + parseFloat((o.totalAmount as string) || '0'),
+        0
+      ),
+      paidAmount: activeOrders.reduce(
+        (sum, o) => sum + parseFloat((o.paidAmount as string) || '0'),
+        0
+      ),
+      balanceAmount: activeOrders.reduce(
         (sum, o) => sum + parseFloat((o.balanceAmount as string) || '0'),
         0
       ),
-      unpaidOrders: orders.filter((o) => o.paymentStatus === 'unpaid').length,
-      partialOrders: orders.filter((o) => o.paymentStatus === 'partial').length,
-      paidOrders: orders.filter((o) => o.paymentStatus === 'paid').length,
+      // Payment status counts (exclude cancelled)
+      unpaidOrders: activeOrders.filter((o) => o.paymentStatus === 'unpaid').length,
+      partialOrders: activeOrders.filter((o) => o.paymentStatus === 'partial').length,
+      paidOrders: activeOrders.filter((o) => o.paymentStatus === 'paid').length,
     };
   }, [data]);
 

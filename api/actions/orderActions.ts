@@ -279,3 +279,11 @@ export const fetchCustomerLastOrder = async (customerId: number) => {
   const res = await apiRequest(`/vendor-customers/${customerId}/last-order`, 'GET');
   return res.data;
 };
+
+/**
+ * Delete order (soft delete - only cancelled/pending)
+ */
+export const deleteOrder = async (orderId: number) => {
+  const res = await apiRequest(`${BASE_PATH}/${orderId}`, 'DELETE');
+  return res.data;
+};
