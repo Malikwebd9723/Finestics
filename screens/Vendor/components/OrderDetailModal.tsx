@@ -43,6 +43,9 @@ import {
   canReopenOrder,
 } from 'types/order.types';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import { copyAsync, documentDirectory } from 'expo-file-system/legacy';
 
 const { height } = Dimensions.get('window');
 
@@ -53,6 +56,153 @@ interface OrderDetailModalProps {
   onEdit: (orderId: number) => void;
   onRecordPayment: (orderId: number) => void;
 }
+
+
+const generateInvoiceHTML = (order: any) => {
+  const formatPrice = (price: number) => `£${Number(price).toFixed(2)}`;
+  const itemsRows = order.items
+    ?.map(
+      (item: any) => `
+    <tr>
+      <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${item.productName}</td>
+      <td style="padding: 8px; text-align: center; border-bottom: 1px solid #e5e7eb;">${item.orderedQuantity} ${item.unit}</td>
+      <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e7eb;">${formatPrice(item.sellingPrice)}</td>
+      <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e7eb;">${formatPrice(item.subtotal)}</td>
+    </tr>
+  `
+    )
+    .join('');
+
+  return `
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
+          .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #1f2937; padding-bottom: 20px; }
+          .company-info h1 { margin: 0; font-size: 24px; color: #1f2937; }
+          .company-details { font-size: 12px; color: #666; margin-top: 5px; }
+          .invoice-title { font-size: 48px; font-weight: bold; color: #1f2937; }
+          .invoice-meta { font-size: 12px; margin-top: 20px; }
+          .bill-to { background: #1f2937; color: white; padding: 15px; margin: 20px 0; border-radius: 4px; }
+          .bill-to h3 { margin: 0 0 10px 0; }
+          .bill-to p { margin: 5px 0; font-size: 13px; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          thead { background: #1f2937; color: white; }
+          th { padding: 12px; text-align: left; font-weight: bold; }
+          td { padding: 8px; }
+          .text-right { text-align: right; }
+          .text-center { text-align: center; }
+          .summary { margin-top: 30px; }
+          .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+          .summary-row.total { border-top: 2px solid #1f2937; border-bottom: 2px solid #1f2937; font-weight: bold; font-size: 18px; padding: 12px 0; background: #f3f4f6; }
+          .footer { font-size: 11px; color: #666; margin-top: 30px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 15px; }
+          .footer p { margin: 3px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="company-info">
+            <h1>Sunshine Vegetables Ltd</h1>
+            <div class="company-details">
+              <p>Stand 12, New Spitalfields Market</p>
+              <p>Leyton, London E10 5SL</p>
+              <p>📞 07876212579</p>
+              <p>📧 info@sunshinevegetables.co.uk</p>
+              <p>Reg No: 15476589, VAT: 468769910</p>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div class="invoice-title">INVOICE</div>
+          </div>
+        </div>
+
+        <div class="invoice-meta">
+          <p><strong>Date:</strong> ${formatDateTime(order.orderDate)}</p>
+          <p><strong>Invoice No:</strong> ${order.orderNumber}</p>
+          <p><strong>Invoice Type:</strong> ${order.invoiceType || 'credit'}</p>
+        </div>
+
+        <div class="bill-to">
+          <h3>BILL TO: ${order.customer?.businessName || 'N/A'}</h3>
+          <p>Contact: ${order.customer?.contactPerson || 'N/A'} • ${order.customer?.phone || 'N/A'}</p>
+          ${order.deliveryAddress ? `<p>${order.deliveryAddress}</p>` : ''}
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th style="text-align: center;">Quantity</th>
+              <th style="text-align: right;">Unit Price</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsRows}
+          </tbody>
+        </table>
+
+        <div class="summary">
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <span>${formatPrice(order.subtotal)}</span>
+          </div>
+          <div class="summary-row">
+            <span>Delivery Fee</span>
+            <span>${formatPrice(order.deliveryFee)}</span>
+          </div>
+          ${order.discount > 0 ? `<div class="summary-row"><span>Discount</span><span>-${formatPrice(order.discount)}</span></div>` : ''}
+          <div class="summary-row">
+            <span>VAT @ %</span>
+            <span>${formatPrice(0)}</span>
+          </div>
+          <div class="summary-row total">
+            <span>TOTAL</span>
+            <span>${formatPrice(order.totalAmount)}</span>
+          </div>
+        </div>
+
+        ${order.paymentStatus !== 'paid' ? `
+          <div class="summary" style="border-top: 1px solid #e5e7eb; padding-top: 15px;">
+            <div class="summary-row">
+              <span>Paid Amount</span>
+              <span style="color: #10b981;">${formatPrice(order.paidAmount)}</span>
+            </div>
+            <div class="summary-row">
+              <span>Balance Due</span>
+              <span style="color: #ef4444;">${formatPrice(order.balanceAmount)}</span>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="footer">
+          <p>NO COMPLAINTS OR RETURNS CONSIDERED AFTER 24 HOURS<br>Bank: Metro</p>
+          <p>Acc: 55818878 | Sort Code: 23-05-80</p>
+          <p style="margin-top: 10px; color: #999;">Generated on ${new Date().toLocaleDateString()}</p>
+        </div>
+      </body>
+    </html>
+  `;
+};
+
+const handleGenerateAndShareInvoice = async (order: any) => {
+  try {
+    const html = generateInvoiceHTML(order);
+    const { uri } = await Print.printToFileAsync({ html });
+    
+    const filename = `${order.customer?.businessName}-${order.orderNumber}-${formatDateTime(order.orderDate).replace(/\//g, '-')}.pdf`;
+    const newUri = `${documentDirectory}${filename}`;
+    
+    await copyAsync({ from: uri, to: newUri });
+    await Sharing.shareAsync(newUri, { mimeType: 'application/pdf', dialogTitle: filename });
+  } catch (error) {
+    Alert.alert('Error', 'Failed to generate invoice');
+    console.error(error);
+  }
+};
+
+
 
 export default function OrderDetailModal({
   visible,
@@ -492,8 +642,17 @@ export default function OrderDetailModal({
               {/* Action Buttons */}
               <View className="border-t px-5 py-4" style={{ borderColor: colors.border }}>
                 {/* Primary Actions Row */}
+                {/* Generate Invoice Button */}
+
                 <View className="mb-3 flex-row gap-3">
                   {/* Record Payment - Always show (allows adjustments) */}
+                  <TouchableOpacity
+                    onPress={() => handleGenerateAndShareInvoice(order)}
+                    className="flex-1 flex-row items-center justify-center rounded-xl py-3"
+                    style={{ backgroundColor: colors.primary }}>
+                    <MaterialIcons name="picture-as-pdf" size={18} color="#fff" />
+                    <Text className="ml-2 text-sm font-bold text-white">Invoice</Text>
+                  </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => onRecordPayment(orderId!)}
                     className="flex-1 flex-row items-center justify-center rounded-xl py-3"
