@@ -16,11 +16,7 @@
           "photosPermission": "Allow Finestics to access your photos.",
           "savePhotosPermission": "Allow Finestics to save images to your gallery.",
           "isAccessMediaLocationEnabled": true,
-          "permissions": [
-            "READ_MEDIA_IMAGES",
-            "READ_MEDIA_VIDEO",
-            "WRITE_EXTERNAL_STORAGE"
-          ]
+          "permissions": ["READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO", "WRITE_EXTERNAL_STORAGE"]
         }
       ]
     ],
@@ -32,13 +28,12 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
