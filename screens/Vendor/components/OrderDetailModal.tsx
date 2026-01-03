@@ -25,13 +25,10 @@ import {
 } from 'api/actions/orderActions';
 import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
 import {
-  Order,
   OrderDetailResponse,
   OrderStatus,
-  ORDER_STATUSES,
   formatPrice,
   formatDate,
-  formatDateTime,
   getStatusColor,
   getStatusLabel,
   getPaymentStatusColor,
@@ -41,7 +38,6 @@ import {
   getNextStatuses,
   canUpdateOrder,
   canCancelOrder,
-  canReopenOrder,
   canDeleteOrder,
 } from 'types/order.types';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -120,7 +116,7 @@ const generateInvoiceHTML = (order: any) => {
         </div>
 
         <div class="invoice-meta">
-          <p><strong>Date:</strong> ${formatDateTime(order.orderDate)}</p>
+          <p><strong>Date:</strong> ${formatDate(order.orderDate)}</p>
           <p><strong>Invoice No:</strong> ${order.orderNumber}</p>
           <p><strong>Invoice Type:</strong> ${order.invoiceType || 'credit'}</p>
         </div>
@@ -193,7 +189,7 @@ const handleGenerateAndShareInvoice = async (order: any) => {
     const html = generateInvoiceHTML(order);
     const { uri } = await Print.printToFileAsync({ html });
     
-    const filename = `${order.customer?.businessName}-${order.orderNumber}-${formatDateTime(order.orderDate).replace(/\//g, '-')}.pdf`;
+    const filename = `${order.customer?.businessName}-${order.orderNumber}-${formatDate(order.orderDate).replace(/\//g, '-')}.pdf`;
     const newUri = `${documentDirectory}${filename}`;
     
     await copyAsync({ from: uri, to: newUri });
