@@ -77,10 +77,10 @@ export default function Statistics() {
   const isRefetching = statsRefetching;
 
   const periodLabels: Record<Period, string> = {
-    week: 'This Week',
-    month: 'This Month',
-    quarter: 'This Quarter',
-    year: 'This Year',
+    week: 'Week',
+    month: 'Month',
+    quarter: 'Quarter',
+    year: 'Year',
   };
 
   if (isLoading && !stats) {
