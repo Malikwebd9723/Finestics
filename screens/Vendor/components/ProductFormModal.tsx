@@ -240,8 +240,9 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : "height"}
-        className="flex-1">
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         <SafeAreaView className="flex-1 justify-end bg-black/50">
           <View
             className="rounded-t-3xl"

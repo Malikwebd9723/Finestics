@@ -58,3 +58,29 @@ export const updateCustomerStatus = async (customerId: number, status: string) =
   const res = await apiRequest(`/vendor-customers/${customerId}/status`, 'PATCH', { status });
   return res.data;
 };
+
+/**
+ * Fetch customer details with order summary (stats)
+ */
+export const fetchCustomerSummary = async (customerId: number) => {
+  const res = await apiRequest(`/vendor-customers/${customerId}/summary`, 'GET');
+  return res.data;
+};
+
+/**
+ * Fetch customer orders
+ */
+export const fetchCustomerOrders = async (
+  customerId: number,
+  params?: { status?: string; limit?: number; page?: number }
+) => {
+  const queryParams = new URLSearchParams();
+  if (params?.status) queryParams.append('status', params.status);
+  if (params?.limit) queryParams.append('limit', params.limit.toString());
+  if (params?.page) queryParams.append('page', params.page.toString());
+
+  const query = queryParams.toString();
+  const url = `/vendor-customers/${customerId}/orders${query ? `?${query}` : ''}`;
+  const res = await apiRequest(url, 'GET');
+  return res.data;
+};

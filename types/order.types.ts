@@ -2,6 +2,14 @@
 
 // ==================== ORDER ====================
 
+// Currency Configuration
+export const CURRENCY = {
+  code: 'GBP',
+  symbol: '£',
+  position: 'prefix' as const,
+  decimalPlaces: 2,
+};
+
 export interface Order {
   id: number;
   vendorId: number;
@@ -286,9 +294,15 @@ export interface CartItem {
 
 // ==================== HELPER FUNCTIONS ====================
 
-export const formatPrice = (value: string | number): string => {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
-  return isNaN(num) ? '0' : num.toLocaleString();
+// Format price with currency symbol
+export const formatPrice = (value: string | number | null | undefined): string => {
+  const num = parseFloat(String(value || 0));
+  const formatted = num.toLocaleString('en-GB', {
+    minimumFractionDigits: CURRENCY.decimalPlaces,
+    maximumFractionDigits: CURRENCY.decimalPlaces,
+  });
+
+  return `${CURRENCY.symbol}${formatted}`;
 };
 
 export const formatDate = (dateString: string | null): string => {
