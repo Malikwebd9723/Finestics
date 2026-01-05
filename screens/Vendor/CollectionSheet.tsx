@@ -108,8 +108,11 @@ export default function CollectionSheet() {
   // Share collection sheet
   const handleShare = async () => {
     if (!collectionSheet?.items?.length) return;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-    let text = `📋 Collection Sheet - ${formatDisplayDate(selectedDate)}\n`;
+    let text = `📋 Collection Sheet - ${dateStr} , ${timeStr}\n`;
     text += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
     collectionSheet.items.forEach((item, index) => {

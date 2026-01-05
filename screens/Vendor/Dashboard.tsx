@@ -252,6 +252,43 @@ export default function Dashboard() {
         </View>
       </View>
 
+{/* Completed Orders */}
+<View className="px-4 py-3">
+  <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
+    COMPLETED ORDERS
+  </Text>
+  <View
+    className="rounded-xl p-4"
+    style={{
+      backgroundColor: colors.success + '10',
+      borderWidth: 1,
+      borderColor: colors.success + '30',
+    }}>
+    <TouchableOpacity onPress={() => navigation.navigate('Orders', { statusFilter: 'completed' })} className="flex-row items-center justify-between">
+      <View className="flex-1">
+        <View className="flex-row items-center mb-2">
+          <View
+            className="rounded-full p-2 mr-3"
+            style={{ backgroundColor: colors.success + '20' }}>
+            <MaterialIcons name="check-circle" size={20} color={colors.success} />
+          </View>
+          <View>
+            <Text className="text-2xl font-bold" style={{ color: colors.success }}>
+              {stats?.ordersByStatus.completed || 0}
+            </Text>
+            <Text className="text-xs" style={{ color: colors.muted }}>
+              Orders completed today
+            </Text>
+          </View>
+        </View>
+      </View>
+      <View>
+        <MaterialIcons name="chevron-right" size={24} color={colors.muted} />
+      </View>
+    </TouchableOpacity>
+  </View>
+</View>
+
       {/* Period Summary */}
       <View className="px-4 py-3">
         <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>

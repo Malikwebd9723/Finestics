@@ -1,8 +1,8 @@
 // screens/Vendor/OrdersScreen.tsx
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Pressable, Text, TouchableOpacity } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useThemeContext } from 'context/ThemeProvider';
 import SearchBar from 'components/SearchBar';
 import OrdersList from './components/OrdersList';
@@ -35,6 +35,18 @@ export default function Orders() {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState<Set<number>>(new Set());
 
+
+  // Add this after the useState declarations
+const route = useRoute<any>();
+
+useEffect(() => {
+  if (route.params?.statusFilter) {
+    setStatusFilter(route.params.statusFilter);
+  }
+  if (route.params?.paymentFilter) {
+    setPaymentFilter(route.params.paymentFilter);
+  }
+}, [route.params]);
   // Handlers
   const handleCreateOrder = () => {
     navigation.navigate('CreateOrderScreen');
