@@ -1,4 +1,4 @@
-// navigation/RootNavigator.jsx
+// navigation/RootNavigator.tsx
 
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
@@ -6,35 +6,69 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeContext } from 'context/ThemeProvider';
 import { useAuth } from 'context/AuthContext';
-import { apiRequest } from 'api/clients';
+import { getOnboardingStatus } from 'api/actions/onboardingActions';
 
-// Import DrawerNavigator instead of TabNavigator
+// Import DrawerNavigator
 import DrawerNavigator from './DrawerNavigator';
-import Login from '../screens/Login';
-import Signup from '../screens/Signup';
 
-import RoleSelectionScreen from 'screens/Onboarding/RoleSelectionScreen';
+// Auth Screens
+import LoginScreen from 'screens/LoginScreen';
+import SignupScreen from 'screens/SignupScreen';
+
+// Onboarding Screens
 import BusinessInfoScreen from 'screens/Onboarding/BusinessInfoScreen';
 import BusinessAddressScreen from 'screens/Onboarding/BusinessAddressScreen';
-import SubscriptionScreen from 'screens/Onboarding/SubscriptionScreen';
 import SubmitOnboardingScreen from 'screens/Onboarding/SubmitOnboardingScreen';
 import PendingVerificationScreen from 'screens/Onboarding/PendingVerificationScreen';
+
+// Other Screens
 import CategoryDetails from 'screens/Admin/CategoryDetails';
 import CreateOrderScreen from 'screens/Vendor/CreateOrderScreen';
-import CollectionSheet from '../screens/Vendor/CollectionSheet';
+import CollectionSheet from 'screens/Vendor/CollectionSheet';
 import CustomerOrdersScreen from 'screens/Vendor/CustomerOrdersScreen';
 import VanOrdersScreen from 'screens/Vendor/VanOrdersScreen';
 
-const Stack = createNativeStackNavigator();
-const OnboardingStack = createNativeStackNavigator();
+// ==================== TYPE DEFINITIONS ====================
+
+type OnboardingScreen =
+  | 'BusinessInfoScreen'
+  | 'BusinessAddressScreen'
+  | 'SubmitOnboardingScreen'
+  | 'PendingVerificationScreen';
+
+type TargetRoute = 'Login' | 'Onboarding' | 'Main';
+
+export type RootStackParamList = {
+  Login: undefined;
+  Signup: undefined;
+  Onboarding: { screen?: OnboardingScreen } | undefined;
+  Main: undefined;
+  CategoryDetails: { categoryId: number };
+  CreateOrderScreen: { orderId?: number } | undefined;
+  CollectionSheet: undefined;
+  CustomerOrdersScreen: { customerId: number };
+  VanOrdersScreen: { vanName: string };
+};
+
+export type OnboardingStackParamList = {
+  BusinessInfoScreen: undefined;
+  BusinessAddressScreen: undefined;
+  SubmitOnboardingScreen: undefined;
+  PendingVerificationScreen: undefined;
+};
+
+// ==================== STACKS ====================
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
+
+// ==================== ONBOARDING NAVIGATOR ====================
 
 function OnboardingNavigator() {
   return (
     <OnboardingStack.Navigator screenOptions={{ headerShown: false }}>
-      <OnboardingStack.Screen name="RoleSelectionScreen" component={RoleSelectionScreen} />
       <OnboardingStack.Screen name="BusinessInfoScreen" component={BusinessInfoScreen} />
       <OnboardingStack.Screen name="BusinessAddressScreen" component={BusinessAddressScreen} />
-      <OnboardingStack.Screen name="SubscriptionScreen" component={SubscriptionScreen} />
       <OnboardingStack.Screen name="SubmitOnboardingScreen" component={SubmitOnboardingScreen} />
       <OnboardingStack.Screen
         name="PendingVerificationScreen"
@@ -44,48 +78,44 @@ function OnboardingNavigator() {
   );
 }
 
+// ==================== ROOT NAVIGATOR ====================
+
 export default function RootNavigator() {
   const { colors } = useThemeContext();
   const { user, loading: authLoading } = useAuth();
 
   const [initializing, setInitializing] = useState(true);
-  const [targetRoute, setTargetRoute] = useState('Login');
-  const [targetParams, setTargetParams] = useState(undefined);
+  const [targetRoute, setTargetRoute] = useState<TargetRoute>('Login');
+  const [targetParams, setTargetParams] = useState<{ screen?: OnboardingScreen } | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     const determineRoute = async () => {
       setInitializing(true);
 
-      // Check if user exists in storage
-      const accessToken = await AsyncStorage.getItem('accessToken');
-      const profileStatus = await AsyncStorage.getItem('profileStatus');
-
-      if (!user || !accessToken) {
-        setTargetRoute('Login');
-        setTargetParams(undefined);
-        setInitializing(false);
-        return;
-      }
-
-      // Main
-      if (user.role === 'admin') {
-        setTargetRoute('Main');
-        setTargetParams(undefined);
-        setInitializing(false);
-        return;
-      }
-
-      // Check onboarding status
       try {
-        const res = await apiRequest('/onboarding/status', 'GET');
-        if (!res.success) {
+        // Check if user exists in storage
+        const accessToken = await AsyncStorage.getItem('accessToken');
+        const profileStatus = await AsyncStorage.getItem('profileStatus');
+
+        // No user or token -> Login
+        if (!user || !accessToken) {
           setTargetRoute('Login');
           setTargetParams(undefined);
           setInitializing(false);
           return;
         }
 
-        // If profile is approved, user should go to Main
+        // Admin goes straight to Main
+        if (user.role === 'super_admin') {
+          setTargetRoute('Main');
+          setTargetParams(undefined);
+          setInitializing(false);
+          return;
+        }
+
+        // Profile is active -> Main app
         if (profileStatus === 'active') {
           setTargetRoute('Main');
           setTargetParams(undefined);
@@ -93,24 +123,28 @@ export default function RootNavigator() {
           return;
         }
 
-        const onboardingCompetionStatus = res.data.data.onboardingCompleted;
-        const steps = res.data.data.steps;
+        // Fetch onboarding status from API
+        const response = await getOnboardingStatus();
 
-        // If onboarding is not completed, check which step to show
-        if (!onboardingCompetionStatus) {
-          // Determine which onboarding step the user should see
-          let nextScreen = 'RoleSelectionScreen';
+        if (!response.success || !response.data?.data) {
+          setTargetRoute('Login');
+          setTargetParams(undefined);
+          setInitializing(false);
+          return;
+        }
 
-          if (!steps.roleSelected) {
-            nextScreen = 'RoleSelectionScreen';
-          } else if (!steps.businessInfoCompleted) {
+        const { onboardingCompleted, steps, profileStatus: apiProfileStatus } = response.data.data;
+
+        // If onboarding is not completed, determine which step to show
+        if (!onboardingCompleted) {
+          let nextScreen: OnboardingScreen = 'BusinessInfoScreen';
+
+          if (!steps.businessInfoCompleted) {
             nextScreen = 'BusinessInfoScreen';
           } else if (!steps.addressCompleted) {
             nextScreen = 'BusinessAddressScreen';
-          } else if (!steps.paymentPlanSelected) {
-            nextScreen = 'SubscriptionScreen';
           } else {
-            // All steps completed but onboarding not marked complete
+            // All steps done but not submitted
             nextScreen = 'SubmitOnboardingScreen';
           }
 
@@ -120,15 +154,24 @@ export default function RootNavigator() {
           return;
         }
 
-        // Onboarding is completed, check if pending verification
-        if (profileStatus === 'pending') {
+        // Onboarding completed but pending approval
+        if (apiProfileStatus === 'pending' || profileStatus === 'pending') {
           setTargetRoute('Onboarding');
           setTargetParams({ screen: 'PendingVerificationScreen' });
           setInitializing(false);
           return;
         }
 
-        // Default if everything is complete
+        // Profile is rejected - allow editing
+        if (apiProfileStatus === 'rejected') {
+          setTargetRoute('Onboarding');
+          setTargetParams({ screen: 'BusinessInfoScreen' });
+          setInitializing(false);
+          return;
+        }
+
+        // Default: go to Main
+        setTargetRoute('Main');
         setTargetParams(undefined);
         setInitializing(false);
       } catch (error) {
@@ -145,7 +188,8 @@ export default function RootNavigator() {
     }
   }, [authLoading, user]);
 
-  // Show loader while auth or route is loading
+  // ==================== LOADING STATE ====================
+
   if (authLoading || initializing) {
     return (
       <View
@@ -160,14 +204,15 @@ export default function RootNavigator() {
     );
   }
 
+  // ==================== MAIN APP STACK ====================
+
   if (targetRoute === 'Main') {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {/* Replace TabNavigator with DrawerNavigator */}
         <Stack.Screen name="Main" component={DrawerNavigator} />
         <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="Signup" component={Signup} />
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="CategoryDetails" component={CategoryDetails} />
         <Stack.Screen name="CreateOrderScreen" component={CreateOrderScreen} />
         <Stack.Screen name="CollectionSheet" component={CollectionSheet} />
@@ -177,6 +222,8 @@ export default function RootNavigator() {
     );
   }
 
+  // ==================== ONBOARDING STACK ====================
+
   if (targetRoute === 'Onboarding') {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -185,21 +232,20 @@ export default function RootNavigator() {
           component={OnboardingNavigator}
           initialParams={targetParams}
         />
-        {/* Replace TabNavigator with DrawerNavigator */}
         <Stack.Screen name="Main" component={DrawerNavigator} />
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="Signup" component={Signup} />
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Signup" component={SignupScreen} />
       </Stack.Navigator>
     );
   }
 
-  // Default: Login (and Signup)
+  // ==================== AUTH STACK (DEFAULT) ====================
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Login" component={Login} />
-      <Stack.Screen name="Signup" component={Signup} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Signup" component={SignupScreen} />
       <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
-      {/* Replace TabNavigator with DrawerNavigator */}
       <Stack.Screen name="Main" component={DrawerNavigator} />
     </Stack.Navigator>
   );

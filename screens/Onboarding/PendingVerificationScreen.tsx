@@ -1,162 +1,194 @@
-import React from "react";
-import { View, Text, TouchableOpacity, Linking } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { useThemeContext } from "context/ThemeProvider";
-import { useAuth } from "context/AuthContext";
+// screens/Onboarding/PendingVerificationScreen.tsx
 
-const PendingVerificationScreen = () => {
+import React from 'react';
+import { View, Text, TouchableOpacity, Linking } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+
+import { useThemeContext } from 'context/ThemeProvider';
+import { useAuth } from 'context/AuthContext';
+
+export default function PendingVerificationScreen() {
   const { colors } = useThemeContext();
   const { logout } = useAuth();
 
   const handleEmail = () => {
-    Linking.openURL("mailto:support@finestics.com");
+    Linking.openURL('mailto:support@example.com');
   };
 
   const handleWhatsApp = () => {
-    // Replace with your WhatsApp number (include country code, no + or spaces)
-    const phoneNumber = "+923139800205"; // Example: Pakistan number
-    const message = "Hello, I need assistance with my pending verification.";
+    const phoneNumber = '+447700900000'; // UK format
+    const message = 'Hello, I need assistance with my pending verification.';
     Linking.openURL(`whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`);
   };
 
-  const handleGoHome = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
-    <SafeAreaView
-      className="flex-1 px-6"
-      style={{ backgroundColor: colors.background }}
-    >
-      {/* GO HOME BUTTON - Top Right */}
-      <View className="mt-4 flex-row justify-end">
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Header with Logout */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, alignItems: 'flex-end' }}>
         <TouchableOpacity
-          onPress={handleGoHome}
-          className="flex-row items-center px-3 py-2 rounded-lg"
-          style={{ backgroundColor: colors.primary }}
-        >
-          <Ionicons name="home-outline" size={18} color={colors.white} />
-          <Text className="ml-1 text-sm font-medium" style={{ color: colors.white }}>
-            Go Back?
-          </Text>
+          onPress={handleLogout}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.card,
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: colors.border || '#eee',
+          }}>
+          <Ionicons name="log-out-outline" size={18} color={colors.text} />
+          <Text style={{ marginLeft: 8, color: colors.text, fontWeight: '500' }}>Sign Out</Text>
         </TouchableOpacity>
       </View>
 
-      {/* MAIN CONTENT - Centered */}
-      <View className="flex-1 justify-center items-center">
-        {/* ICON CIRCLE */}
+      {/* Main Content */}
+      <View
+        style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 }}>
+        {/* Icon */}
         <View
-          className="h-32 w-32 items-center justify-center rounded-full"
-          style={{ backgroundColor: colors.primary + "25" }}
-        >
-          <Ionicons name="hourglass-outline" size={80} color={colors.primary} />
+          style={{
+            width: 120,
+            height: 120,
+            borderRadius: 60,
+            backgroundColor: colors.primary + '15',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 32,
+          }}>
+          <Ionicons name="hourglass-outline" size={60} color={colors.primary} />
         </View>
 
-        {/* TITLE */}
+        {/* Title */}
         <Text
-          className="mt-8 text-3xl font-bold text-center"
-          style={{ color: colors.text }}
-        >
+          style={{
+            fontSize: 26,
+            fontWeight: '700',
+            color: colors.text,
+            textAlign: 'center',
+            marginBottom: 12,
+          }}>
           Profile Under Review
         </Text>
 
-        {/* DESCRIPTION */}
+        {/* Description */}
         <Text
-          className="mt-4 text-center text-base leading-6"
-          style={{ color: colors.text }}
-        >
-          Thank you! Your profile has been submitted successfully.
-          {"\n"}Our team is now reviewing your information.
+          style={{
+            fontSize: 15,
+            color: colors.placeholder,
+            textAlign: 'center',
+            lineHeight: 22,
+            paddingHorizontal: 10,
+          }}>
+          Thank you! Your profile has been submitted successfully.{'\n'}
+          Our team is now reviewing your information.
         </Text>
 
         <Text
-          className="mt-2 text-center text-base leading-6"
-          style={{ color: colors.text + "AA" }}
-        >
-          Verification typically takes between{" "}
-          <Text style={{ fontWeight: "bold", color: colors.text }}>
-            12–24 hours
-          </Text>
-          .{"\n"}You will be notified once your account is approved.
+          style={{
+            fontSize: 14,
+            color: colors.text,
+            textAlign: 'center',
+            marginTop: 16,
+            lineHeight: 20,
+          }}>
+          Verification typically takes{' '}
+          <Text style={{ fontWeight: '700', color: colors.primary }}>12–24 hours</Text>.{'\n'}
+          You will be notified once approved.
         </Text>
 
-        {/* FOOTER MESSAGE BOX */}
+        {/* Info Card */}
         <View
-          className="mt-10 w-full rounded-2xl p-5"
           style={{
             backgroundColor: colors.card,
-            shadowColor: "#000",
-            shadowOpacity: 0.1,
-            shadowRadius: 6,
-            shadowOffset: { width: 0, height: 4 },
-            elevation: 4,
-          }}
-        >
-          <View className="flex-row items-center">
+            borderRadius: 16,
+            padding: 20,
+            marginTop: 32,
+            width: '100%',
+            borderWidth: 1,
+            borderColor: colors.border || '#eee',
+          }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
             <Ionicons name="information-circle" size={24} color={colors.primary} />
-            <Text
-              className="ml-2 text-lg font-semibold"
-              style={{ color: colors.text }}
-            >
+            <Text style={{ marginLeft: 10, fontSize: 16, fontWeight: '600', color: colors.text }}>
               What you can do meanwhile
             </Text>
           </View>
 
-          <Text className="mt-3 text-base" style={{ color: colors.text }}>
-            • Pay for payment plans in order to get verified
-          </Text>
-
-          <Text className="mt-1 text-base" style={{ color: colors.text }}>
-            • Contact the admin team for further assistance
-          </Text>
-
-          <Text className="mt-1 text-base" style={{ color: colors.text }}>
-            • Prepare your product or service details
-          </Text>
-
-          <Text className="mt-1 text-base" style={{ color: colors.text }}>
-            • You will gain full access once approval is complete
-          </Text>
+          <View style={{ gap: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+              <Text style={{ color: colors.primary, marginRight: 8, fontSize: 14 }}>•</Text>
+              <Text style={{ flex: 1, fontSize: 14, color: colors.text, lineHeight: 20 }}>
+                Contact the admin team for faster processing
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+              <Text style={{ color: colors.primary, marginRight: 8, fontSize: 14 }}>•</Text>
+              <Text style={{ flex: 1, fontSize: 14, color: colors.text, lineHeight: 20 }}>
+                Prepare your product catalogue details
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+              <Text style={{ color: colors.primary, marginRight: 8, fontSize: 14 }}>•</Text>
+              <Text style={{ flex: 1, fontSize: 14, color: colors.text, lineHeight: 20 }}>
+                Full access will be granted after approval
+              </Text>
+            </View>
+          </View>
         </View>
       </View>
 
-      {/* CONTACT BUTTONS - Bottom */}
-      <View className="pb-6">
+      {/* Contact Section */}
+      <View style={{ paddingHorizontal: 20, paddingBottom: 24 }}>
         <Text
-          className="text-center text-sm mb-3"
-          style={{ color: colors.text + "AA" }}
-        >
-          For assistance, Contact us:
+          style={{
+            fontSize: 13,
+            color: colors.placeholder,
+            textAlign: 'center',
+            marginBottom: 16,
+          }}>
+          Need help? Contact us:
         </Text>
-        <View className="flex-row justify-center space-x-4 gap-5">
-          {/* Gmail Button */}
+
+        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16 }}>
           <TouchableOpacity
             onPress={handleEmail}
-            className="flex-row items-center px-6 py-3 rounded-xl"
-            style={{ backgroundColor: colors.card }}
-          >
-            <Ionicons name="mail-outline" size={24} color="#EA4335" />
-            <Text className="ml-2 font-medium" style={{ color: colors.text }}>
-              Email
-            </Text>
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: colors.card,
+              paddingHorizontal: 24,
+              paddingVertical: 14,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: colors.border || '#eee',
+            }}>
+            <Ionicons name="mail-outline" size={22} color="#EA4335" />
+            <Text style={{ marginLeft: 10, fontWeight: '500', color: colors.text }}>Email</Text>
           </TouchableOpacity>
 
-          {/* WhatsApp Button */}
           <TouchableOpacity
             onPress={handleWhatsApp}
-            className="flex-row items-center px-6 py-3 rounded-xl"
-            style={{ backgroundColor: colors.card }}
-          >
-            <Ionicons name="logo-whatsapp" size={24} color="#25D366" />
-            <Text className="ml-2 font-medium" style={{ color: colors.text }}>
-              WhatsApp
-            </Text>
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: colors.card,
+              paddingHorizontal: 24,
+              paddingVertical: 14,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: colors.border || '#eee',
+            }}>
+            <Ionicons name="logo-whatsapp" size={22} color="#25D366" />
+            <Text style={{ marginLeft: 10, fontWeight: '500', color: colors.text }}>WhatsApp</Text>
           </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
   );
-};
-
-export default PendingVerificationScreen;
+}
