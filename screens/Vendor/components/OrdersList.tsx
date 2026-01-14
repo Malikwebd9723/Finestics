@@ -1,5 +1,5 @@
 // screens/Vendor/components/OrdersList.tsx
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   RefreshControl,
   ScrollView,
   Platform,
+  Modal,
+  Animated,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
@@ -76,6 +78,9 @@ export default function OrdersList({
   const [showDateFrom, setShowDateFrom] = useState(false);
   const [showDateTo, setShowDateTo] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [filterMenuVisible, setFilterMenuVisible] = useState(false);
+  const [activeFilterType, setActiveFilterType] = useState<'status' | 'payment' | 'van' | 'dateRange' | null>(null);
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   // Sorting state
   const [sortBy, setSortBy] = useState<SortField>('orderDate');
@@ -88,6 +93,29 @@ export default function OrdersList({
   // Quick date navigation
   const [quickDate, setQuickDate] = useState<Date>(new Date());
   const [showQuickDatePicker, setShowQuickDatePicker] = useState(false);
+
+  // Filter menu animation
+  const openFilterMenu = (type: 'status' | 'payment' | 'van' | 'dateRange') => {
+    setActiveFilterType(type);
+    setFilterMenuVisible(true);
+    Animated.spring(slideAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 65,
+      friction: 11,
+    }).start();
+  };
+
+  const closeFilterMenu = () => {
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setFilterMenuVisible(false);
+      setActiveFilterType(null);
+    });
+  };
 
   // Fetch vans for filter
   const { data: vansData } = useQuery({
@@ -361,6 +389,114 @@ export default function OrdersList({
         </View>
       </View>
 
+      {/* Active Filter Chips - Show below date selection */}
+      {activeFiltersCount > 0 && (
+        <View className="px-4 py-2" style={{ backgroundColor: colors.background }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View className="flex-row items-center gap-2">
+              {statusFilter && (
+                <TouchableOpacity
+                  onPress={() => onStatusFilterChange(null)}
+                  className="flex-row items-center rounded-full px-3 py-1.5"
+                  style={{
+                    backgroundColor: ORDER_STATUSES.find(s => s.value === statusFilter)?.color + '20',
+                    borderWidth: 1,
+                    borderColor: ORDER_STATUSES.find(s => s.value === statusFilter)?.color,
+                  }}>
+                  <View
+                    className="mr-1.5 h-2 w-2 rounded-full"
+                    style={{ backgroundColor: ORDER_STATUSES.find(s => s.value === statusFilter)?.color }}
+                  />
+                  <Text
+                    className="text-xs font-semibold"
+                    style={{ color: ORDER_STATUSES.find(s => s.value === statusFilter)?.color }}>
+                    {ORDER_STATUSES.find(s => s.value === statusFilter)?.label}
+                  </Text>
+                  <Ionicons
+                    name="close"
+                    size={14}
+                    color={ORDER_STATUSES.find(s => s.value === statusFilter)?.color}
+                    style={{ marginLeft: 4 }}
+                  />
+                </TouchableOpacity>
+              )}
+              {paymentFilter && (
+                <TouchableOpacity
+                  onPress={() => onPaymentFilterChange(null)}
+                  className="flex-row items-center rounded-full px-3 py-1.5"
+                  style={{
+                    backgroundColor: PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color + '20',
+                    borderWidth: 1,
+                    borderColor: PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color,
+                  }}>
+                  <View
+                    className="mr-1.5 h-2 w-2 rounded-full"
+                    style={{ backgroundColor: PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color }}
+                  />
+                  <Text
+                    className="text-xs font-semibold"
+                    style={{ color: PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color }}>
+                    {PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.label}
+                  </Text>
+                  <Ionicons
+                    name="close"
+                    size={14}
+                    color={PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color}
+                    style={{ marginLeft: 4 }}
+                  />
+                </TouchableOpacity>
+              )}
+              {vanFilter && (
+                <TouchableOpacity
+                  onPress={() => onVanFilterChange(null)}
+                  className="flex-row items-center rounded-full px-3 py-1.5"
+                  style={{
+                    backgroundColor: colors.primary + '20',
+                    borderWidth: 1,
+                    borderColor: colors.primary,
+                  }}>
+                  <Ionicons name="car" size={12} color={colors.primary} style={{ marginRight: 4 }} />
+                  <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
+                    {vanFilter}
+                  </Text>
+                  <Ionicons name="close" size={14} color={colors.primary} style={{ marginLeft: 4 }} />
+                </TouchableOpacity>
+              )}
+              {(dateFrom || dateTo) && !(dateFrom && dateTo && dateFrom.toDateString() === dateTo.toDateString()) && (
+                <TouchableOpacity
+                  onPress={clearDateFilter}
+                  className="flex-row items-center rounded-full px-3 py-1.5"
+                  style={{
+                    backgroundColor: colors.primary + '20',
+                    borderWidth: 1,
+                    borderColor: colors.primary,
+                  }}>
+                  <Ionicons name="calendar" size={12} color={colors.primary} style={{ marginRight: 4 }} />
+                  <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
+                    {dateFrom ? dateFrom.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '...'} - {dateTo ? dateTo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '...'}
+                  </Text>
+                  <Ionicons name="close" size={14} color={colors.primary} style={{ marginLeft: 4 }} />
+                </TouchableOpacity>
+              )}
+              {/* Clear All */}
+              <TouchableOpacity
+                onPress={() => {
+                  onStatusFilterChange(null);
+                  onPaymentFilterChange(null);
+                  onVanFilterChange(null);
+                  onDateRangeChange(null, null);
+                }}
+                className="rounded-full px-3 py-1.5"
+                style={{ backgroundColor: colors.error + '15' }}>
+                <Text className="text-xs font-semibold" style={{ color: colors.error }}>
+                  Clear All
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      )}
+
       {/* Filter Toggle, Sort & Stats */}
       <View className="px-4 py-3">
         <View className="mb-3 flex-row items-center justify-between">
@@ -389,6 +525,25 @@ export default function OrdersList({
                 </Text>
               </TouchableOpacity>
             )}
+
+            {/* Date Filter Type Toggle */}
+            <TouchableOpacity
+              onPress={() => setDateFilterField(dateFilterField === 'orderDate' ? 'deliveryDate' : 'orderDate')}
+              className="flex-row items-center rounded-full px-2 py-1.5"
+              style={{
+                backgroundColor: colors.card,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}>
+              <Ionicons name="funnel-outline" size={12} color={colors.muted} />
+              <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
+                By
+              </Text>
+              <Text className="ml-1 text-xs font-semibold" style={{ color: colors.primary }}>
+                {dateFilterField === 'orderDate' ? 'Order Date' : 'Delivery'}
+              </Text>
+              <Ionicons name="swap-horizontal" size={12} color={colors.primary} style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
 
             {/* Sort Button */}
             <TouchableOpacity
@@ -419,15 +574,19 @@ export default function OrdersList({
                 borderColor: activeFiltersCount > 0 ? colors.primary : colors.border,
               }}>
               <MaterialIcons
-                name="filter-list"
+                name="tune"
                 size={16}
                 color={activeFiltersCount > 0 ? '#fff' : colors.text}
               />
-              <Text
-                className="ml-1 text-xs font-semibold"
-                style={{ color: activeFiltersCount > 0 ? '#fff' : colors.text }}>
-                Filters{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
-              </Text>
+              {activeFiltersCount > 0 && (
+                <View
+                  className="ml-1 h-4 w-4 items-center justify-center rounded-full"
+                  style={{ backgroundColor: '#fff' }}>
+                  <Text className="text-xs font-bold" style={{ color: colors.primary }}>
+                    {activeFiltersCount}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -635,241 +794,150 @@ export default function OrdersList({
         </TouchableOpacity>
       </View>
 
-      {/* Filters Panel */}
+      {/* Filters Menu - Cleaner dropdown style */}
       {showFilters && (
-        <View className="px-4 pb-3">
-          {/* Date Filter Field Toggle */}
-          <View className="mb-3 flex-row items-center gap-2">
-            <Text className="text-xs font-semibold" style={{ color: colors.muted }}>
-              Filter by:
-            </Text>
-            <TouchableOpacity
-              onPress={() => setDateFilterField('orderDate')}
-              className="rounded-full px-3 py-1"
-              style={{
-                backgroundColor: dateFilterField === 'orderDate' ? colors.primary : colors.card,
-                borderWidth: 1,
-                borderColor: dateFilterField === 'orderDate' ? colors.primary : colors.border,
-              }}>
-              <Text
-                className="text-xs font-medium"
-                style={{ color: dateFilterField === 'orderDate' ? '#fff' : colors.text }}>
-                Order Date
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setDateFilterField('deliveryDate')}
-              className="rounded-full px-3 py-1"
-              style={{
-                backgroundColor: dateFilterField === 'deliveryDate' ? colors.primary : colors.card,
-                borderWidth: 1,
-                borderColor: dateFilterField === 'deliveryDate' ? colors.primary : colors.border,
-              }}>
-              <Text
-                className="text-xs font-medium"
-                style={{ color: dateFilterField === 'deliveryDate' ? '#fff' : colors.text }}>
-                Delivery Date
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Date Range Filter */}
-          <Text className="mb-2 text-xs font-semibold" style={{ color: colors.muted }}>
-            Date Range
-          </Text>
-          <View className="mb-3 flex-row gap-2">
+        <View
+          className="mx-4 mb-3 rounded-xl overflow-hidden"
+          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+          {/* Date Range - From */}
+          <View className="flex-row items-center border-b" style={{ borderColor: colors.border }}>
             <TouchableOpacity
               onPress={() => setShowDateFrom(true)}
-              className="flex-1 flex-row items-center rounded-lg px-3 py-2"
-              style={{
-                backgroundColor: colors.card,
-                borderWidth: 1,
-                borderColor: dateFrom ? colors.primary : colors.border,
-              }}>
-              <Ionicons
-                name="calendar-outline"
-                size={16}
-                color={dateFrom ? colors.primary : colors.muted}
-              />
-              <Text
-                className="ml-2 text-sm"
-                style={{ color: dateFrom ? colors.text : colors.placeholder }}>
-                {dateFrom
-                  ? dateFrom.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  : 'From'}
+              className="flex-1 flex-row items-center justify-between px-4 py-3 border-r"
+              style={{ borderColor: colors.border }}>
+              <View className="flex-row items-center">
+                <Ionicons name="calendar-outline" size={16} color={dateFrom ? colors.primary : colors.muted} />
+                <Text className="ml-2 text-sm font-medium" style={{ color: colors.text }}>
+                  From
+                </Text>
+              </View>
+              <Text className="text-sm" style={{ color: dateFrom ? colors.primary : colors.muted }}>
+                {dateFrom ? dateFrom.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Any'}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setShowDateTo(true)}
-              className="flex-1 flex-row items-center rounded-lg px-3 py-2"
-              style={{
-                backgroundColor: colors.card,
-                borderWidth: 1,
-                borderColor: dateTo ? colors.primary : colors.border,
-              }}>
-              <Ionicons
-                name="calendar-outline"
-                size={16}
-                color={dateTo ? colors.primary : colors.muted}
-              />
-              <Text
-                className="ml-2 text-sm"
-                style={{ color: dateTo ? colors.text : colors.placeholder }}>
-                {dateTo
-                  ? dateTo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  : 'To'}
+              className="flex-1 flex-row items-center justify-between px-4 py-3">
+              <View className="flex-row items-center">
+                <Ionicons name="calendar-outline" size={16} color={dateTo ? colors.primary : colors.muted} />
+                <Text className="ml-2 text-sm font-medium" style={{ color: colors.text }}>
+                  To
+                </Text>
+              </View>
+              <Text className="text-sm" style={{ color: dateTo ? colors.primary : colors.muted }}>
+                {dateTo ? dateTo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Any'}
               </Text>
             </TouchableOpacity>
             {(dateFrom || dateTo) && (
-              <TouchableOpacity
-                onPress={clearDateFilter}
-                className="items-center justify-center px-2">
-                <Ionicons name="close-circle" size={20} color={colors.error} />
+              <TouchableOpacity onPress={clearDateFilter} className="pr-3">
+                <Ionicons name="close-circle" size={18} color={colors.error} />
               </TouchableOpacity>
             )}
           </View>
 
+          {/* Order Status */}
+          <TouchableOpacity
+            onPress={() => openFilterMenu('status')}
+            className="flex-row items-center justify-between px-4 py-3 border-b"
+            style={{ borderColor: colors.border }}>
+            <View className="flex-row items-center">
+              <Ionicons name="flag-outline" size={18} color={statusFilter ? colors.primary : colors.muted} />
+              <Text className="ml-3 text-sm font-medium" style={{ color: colors.text }}>
+                Order Status
+              </Text>
+            </View>
+            <View className="flex-row items-center">
+              {statusFilter ? (
+                <>
+                  <View
+                    className="flex-row items-center rounded-full px-2 py-0.5"
+                    style={{ backgroundColor: ORDER_STATUSES.find(s => s.value === statusFilter)?.color + '20' }}>
+                    <View
+                      className="mr-1 h-2 w-2 rounded-full"
+                      style={{ backgroundColor: ORDER_STATUSES.find(s => s.value === statusFilter)?.color }}
+                    />
+                    <Text className="text-xs font-medium" style={{ color: ORDER_STATUSES.find(s => s.value === statusFilter)?.color }}>
+                      {ORDER_STATUSES.find(s => s.value === statusFilter)?.label}
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={() => onStatusFilterChange(null)} className="ml-2">
+                    <Ionicons name="close-circle" size={18} color={colors.error} />
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <Text className="text-sm" style={{ color: colors.muted }}>All</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.muted} style={{ marginLeft: 4 }} />
+                </>
+              )}
+            </View>
+          </TouchableOpacity>
+
+          {/* Payment Status */}
+          <TouchableOpacity
+            onPress={() => openFilterMenu('payment')}
+            className="flex-row items-center justify-between px-4 py-3 border-b"
+            style={{ borderColor: colors.border }}>
+            <View className="flex-row items-center">
+              <Ionicons name="wallet-outline" size={18} color={paymentFilter ? colors.primary : colors.muted} />
+              <Text className="ml-3 text-sm font-medium" style={{ color: colors.text }}>
+                Payment Status
+              </Text>
+            </View>
+            <View className="flex-row items-center">
+              {paymentFilter ? (
+                <>
+                  <View
+                    className="flex-row items-center rounded-full px-2 py-0.5"
+                    style={{ backgroundColor: PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color + '20' }}>
+                    <View
+                      className="mr-1 h-2 w-2 rounded-full"
+                      style={{ backgroundColor: PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color }}
+                    />
+                    <Text className="text-xs font-medium" style={{ color: PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color }}>
+                      {PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.label}
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={() => onPaymentFilterChange(null)} className="ml-2">
+                    <Ionicons name="close-circle" size={18} color={colors.error} />
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <Text className="text-sm" style={{ color: colors.muted }}>All</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.muted} style={{ marginLeft: 4 }} />
+                </>
+              )}
+            </View>
+          </TouchableOpacity>
+
           {/* Van Filter */}
           {vans.length > 0 && (
-            <>
-              <Text className="mb-2 text-xs font-semibold" style={{ color: colors.muted }}>
-                Van
-              </Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
-                <View className="flex-row gap-2">
-                  <TouchableOpacity
-                    onPress={() => onVanFilterChange(null)}
-                    className="rounded-full px-3 py-1.5"
-                    style={{
-                      backgroundColor: !vanFilter ? colors.primary : colors.card,
-                      borderWidth: 1,
-                      borderColor: !vanFilter ? colors.primary : colors.border,
-                    }}>
-                    <Text
-                      className="text-xs font-semibold"
-                      style={{ color: !vanFilter ? '#fff' : colors.text }}>
-                      All Vans
-                    </Text>
-                  </TouchableOpacity>
-                  {vans.map((van) => (
-                    <TouchableOpacity
-                      key={van}
-                      onPress={() => onVanFilterChange(vanFilter === van ? null : van)}
-                      className="rounded-full px-3 py-1.5"
-                      style={{
-                        backgroundColor: vanFilter === van ? colors.primary : colors.card,
-                        borderWidth: 1,
-                        borderColor: vanFilter === van ? colors.primary : colors.border,
-                      }}>
-                      <Text
-                        className="text-xs font-semibold"
-                        style={{ color: vanFilter === van ? '#fff' : colors.text }}>
-                        {van}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
-            </>
-          )}
-
-          {/* Order Status Filter */}
-          <Text className="mb-2 text-xs font-semibold" style={{ color: colors.muted }}>
-            Order Status
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
-            <View className="flex-row gap-2">
-              <TouchableOpacity
-                onPress={() => onStatusFilterChange(null)}
-                className="rounded-full px-3 py-1.5"
-                style={{
-                  backgroundColor: !statusFilter ? colors.primary : colors.card,
-                  borderWidth: 1,
-                  borderColor: !statusFilter ? colors.primary : colors.border,
-                }}>
-                <Text
-                  className="text-xs font-semibold"
-                  style={{ color: !statusFilter ? '#fff' : colors.text }}>
-                  All
-                </Text>
-              </TouchableOpacity>
-              {ORDER_STATUSES.map((status) => (
-                <TouchableOpacity
-                  key={status.value}
-                  onPress={() =>
-                    onStatusFilterChange(statusFilter === status.value ? null : status.value)
-                  }
-                  className="rounded-full px-3 py-1.5"
-                  style={{
-                    backgroundColor: statusFilter === status.value ? status.color : colors.card,
-                    borderWidth: 1,
-                    borderColor: statusFilter === status.value ? status.color : colors.border,
-                  }}>
-                  <Text
-                    className="text-xs font-semibold"
-                    style={{ color: statusFilter === status.value ? '#fff' : colors.text }}>
-                    {status.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-
-          {/* Payment Status Filter */}
-          <Text className="mb-2 text-xs font-semibold" style={{ color: colors.muted }}>
-            Payment Status
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View className="flex-row gap-2">
-              <TouchableOpacity
-                onPress={() => onPaymentFilterChange(null)}
-                className="rounded-full px-3 py-1.5"
-                style={{
-                  backgroundColor: !paymentFilter ? colors.primary : colors.card,
-                  borderWidth: 1,
-                  borderColor: !paymentFilter ? colors.primary : colors.border,
-                }}>
-                <Text
-                  className="text-xs font-semibold"
-                  style={{ color: !paymentFilter ? '#fff' : colors.text }}>
-                  All
-                </Text>
-              </TouchableOpacity>
-              {PAYMENT_STATUSES.map((status) => (
-                <TouchableOpacity
-                  key={status.value}
-                  onPress={() =>
-                    onPaymentFilterChange(paymentFilter === status.value ? null : status.value)
-                  }
-                  className="rounded-full px-3 py-1.5"
-                  style={{
-                    backgroundColor: paymentFilter === status.value ? status.color : colors.card,
-                    borderWidth: 1,
-                    borderColor: paymentFilter === status.value ? status.color : colors.border,
-                  }}>
-                  <Text
-                    className="text-xs font-semibold"
-                    style={{ color: paymentFilter === status.value ? '#fff' : colors.text }}>
-                    {status.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-
-          {/* Clear Filters */}
-          {activeFiltersCount > 0 && (
             <TouchableOpacity
-              onPress={() => {
-                onStatusFilterChange(null);
-                onPaymentFilterChange(null);
-                onVanFilterChange(null);
-                onDateRangeChange(null, null);
-              }}
-              className="mt-3 self-start">
-              <Text className="text-sm font-semibold" style={{ color: colors.error }}>
-                Clear all filters
-              </Text>
+              onPress={() => openFilterMenu('van')}
+              className="flex-row items-center justify-between px-4 py-3"
+              style={{ borderColor: colors.border }}>
+              <View className="flex-row items-center">
+                <Ionicons name="car-outline" size={18} color={vanFilter ? colors.primary : colors.muted} />
+                <Text className="ml-3 text-sm font-medium" style={{ color: colors.text }}>
+                  Van
+                </Text>
+              </View>
+              <View className="flex-row items-center">
+                {vanFilter ? (
+                  <>
+                    <Text className="text-sm" style={{ color: colors.primary }}>{vanFilter}</Text>
+                    <TouchableOpacity onPress={() => onVanFilterChange(null)} className="ml-2">
+                      <Ionicons name="close-circle" size={18} color={colors.error} />
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    <Text className="text-sm" style={{ color: colors.muted }}>All Vans</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.muted} style={{ marginLeft: 4 }} />
+                  </>
+                )}
+              </View>
             </TouchableOpacity>
           )}
         </View>
@@ -951,6 +1019,192 @@ export default function OrdersList({
           </View>
         )}
       />
+
+      {/* Filter Selection Modal */}
+      <Modal
+        visible={filterMenuVisible}
+        transparent
+        animationType="none"
+        onRequestClose={closeFilterMenu}>
+        <Pressable
+          className="flex-1 justify-end"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onPress={closeFilterMenu}>
+          <Animated.View
+            style={{
+              transform: [
+                {
+                  translateY: slideAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [300, 0],
+                  }),
+                },
+              ],
+            }}>
+            <Pressable
+              className="rounded-t-3xl px-4 pb-8 pt-4"
+              style={{ backgroundColor: colors.card }}
+              onPress={(e) => e.stopPropagation()}>
+              {/* Handle bar */}
+              <View className="mb-4 self-center h-1 w-12 rounded-full" style={{ backgroundColor: colors.border }} />
+
+              {/* Modal Title */}
+              <Text className="text-lg font-bold mb-4" style={{ color: colors.text }}>
+                {activeFilterType === 'status' && 'Order Status'}
+                {activeFilterType === 'payment' && 'Payment Status'}
+                {activeFilterType === 'van' && 'Select Van'}
+              </Text>
+
+              {/* Status Options */}
+              {activeFilterType === 'status' && (
+                <View className="gap-2">
+                  <TouchableOpacity
+                    onPress={() => {
+                      onStatusFilterChange(null);
+                      closeFilterMenu();
+                    }}
+                    className="flex-row items-center justify-between rounded-xl px-4 py-3"
+                    style={{
+                      backgroundColor: !statusFilter ? colors.primary + '15' : colors.background,
+                      borderWidth: !statusFilter ? 1 : 0,
+                      borderColor: colors.primary,
+                    }}>
+                    <Text className="text-sm font-medium" style={{ color: !statusFilter ? colors.primary : colors.text }}>
+                      All Statuses
+                    </Text>
+                    {!statusFilter && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                  </TouchableOpacity>
+                  {ORDER_STATUSES.map((status) => (
+                    <TouchableOpacity
+                      key={status.value}
+                      onPress={() => {
+                        onStatusFilterChange(status.value);
+                        closeFilterMenu();
+                      }}
+                      className="flex-row items-center justify-between rounded-xl px-4 py-3"
+                      style={{
+                        backgroundColor: statusFilter === status.value ? status.color + '15' : colors.background,
+                        borderWidth: statusFilter === status.value ? 1 : 0,
+                        borderColor: status.color,
+                      }}>
+                      <View className="flex-row items-center">
+                        <View
+                          className="mr-3 h-3 w-3 rounded-full"
+                          style={{ backgroundColor: status.color }}
+                        />
+                        <Text
+                          className="text-sm font-medium"
+                          style={{ color: statusFilter === status.value ? status.color : colors.text }}>
+                          {status.label}
+                        </Text>
+                      </View>
+                      {statusFilter === status.value && <Ionicons name="checkmark" size={20} color={status.color} />}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* Payment Options */}
+              {activeFilterType === 'payment' && (
+                <View className="gap-2">
+                  <TouchableOpacity
+                    onPress={() => {
+                      onPaymentFilterChange(null);
+                      closeFilterMenu();
+                    }}
+                    className="flex-row items-center justify-between rounded-xl px-4 py-3"
+                    style={{
+                      backgroundColor: !paymentFilter ? colors.primary + '15' : colors.background,
+                      borderWidth: !paymentFilter ? 1 : 0,
+                      borderColor: colors.primary,
+                    }}>
+                    <Text className="text-sm font-medium" style={{ color: !paymentFilter ? colors.primary : colors.text }}>
+                      All Payment Statuses
+                    </Text>
+                    {!paymentFilter && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                  </TouchableOpacity>
+                  {PAYMENT_STATUSES.map((status) => (
+                    <TouchableOpacity
+                      key={status.value}
+                      onPress={() => {
+                        onPaymentFilterChange(status.value);
+                        closeFilterMenu();
+                      }}
+                      className="flex-row items-center justify-between rounded-xl px-4 py-3"
+                      style={{
+                        backgroundColor: paymentFilter === status.value ? status.color + '15' : colors.background,
+                        borderWidth: paymentFilter === status.value ? 1 : 0,
+                        borderColor: status.color,
+                      }}>
+                      <View className="flex-row items-center">
+                        <View
+                          className="mr-3 h-3 w-3 rounded-full"
+                          style={{ backgroundColor: status.color }}
+                        />
+                        <Text
+                          className="text-sm font-medium"
+                          style={{ color: paymentFilter === status.value ? status.color : colors.text }}>
+                          {status.label}
+                        </Text>
+                      </View>
+                      {paymentFilter === status.value && <Ionicons name="checkmark" size={20} color={status.color} />}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* Van Options */}
+              {activeFilterType === 'van' && (
+                <View className="gap-2">
+                  <TouchableOpacity
+                    onPress={() => {
+                      onVanFilterChange(null);
+                      closeFilterMenu();
+                    }}
+                    className="flex-row items-center justify-between rounded-xl px-4 py-3"
+                    style={{
+                      backgroundColor: !vanFilter ? colors.primary + '15' : colors.background,
+                      borderWidth: !vanFilter ? 1 : 0,
+                      borderColor: colors.primary,
+                    }}>
+                    <View className="flex-row items-center">
+                      <Ionicons name="car" size={18} color={!vanFilter ? colors.primary : colors.muted} style={{ marginRight: 12 }} />
+                      <Text className="text-sm font-medium" style={{ color: !vanFilter ? colors.primary : colors.text }}>
+                        All Vans
+                      </Text>
+                    </View>
+                    {!vanFilter && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                  </TouchableOpacity>
+                  {vans.map((van) => (
+                    <TouchableOpacity
+                      key={van}
+                      onPress={() => {
+                        onVanFilterChange(van);
+                        closeFilterMenu();
+                      }}
+                      className="flex-row items-center justify-between rounded-xl px-4 py-3"
+                      style={{
+                        backgroundColor: vanFilter === van ? colors.primary + '15' : colors.background,
+                        borderWidth: vanFilter === van ? 1 : 0,
+                        borderColor: colors.primary,
+                      }}>
+                      <View className="flex-row items-center">
+                        <Ionicons name="car" size={18} color={vanFilter === van ? colors.primary : colors.muted} style={{ marginRight: 12 }} />
+                        <Text
+                          className="text-sm font-medium"
+                          style={{ color: vanFilter === van ? colors.primary : colors.text }}>
+                          {van}
+                        </Text>
+                      </View>
+                      {vanFilter === van && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </Pressable>
+          </Animated.View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -1052,29 +1306,32 @@ function OrderCard({
         </View>
 
         {/* Order Details Row */}
-        <View className="mb-3 flex-row items-center justify-between">
-          <View className="flex-row items-center gap-4">
+        <View className="mb-3 flex-row items-center flex-wrap gap-3">
+          {/* Order Date */}
+          <View className="flex-row items-center">
+            <Ionicons name="cart-outline" size={14} color={colors.muted} />
+            <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
+              {formatShortDate(order.orderDate)}
+            </Text>
+          </View>
+          {/* Delivery Date */}
+          {order.deliveryDate && (
             <View className="flex-row items-center">
-              <MaterialIcons name="event" size={14} color={colors.muted} />
-              <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
-                {formatShortDate(order.orderDate)}
+              <Ionicons name="car-outline" size={14} color={colors.primary} />
+              <Text className="ml-1 text-xs font-medium" style={{ color: colors.primary }}>
+                {formatShortDate(order.deliveryDate)}
               </Text>
             </View>
-            {/* <View className="flex-row items-center">
-              <MaterialIcons name="shopping-basket" size={14} color={colors.muted} />
+          )}
+          {/* Van */}
+          {order.vanName && (
+            <View className="flex-row items-center">
+              <MaterialIcons name="local-shipping" size={14} color={colors.muted} />
               <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
-                {itemCount} item{itemCount !== 1 ? 's' : ''}
+                {order.vanName}
               </Text>
-            </View> */}
-            {order.vanName && (
-              <View className="flex-row items-center">
-                <MaterialIcons name="local-shipping" size={14} color={colors.muted} />
-                <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
-                  {order.vanName}
-                </Text>
-              </View>
-            )}
-          </View>
+            </View>
+          )}
         </View>
 
         {/* Footer: Payment + Total */}
