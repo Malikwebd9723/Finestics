@@ -10,7 +10,7 @@ export interface User {
   lastName: string;
   email: string;
   phone?: string;
-  role: 'vendor' | 'customer' | 'super_admin';
+  role: 'vendor' | 'customer' | 'admin';
   accountStatus: 'active' | 'suspended' | 'deleted';
   isEmailVerified: boolean;
   onboardingCompleted: boolean;

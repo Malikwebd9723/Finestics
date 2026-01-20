@@ -108,7 +108,7 @@ export default function RootNavigator() {
         }
 
         // Admin goes straight to Main
-        if (user.role === 'super_admin') {
+        if (user.role === 'admin') {
           setTargetRoute('Main');
           setTargetParams(undefined);
           setInitializing(false);
