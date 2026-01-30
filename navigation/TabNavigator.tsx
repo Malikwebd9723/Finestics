@@ -9,7 +9,7 @@ import { useThemeContext } from '../context/ThemeProvider';
 import { useNavigation } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getNavigationItems } from './NavigationItems';
+import { getTabNavigationItems } from './NavigationItems';
 
 // ==================== ADMIN SCREENS ====================
 import AdminDashboard from '../screens/Admin/Dashboard';
@@ -18,10 +18,10 @@ import Users from '../screens/Admin/Users';
 
 // ==================== VENDOR SCREENS ====================
 import Dashboard from '../screens/Vendor/Dashboard';
-import Customers from '../screens/Vendor/Customers';
 import ProductsScreen from '../screens/Vendor/ProductsScreen';
 import OrdersScreen from '../screens/Vendor/OrdersScreen';
-import Statistics from '../screens/Vendor/Statistics';
+import ExpensesScreen from '../screens/Vendor/ExpensesScreen';
+import PaymentsScreen from '../screens/Vendor/PaymentsScreen';
 
 // ==================== CUSTOMER SCREENS ====================
 import CustomersDashboard from '../screens/Customers/CustomersDashboard';
@@ -37,10 +37,10 @@ const screenComponents: Record<string, React.ComponentType<any>> = {
 
   // Vendor
   Dashboard,
-  Customers,
   ProductsScreen,
   OrdersScreen,
-  Statistics,
+  ExpensesScreen,
+  PaymentsScreen,
 
   // Customer
   CustomersDashboard,
@@ -63,7 +63,7 @@ export default function TabNavigator() {
 
   useEffect(() => {
     const fetchNavigationItems = async () => {
-      const items = await getNavigationItems();
+      const items = await getTabNavigationItems();
       setNavigationItems(items);
       setLoading(false);
     };

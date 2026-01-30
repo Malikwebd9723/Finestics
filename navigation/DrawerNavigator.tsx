@@ -11,6 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 import TabNavigator from './TabNavigator';
 import NavigationList from './NavigationList';
 import VendorProfile from '../screens/Vendor/VendorProfile';
+import Statistics from '../screens/Vendor/Statistics';
+import Customers from '../screens/Vendor/Customers';
 
 const Drawer = createDrawerNavigator();
 
@@ -181,6 +183,30 @@ export default function DrawerNavigator() {
         options={{
           headerShown: false,
           headerTitle: 'Business Profile',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Statistics Screen (Drawer-only for Vendor) */}
+      <Drawer.Screen
+        name="Statistics"
+        component={Statistics}
+        options={{
+          headerShown: true,
+          headerTitle: 'Statistics',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Customers Screen (Drawer-only for Vendor) */}
+      <Drawer.Screen
+        name="Customers"
+        component={Customers}
+        options={{
+          headerShown: true,
+          headerTitle: 'Customers',
           headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.text,
         }}
