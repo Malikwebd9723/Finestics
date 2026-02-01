@@ -22,7 +22,6 @@ import SubmitOnboardingScreen from 'screens/Onboarding/SubmitOnboardingScreen';
 import PendingVerificationScreen from 'screens/Onboarding/PendingVerificationScreen';
 
 // Other Screens
-import CategoryDetails from 'screens/Admin/CategoryDetails';
 import CreateOrderScreen from 'screens/Vendor/CreateOrderScreen';
 import CollectionSheet from 'screens/Vendor/CollectionSheet';
 import CustomerOrdersScreen from 'screens/Vendor/CustomerOrdersScreen';
@@ -43,7 +42,6 @@ export type RootStackParamList = {
   Signup: undefined;
   Onboarding: { screen?: OnboardingScreen } | undefined;
   Main: undefined;
-  CategoryDetails: { categoryId: number };
   CreateOrderScreen: { orderId?: number } | undefined;
   CollectionSheet: undefined;
   CustomerOrdersScreen: { customerId: number };
@@ -213,7 +211,6 @@ export default function RootNavigator() {
         <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
-        <Stack.Screen name="CategoryDetails" component={CategoryDetails} />
         <Stack.Screen name="CreateOrderScreen" component={CreateOrderScreen} />
         <Stack.Screen name="CollectionSheet" component={CollectionSheet} />
         <Stack.Screen name="CustomerOrdersScreen" component={CustomerOrdersScreen} />

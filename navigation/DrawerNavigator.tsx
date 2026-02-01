@@ -14,6 +14,11 @@ import VendorProfile from '../screens/Vendor/VendorProfile';
 import Statistics from '../screens/Vendor/Statistics';
 import Customers from '../screens/Vendor/Customers';
 
+// Admin Screens
+import AdminProfile from '../screens/Admin/AdminProfile';
+import Vendors from '../screens/Admin/Vendors';
+import Users from '../screens/Admin/Users';
+
 const Drawer = createDrawerNavigator();
 
 // Custom Drawer Content
@@ -37,18 +42,28 @@ function CustomDrawerContent(props: any) {
   };
 
   const isVendor = user?.role === 'vendor';
+  const isAdmin = user?.role === 'admin';
 
   return (
     <DrawerContentScrollView
       {...props}
       style={[styles.drawerContent, { backgroundColor: colors.card }]}
       contentContainerStyle={{ flex: 1 }}>
-      {/* User Header */}
+      {/* User Header - Touchable for Admin to open profile */}
       <ScrollView>
-        <View style={[styles.userSection, { borderBottomColor: colors.border }]}>
+        <TouchableOpacity
+          style={[styles.userSection, { borderBottomColor: colors.border }]}
+          onPress={() => {
+            if (isAdmin) {
+              navigateTo('AdminProfile');
+            } else if (isVendor) {
+              navigateTo('VendorProfile');
+            }
+          }}
+          activeOpacity={0.7}>
         <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
           <Text style={styles.avatarText}>
-            {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'N/A'}
+            {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'N/A'}
           </Text>
         </View>
         <Text style={[styles.userName, { color: colors.text }]}>
@@ -62,7 +77,12 @@ function CustomDrawerContent(props: any) {
             </Text>
           </View>
         )}
-      </View>
+        {(isAdmin || isVendor) && (
+          <Text style={{ color: colors.muted, fontSize: 11, marginTop: 4 }}>
+            Tap to view profile
+          </Text>
+        )}
+      </TouchableOpacity>
 
       {/* Navigation Menu Items */}
       <View style={styles.menuSection}>
@@ -85,6 +105,29 @@ function CustomDrawerContent(props: any) {
               activeOpacity={0.7}>
               <Ionicons name="business-outline" size={22} color={colors.text} />
               <Text style={[styles.menuItemText, { color: colors.text }]}>Business Profile</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        {/* Admin-specific menu items */}
+        {isAdmin && (
+          <>
+            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 16 }]}>
+              MANAGEMENT
+            </Text>
+            <TouchableOpacity
+              onPress={() => navigateTo('Vendors')}
+              style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
+              activeOpacity={0.7}>
+              <Ionicons name="storefront-outline" size={22} color={colors.text} />
+              <Text style={[styles.menuItemText, { color: colors.text }]}>Vendors</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigateTo('Users')}
+              style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
+              activeOpacity={0.7}>
+              <Ionicons name="people-outline" size={22} color={colors.text} />
+              <Text style={[styles.menuItemText, { color: colors.text }]}>Users</Text>
             </TouchableOpacity>
           </>
         )}
@@ -211,6 +254,40 @@ export default function DrawerNavigator() {
           headerTintColor: colors.text,
         }}
       />
+
+      {/* Admin Profile Screen */}
+      <Drawer.Screen
+        name="AdminProfile"
+        component={AdminProfile}
+        options={{
+          headerShown: false,
+        }}
+      />
+
+      {/* Vendors Screen (Admin) */}
+      <Drawer.Screen
+        name="Vendors"
+        component={Vendors}
+        options={{
+          headerShown: true,
+          headerTitle: 'Vendors',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Users Screen (Admin) */}
+      <Drawer.Screen
+        name="Users"
+        component={Users}
+        options={{
+          headerShown: true,
+          headerTitle: 'Users',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
     </Drawer.Navigator>
   );
 }

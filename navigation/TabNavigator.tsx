@@ -13,7 +13,7 @@ import { getTabNavigationItems } from './NavigationItems';
 
 // ==================== ADMIN SCREENS ====================
 import AdminDashboard from '../screens/Admin/Dashboard';
-import Categories from '../screens/Admin/Categories';
+import AdminStatistics from '../screens/Admin/Statistics';
 import Users from '../screens/Admin/Users';
 
 // ==================== VENDOR SCREENS ====================
@@ -32,7 +32,7 @@ const Tab = createBottomTabNavigator();
 const screenComponents: Record<string, React.ComponentType<any>> = {
   // Admin
   AdminDashboard,
-  Categories,
+  AdminStatistics,
   Users,
 
   // Vendor

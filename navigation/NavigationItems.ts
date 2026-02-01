@@ -67,7 +67,8 @@ export const navigationItems: NavigationItem[] = [
     location: 'drawer',
   },
 
-  // ==================== ADMIN TABS ====================
+  // ==================== ADMIN ITEMS ====================
+  // Tab + Drawer items (Vendors and Users are in MANAGEMENT section in DrawerNavigator)
   {
     label: 'Dashboard',
     screen: 'AdminDashboard',
@@ -76,16 +77,9 @@ export const navigationItems: NavigationItem[] = [
     location: 'both',
   },
   {
-    label: 'Users',
-    screen: 'Users',
-    icon: 'account-group',
-    roles: ['admin'],
-    location: 'both',
-  },
-  {
-    label: 'Categories',
-    screen: 'Categories',
-    icon: 'format-list-bulleted',
+    label: 'Statistics',
+    screen: 'AdminStatistics',
+    icon: 'chart-bar',
     roles: ['admin'],
     location: 'both',
   },
