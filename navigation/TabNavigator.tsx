@@ -103,21 +103,19 @@ export default function TabNavigator() {
     <Tab.Navigator
       screenOptions={{
         tabBarShowLabel: true,
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
           backgroundColor: colors.card,
           borderTopWidth: 1,
           borderTopColor: colors.border,
-          // ✅ FIX: Account for Android navigation buttons using safe area insets
-          // Base height + bottom inset for devices with software nav buttons
           height: 60 + insets.bottom,
           paddingBottom: 8 + insets.bottom,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '500',
+          fontWeight: '600',
         },
       }}>
       {navigationItems.map((item, index) => {
