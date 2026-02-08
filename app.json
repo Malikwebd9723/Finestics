@@ -3,6 +3,8 @@
     "name": "Finestics",
     "slug": "Finestics",
     "version": "1.0.0",
+    "scheme": "finestics",
+    "owner": "mishfaq",
     "web": {
       "favicon": "./assets/favicon.png"
     },
@@ -22,7 +24,7 @@
     ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -30,15 +32,23 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.mishfaq.finestics",
+      "buildNumber": "2",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Finestics needs photo access to save your financial reports and receipts.",
+        "NSPhotoLibraryAddUsageDescription": "Allow Finestics to save images to your photo library.",
+        "CFBundleAllowMixedLocalizations": true
+      }
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.usmanahmed.myexpoapp",
+      "package": "com.mishfaq.finestics",
       "permissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
@@ -48,6 +58,9 @@
         "android.permission.READ_MEDIA_VIDEO",
         "android.permission.READ_MEDIA_AUDIO"
       ]
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     },
     "extra": {
       "eas": {
