@@ -65,6 +65,7 @@ export default function PaymentModal({ visible, orderId, onClose }: PaymentModal
     onSuccess: () => {
       ToastAndroid.show('Payment recorded successfully!', ToastAndroid.SHORT);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
       onClose();
     },
     onError: (error: any) => {
