@@ -9,19 +9,19 @@ import { useThemeContext } from '../context/ThemeProvider';
 import { useNavigation } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getNavigationItems } from './NavigationItems';
+import { getTabNavigationItems } from './NavigationItems';
 
 // ==================== ADMIN SCREENS ====================
 import AdminDashboard from '../screens/Admin/Dashboard';
-import Categories from '../screens/Admin/Categories';
+import AdminStatistics from '../screens/Admin/Statistics';
 import Users from '../screens/Admin/Users';
 
 // ==================== VENDOR SCREENS ====================
 import Dashboard from '../screens/Vendor/Dashboard';
-import Customers from '../screens/Vendor/Customers';
 import ProductsScreen from '../screens/Vendor/ProductsScreen';
 import OrdersScreen from '../screens/Vendor/OrdersScreen';
-import Statistics from '../screens/Vendor/Statistics';
+import ExpensesScreen from '../screens/Vendor/ExpensesScreen';
+import PaymentsScreen from '../screens/Vendor/PaymentsScreen';
 
 // ==================== CUSTOMER SCREENS ====================
 import CustomersDashboard from '../screens/Customers/CustomersDashboard';
@@ -32,15 +32,15 @@ const Tab = createBottomTabNavigator();
 const screenComponents: Record<string, React.ComponentType<any>> = {
   // Admin
   AdminDashboard,
-  Categories,
+  AdminStatistics,
   Users,
 
   // Vendor
   Dashboard,
-  Customers,
   ProductsScreen,
   OrdersScreen,
-  Statistics,
+  ExpensesScreen,
+  PaymentsScreen,
 
   // Customer
   CustomersDashboard,
@@ -63,7 +63,7 @@ export default function TabNavigator() {
 
   useEffect(() => {
     const fetchNavigationItems = async () => {
-      const items = await getNavigationItems();
+      const items = await getTabNavigationItems();
       setNavigationItems(items);
       setLoading(false);
     };
@@ -103,21 +103,19 @@ export default function TabNavigator() {
     <Tab.Navigator
       screenOptions={{
         tabBarShowLabel: true,
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
           backgroundColor: colors.card,
           borderTopWidth: 1,
           borderTopColor: colors.border,
-          // ✅ FIX: Account for Android navigation buttons using safe area insets
-          // Base height + bottom inset for devices with software nav buttons
           height: 60 + insets.bottom,
           paddingBottom: 8 + insets.bottom,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '500',
+          fontWeight: '600',
         },
       }}>
       {navigationItems.map((item, index) => {

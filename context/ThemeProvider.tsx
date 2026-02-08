@@ -43,18 +43,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const colors =
     theme === 'dark'
       ? {
-          background: '#0F172A',
-          card: '#1E293B',
-          text: '#F9FAFB',
-          muted: '#64748b',
-          primary: '#6B7280',
+          background: '#09090B',
+          card: '#18181B',
+          text: '#FAFAFA',
+          muted: '#71717A',
+          primary: '#52525B',
+          accent: '#FAFAFA',
           white: '#ffffff',
-          placeholder: '#64748b',
-          gray: '#2e3a4dff',
+          placeholder: '#52525B',
+          gray: '#1F1F23',
           success: '#10B981',
           error: '#EF4444',
-          // ✅ Added border color for dark theme
-          border: '#334155',
+          border: '#27272A',
         }
       : {
           background: '#F9FAFB',
@@ -62,12 +62,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           text: '#111827',
           muted: '#94a3b8',
           primary: '#0F172A',
+          accent: '#0F172A',
           white: '#ffffff',
           placeholder: '#64748b',
           gray: '#f1f2f5ff',
           success: '#10B981',
           error: '#EF4444',
-          // ✅ Added border color for light theme
           border: '#E5E7EB',
         };
 

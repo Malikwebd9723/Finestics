@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+// screens/Admin/components/UsersList.tsx
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,27 +7,40 @@ import {
   Image,
   Pressable,
   Animated,
-} from "react-native";
-import { useQuery } from "@tanstack/react-query";
-import { Ionicons } from "@expo/vector-icons";
-import { useThemeContext } from "context/ThemeProvider";
-import { fetchPendingVendors } from "api/actions/userActions";
-import { ApiResponse, UserDataType } from "constants/types";
-import UserDetailModal from "./UserDetailmodal";
+  TouchableOpacity,
+} from 'react-native';
+import { useQuery } from '@tanstack/react-query';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { useThemeContext } from 'context/ThemeProvider';
+import { fetchAllUsersAdmin, AdminUser } from 'api/actions/adminActions';
+import UserDetailModal from './UserDetailModal';
 
-interface PendingVendorsListProps {
+interface UsersListProps {
   searchQuery: string;
+  statusFilter: 'all' | 'active' | 'suspended';
+  roleFilter: 'all' | 'admin' | 'vendor' | 'customer';
 }
 
-export default function PendingVendorsList({ searchQuery }: PendingVendorsListProps) {
+interface ApiResponse {
+  success: boolean;
+  data: AdminUser[];
+  pagination: any;
+}
+
+export default function UsersList({ searchQuery, statusFilter, roleFilter }: UsersListProps) {
   const { colors } = useThemeContext();
-  const [fadeAnim] = React.useState(new Animated.Value(0));
+  const [fadeAnim] = useState(new Animated.Value(0));
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const { data, isLoading, error } = useQuery<ApiResponse>({
-    queryKey: [, "users", "vendors", "pending"],
-    queryFn: fetchPendingVendors,
+  const filters = {
+    ...(statusFilter !== 'all' && { status: statusFilter }),
+    ...(roleFilter !== 'all' && { role: roleFilter }),
+  };
+
+  const { data, isLoading, error, refetch } = useQuery<ApiResponse>({
+    queryKey: ['users', 'allUsers', statusFilter, roleFilter],
+    queryFn: () => fetchAllUsersAdmin(1, 100, Object.keys(filters).length > 0 ? filters : undefined),
   });
 
   React.useEffect(() => {
@@ -78,22 +92,52 @@ export default function PendingVendorsList({ searchQuery }: PendingVendorsListPr
   }, [data, searchQuery]);
 
   const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return '#8b5cf6';
+      case 'vendor':
+        return '#3b82f6';
+      case 'customer':
+        return '#10b981';
+      default:
+        return colors.muted;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return colors.success;
+      case 'suspended':
+        return colors.error;
+      case 'deleted':
+        return '#6b7280';
+      default:
+        return colors.muted;
+    }
+  };
+
+  const handleUserPress = (userId: number) => {
+    setSelectedUserId(userId);
+    setModalVisible(true);
   };
 
   const handleCloseModal = () => {
     setModalVisible(false);
     setSelectedUserId(null);
   };
-  
+
   const renderSkeleton = () => (
-    <View className="px-2">
+    <View className="px-4">
       {[...Array(6)].map((_, i) => (
         <Animated.View
           key={i}
           className="flex-row items-center justify-between p-4 mb-3 rounded-3xl shadow-sm"
-          style={{ backgroundColor: colors.card, opacity: shimmerOpacity }}
-        >
+          style={{ backgroundColor: colors.card, opacity: shimmerOpacity }}>
           <View className="flex-row items-center flex-1">
             <Animated.View
               className="w-14 h-14 rounded-full mr-4"
@@ -108,6 +152,10 @@ export default function PendingVendorsList({ searchQuery }: PendingVendorsListPr
                 className="w-40 h-3 mb-1 rounded-lg"
                 style={{ backgroundColor: colors.border, opacity: shimmerOpacity }}
               />
+              <Animated.View
+                className="w-24 h-3 rounded-lg"
+                style={{ backgroundColor: colors.border, opacity: shimmerOpacity }}
+              />
             </View>
           </View>
         </Animated.View>
@@ -120,10 +168,16 @@ export default function PendingVendorsList({ searchQuery }: PendingVendorsListPr
   if (error) {
     return (
       <View className="flex-1 items-center justify-center px-4">
-        <Ionicons name="alert-circle" size={64} color="#ef4444" />
+        <Ionicons name="alert-circle" size={64} color={colors.error} />
         <Text className="text-lg font-semibold mt-4" style={{ color: colors.text }}>
           Failed to load users
         </Text>
+        <TouchableOpacity
+          onPress={() => refetch()}
+          className="mt-4 px-6 py-2 rounded-lg"
+          style={{ backgroundColor: colors.primary }}>
+          <Text className="text-white font-medium">Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -136,7 +190,7 @@ export default function PendingVendorsList({ searchQuery }: PendingVendorsListPr
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
         ListEmptyComponent={
           <View className="items-center justify-center py-16">
-            <Ionicons name="checkmark-circle-outline" size={64} color="#10b981" />
+            <Ionicons name="people-outline" size={64} color={colors.muted} />
             <Text className="text-center mt-4 text-base font-medium" style={{ color: colors.text }}>
               No users found
             </Text>
@@ -144,14 +198,14 @@ export default function PendingVendorsList({ searchQuery }: PendingVendorsListPr
         }
         renderItem={({ item }) => (
           <Pressable
+            onPress={() => handleUserPress(item.id)}
             className="relative flex-row items-center justify-between p-4 mb-3 rounded-3xl shadow-sm"
             style={{
               backgroundColor: colors.card,
               elevation: 2,
-              borderColor: "#ef4444",
-              borderLeftWidth: 2,
-            }}
-          >
+              borderColor: colors.primary,
+              borderLeftWidth: isNewUser(item.createdAt) ? 2 : 0,
+            }}>
             <View className="flex-row items-center flex-1">
               {item.profileImage ? (
                 <Image
@@ -162,9 +216,8 @@ export default function PendingVendorsList({ searchQuery }: PendingVendorsListPr
               ) : (
                 <View
                   className="relative w-14 h-14 rounded-full items-center justify-center"
-                  style={{ backgroundColor: colors.primary + "20" }}
-                >
-                  <Text className="text-lg font-bold" style={{ color: colors.muted }}>
+                  style={{ backgroundColor: getRoleColor(item.role) + '20' }}>
+                  <Text className="text-lg font-bold" style={{ color: getRoleColor(item.role) }}>
                     {getInitials(item.firstName, item.lastName)}
                   </Text>
                 </View>
@@ -175,15 +228,44 @@ export default function PendingVendorsList({ searchQuery }: PendingVendorsListPr
                   <Text className="font-bold text-base mr-2" style={{ color: colors.text }}>
                     {item.firstName} {item.lastName}
                   </Text>
+                  <View
+                    className="px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: getRoleColor(item.role) + '20' }}>
+                    <Text
+                      className="text-xs font-semibold uppercase"
+                      style={{ color: getRoleColor(item.role) }}>
+                      {item.role || 'User'}
+                    </Text>
+                  </View>
                 </View>
-                <Text className="text-sm text-gray-500 mt-0.5" numberOfLines={1}>
+                <Text className="text-sm mt-0.5" style={{ color: colors.muted }} numberOfLines={1}>
                   {item.email}
                 </Text>
+                <View className="flex-row items-center mt-1">
+                  <View
+                    className="w-2 h-2 rounded-full mr-1"
+                    style={{ backgroundColor: getStatusColor(item.accountStatus) }}
+                  />
+                  <Text className="text-xs capitalize" style={{ color: colors.muted }}>
+                    {item.accountStatus}
+                  </Text>
+                  {!item.isEmailVerified && (
+                    <View className="flex-row items-center ml-2">
+                      <MaterialIcons name="warning" size={12} color="#f59e0b" />
+                      <Text className="text-xs ml-0.5" style={{ color: '#f59e0b' }}>
+                        Unverified
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </View>
             </View>
+
+            <MaterialIcons name="chevron-right" size={24} color={colors.muted} />
           </Pressable>
         )}
       />
+
       {/* User Detail Modal */}
       <UserDetailModal
         visible={modalVisible}
