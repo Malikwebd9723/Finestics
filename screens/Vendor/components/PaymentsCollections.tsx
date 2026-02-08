@@ -1,7 +1,7 @@
 // screens/Vendor/components/PaymentsCollections.tsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import {
@@ -12,6 +12,7 @@ import {
   DailyCollectionData,
 } from 'api/actions/paymentActions';
 import { formatPrice, formatShortDate, getPaymentMethodLabel } from 'types/order.types';
+import { copyToClipboard, formatCollectionsText } from 'utils/paymentClipboard';
 
 interface Props {
   startDate: string;
@@ -79,41 +80,55 @@ export default function PaymentsCollectionsTab({ startDate, endDate, isActive }:
     );
   }
 
+  const handleCopy = () => {
+    if (collections) copyToClipboard(formatCollectionsText(collections, startDate, endDate));
+  };
+
   return (
     <View className="flex-1 px-4 pt-4">
-      {/* Group by selector */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ flexGrow: 0 }}
-        className="mb-4">
-        <View className="flex-row gap-1.5">
-          {GROUP_OPTIONS.map((opt) => {
-            const active = groupBy === opt.key;
-            return (
-              <TouchableOpacity
-                key={opt.key}
-                onPress={() => {
-                  setGroupBy(opt.key);
-                  setSelectedDate(null);
-                }}
-                className="items-center justify-center rounded-full px-3.5"
-                style={{
-                  height: 30,
-                  backgroundColor: active ? colors.primary : colors.card,
-                  borderWidth: 1,
-                  borderColor: active ? colors.primary : colors.border,
-                }}>
-                <Text
-                  className="text-xs font-medium"
-                  style={{ color: active ? '#fff' : colors.muted }}>
-                  {opt.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </ScrollView>
+      {/* Group by + Copy */}
+      <View className="mb-4 flex-row items-center">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ flexGrow: 0, flex: 1 }}>
+          <View className="flex-row gap-1.5">
+            {GROUP_OPTIONS.map((opt) => {
+              const active = groupBy === opt.key;
+              return (
+                <TouchableOpacity
+                  key={opt.key}
+                  onPress={() => {
+                    setGroupBy(opt.key);
+                    setSelectedDate(null);
+                  }}
+                  className="items-center justify-center rounded-full px-3.5"
+                  style={{
+                    height: 30,
+                    backgroundColor: active ? colors.primary : colors.card,
+                    borderWidth: 1,
+                    borderColor: active ? colors.primary : colors.border,
+                  }}>
+                  <Text
+                    className="text-xs font-medium"
+                    style={{ color: active ? '#fff' : colors.muted }}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </ScrollView>
+        {collections && (
+          <TouchableOpacity
+            onPress={handleCopy}
+            className="ml-2 flex-row items-center rounded-full px-3"
+            style={{ height: 30, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+            <Ionicons name="copy-outline" size={13} color={colors.muted} />
+            <Text className="ml-1.5 text-xs" style={{ color: colors.muted }}>Copy</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       {/* Total banner */}
       {collections && (

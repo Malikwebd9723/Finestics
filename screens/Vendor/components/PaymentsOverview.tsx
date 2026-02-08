@@ -1,11 +1,12 @@
 // screens/Vendor/components/PaymentsOverview.tsx
 import React from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchPaymentOverview, PaymentOverview } from 'api/actions/paymentActions';
 import { formatPrice } from 'types/order.types';
+import { copyToClipboard, formatOverviewText } from 'utils/paymentClipboard';
 
 interface Props {
   startDate: string;
@@ -60,8 +61,19 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
       ? Math.round((overview.totalCollections / overview.totalSales) * 100)
       : 0;
 
+  const handleCopy = () => copyToClipboard(formatOverviewText(overview, startDate, endDate));
+
   return (
     <View className="px-4 pt-4">
+      {/* Copy button */}
+      <TouchableOpacity
+        onPress={handleCopy}
+        className="mb-3 flex-row items-center self-end rounded-full px-3"
+        style={{ height: 28, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+        <Ionicons name="copy-outline" size={13} color={colors.muted} />
+        <Text className="ml-1.5 text-xs" style={{ color: colors.muted }}>Copy</Text>
+      </TouchableOpacity>
+
       {/* Main figures */}
       <View className="mb-3 flex-row gap-3">
         <View className="flex-1 rounded-2xl p-4" style={{ backgroundColor: colors.primary }}>

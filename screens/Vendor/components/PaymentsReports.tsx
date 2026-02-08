@@ -11,6 +11,7 @@ import {
   ProfitLossData,
 } from 'api/actions/paymentActions';
 import { formatPrice, formatShortDate } from 'types/order.types';
+import { copyToClipboard, formatSalesReportText, formatPnLText } from 'utils/paymentClipboard';
 
 type ReportType = 'sales' | 'pnl';
 type GroupBy = 'day' | 'week' | 'month';
@@ -60,31 +61,47 @@ export default function PaymentsReportsTab({ startDate, endDate, isActive }: Pro
     );
   }
 
+  const handleCopy = () => {
+    if (reportType === 'sales' && salesReport) {
+      copyToClipboard(formatSalesReportText(salesReport, startDate, endDate));
+    } else if (reportType === 'pnl' && pnlReport) {
+      copyToClipboard(formatPnLText(pnlReport, startDate, endDate));
+    }
+  };
+
   return (
     <View className="flex-1 px-4 pt-4">
-      {/* Report type toggle - compact pill */}
-      <View
-        className="mb-4 flex-row overflow-hidden rounded-full"
-        style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-        {([
-          { key: 'sales' as const, label: 'Sales Report' },
-          { key: 'pnl' as const, label: 'Profit & Loss' },
-        ]).map((opt) => {
-          const active = reportType === opt.key;
-          return (
-            <TouchableOpacity
-              key={opt.key}
-              onPress={() => setReportType(opt.key)}
-              className="flex-1 items-center justify-center py-2"
-              style={{ backgroundColor: active ? colors.primary : 'transparent' }}>
-              <Text
-                className="text-xs font-semibold"
-                style={{ color: active ? '#fff' : colors.muted }}>
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+      {/* Report type toggle + Copy */}
+      <View className="mb-4 flex-row items-center gap-2">
+        <View
+          className="flex-1 flex-row overflow-hidden rounded-full"
+          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+          {([
+            { key: 'sales' as const, label: 'Sales Report' },
+            { key: 'pnl' as const, label: 'Profit & Loss' },
+          ]).map((opt) => {
+            const active = reportType === opt.key;
+            return (
+              <TouchableOpacity
+                key={opt.key}
+                onPress={() => setReportType(opt.key)}
+                className="flex-1 items-center justify-center py-2"
+                style={{ backgroundColor: active ? colors.primary : 'transparent' }}>
+                <Text
+                  className="text-xs font-semibold"
+                  style={{ color: active ? '#fff' : colors.muted }}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <TouchableOpacity
+          onPress={handleCopy}
+          className="flex-row items-center rounded-full px-3"
+          style={{ height: 30, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+          <Ionicons name="copy-outline" size={13} color={colors.muted} />
+        </TouchableOpacity>
       </View>
 
       {/* ---- SALES REPORT ---- */}

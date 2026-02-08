@@ -1,11 +1,12 @@
 // screens/Vendor/components/PaymentsCustomers.tsx
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchCustomerPaymentSummaries, CustomerPaymentSummary } from 'api/actions/paymentActions';
 import { formatPrice } from 'types/order.types';
+import { copyToClipboard, formatCustomersText } from 'utils/paymentClipboard';
 import SearchBar from 'components/SearchBar';
 
 type SortField = 'totalAmount' | 'totalBalance' | 'totalOrders' | 'businessName';
@@ -101,12 +102,12 @@ export default function PaymentsCustomersTab({
       />
 
       <View className="px-4">
-        {/* Filter + Sort row */}
+        {/* Filter + Sort + Copy row */}
+        <View className="mb-3 flex-row items-center">
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={{ flexGrow: 0 }}
-          className="mb-3">
+          style={{ flexGrow: 0, flex: 1 }}>
           <View className="flex-row gap-1.5">
             {/* Balance filter chip */}
             <TouchableOpacity
@@ -162,6 +163,15 @@ export default function PaymentsCustomersTab({
             })}
           </View>
         </ScrollView>
+        {filteredCustomers.length > 0 && (
+          <TouchableOpacity
+            onPress={() => copyToClipboard(formatCustomersText(filteredCustomers, startDate, endDate))}
+            className="ml-2 flex-row items-center rounded-full px-3"
+            style={{ height: 28, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+            <Ionicons name="copy-outline" size={13} color={colors.muted} />
+          </TouchableOpacity>
+        )}
+        </View>
 
         {/* Customer List */}
         {filteredCustomers.length === 0 ? (

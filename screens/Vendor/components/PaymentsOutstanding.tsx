@@ -1,7 +1,7 @@
 // screens/Vendor/components/PaymentsOutstanding.tsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import {
@@ -11,6 +11,7 @@ import {
   AgingData,
 } from 'api/actions/paymentActions';
 import { formatPrice, formatShortDate, getPaymentStatusColor } from 'types/order.types';
+import { copyToClipboard, formatOutstandingText, formatAgingText } from 'utils/paymentClipboard';
 
 type ViewMode = 'orders' | 'aging';
 type SortField = 'orderDate' | 'totalAmount' | 'balanceAmount' | 'daysOutstanding';
@@ -91,28 +92,44 @@ export default function PaymentsOutstandingTab({
     );
   }
 
+  const handleCopy = () => {
+    if (viewMode === 'orders' && orders.length > 0 && summary) {
+      copyToClipboard(formatOutstandingText(orders, summary));
+    } else if (viewMode === 'aging' && aging) {
+      copyToClipboard(formatAgingText(aging));
+    }
+  };
+
   return (
     <View className="flex-1 px-4 pt-4">
-      {/* View toggle - compact pill style */}
-      <View
-        className="mb-4 flex-row overflow-hidden rounded-full"
-        style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-        {(['orders', 'aging'] as ViewMode[]).map((mode) => {
-          const active = viewMode === mode;
-          return (
-            <TouchableOpacity
-              key={mode}
-              onPress={() => setViewMode(mode)}
-              className="flex-1 items-center justify-center py-2"
-              style={{ backgroundColor: active ? colors.primary : 'transparent' }}>
-              <Text
-                className="text-xs font-semibold"
-                style={{ color: active ? '#fff' : colors.muted }}>
-                {mode === 'orders' ? 'Orders' : 'Aging Report'}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+      {/* View toggle + Copy */}
+      <View className="mb-4 flex-row items-center gap-2">
+        <View
+          className="flex-1 flex-row overflow-hidden rounded-full"
+          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+          {(['orders', 'aging'] as ViewMode[]).map((mode) => {
+            const active = viewMode === mode;
+            return (
+              <TouchableOpacity
+                key={mode}
+                onPress={() => setViewMode(mode)}
+                className="flex-1 items-center justify-center py-2"
+                style={{ backgroundColor: active ? colors.primary : 'transparent' }}>
+                <Text
+                  className="text-xs font-semibold"
+                  style={{ color: active ? '#fff' : colors.muted }}>
+                  {mode === 'orders' ? 'Orders' : 'Aging Report'}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <TouchableOpacity
+          onPress={handleCopy}
+          className="flex-row items-center rounded-full px-3"
+          style={{ height: 30, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+          <Ionicons name="copy-outline" size={13} color={colors.muted} />
+        </TouchableOpacity>
       </View>
 
       {viewMode === 'orders' ? (
