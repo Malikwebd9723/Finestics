@@ -32,7 +32,7 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "bundleIdentifier": "com.mishfaq.finestics",
+      "bundleIdentifier": "com.usmanahmed.finestics",
       "buildNumber": "2",
       "supportsTablet": false,
       "infoPlist": {
@@ -48,7 +48,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.mishfaq.finestics",
+      "package": "com.usmanahmed.finestics",
       "permissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
