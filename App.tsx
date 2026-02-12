@@ -10,11 +10,27 @@ import { PaperProvider } from 'react-native-paper';
 import { AuthProvider } from 'context/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+// ✅ FIX: Move QueryClient OUTSIDE the component
+// This prevents creating a new client on every render
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+  },
+});
+
 function ThemedApp() {
   const { colors, theme } = useThemeContext();
-  const queryClient = new QueryClient()
+
   return (
     <PaperProvider>
+      {/* ✅ FIX: Add StatusBar with dynamic style based on theme */}
+      {/* 'dark' style = light content (for dark backgrounds) */}
+      {/* 'light' style = dark content (for light backgrounds) */}
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <QueryClientProvider client={queryClient}>
           <NavigationContainer>
@@ -27,6 +43,7 @@ function ThemedApp() {
     </PaperProvider>
   );
 }
+
 export default function App() {
   return (
     <SafeAreaProvider>

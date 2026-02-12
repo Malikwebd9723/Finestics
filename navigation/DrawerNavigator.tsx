@@ -1,6 +1,6 @@
 import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useThemeContext } from '../context/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
@@ -10,6 +10,14 @@ import { Ionicons } from '@expo/vector-icons';
 // Import your TabNavigator
 import TabNavigator from './TabNavigator';
 import NavigationList from './NavigationList';
+import VendorProfile from '../screens/Vendor/VendorProfile';
+import Statistics from '../screens/Vendor/Statistics';
+import Customers from '../screens/Vendor/Customers';
+
+// Admin Screens
+import AdminProfile from '../screens/Admin/AdminProfile';
+import Vendors from '../screens/Admin/Vendors';
+import Users from '../screens/Admin/Users';
 
 const Drawer = createDrawerNavigator();
 
@@ -28,25 +36,40 @@ function CustomDrawerContent(props: any) {
     }
   };
 
+  const navigateTo = (screenName: string) => {
+    props.navigation.closeDrawer();
+    props.navigation.navigate(screenName);
+  };
+
+  const isVendor = user?.role === 'vendor';
+  const isAdmin = user?.role === 'admin';
+
   return (
     <DrawerContentScrollView
       {...props}
       style={[styles.drawerContent, { backgroundColor: colors.card }]}
-      contentContainerStyle={{ flex: 1 }}
-    >
-      {/* User Header */}
-      <View style={[styles.userSection, { borderBottomColor: colors.border }]}>
+      contentContainerStyle={{ flex: 1 }}>
+      {/* User Header - Touchable for Admin to open profile */}
+      <ScrollView>
+        <TouchableOpacity
+          style={[styles.userSection, { borderBottomColor: colors.border }]}
+          onPress={() => {
+            if (isAdmin) {
+              navigateTo('AdminProfile');
+            } else if (isVendor) {
+              navigateTo('VendorProfile');
+            }
+          }}
+          activeOpacity={0.7}>
         <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
           <Text style={styles.avatarText}>
-            {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'N/A'}
+            {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'N/A'}
           </Text>
         </View>
         <Text style={[styles.userName, { color: colors.text }]}>
-          {user?.firstName + " " + user?.lastName || ''}
+          {user?.firstName + ' ' + user?.lastName || ''}
         </Text>
-        <Text style={[styles.userEmail, { color: colors.muted }]}>
-          {user?.email || ''}
-        </Text>
+        <Text style={[styles.userEmail, { color: colors.muted }]}>{user?.email || ''}</Text>
         {user?.role && (
           <View style={[styles.roleBadge, { backgroundColor: colors.primary + '20' }]}>
             <Text style={[styles.roleText, { color: colors.muted }]}>
@@ -54,7 +77,12 @@ function CustomDrawerContent(props: any) {
             </Text>
           </View>
         )}
-      </View>
+        {(isAdmin || isVendor) && (
+          <Text style={{ color: colors.muted, fontSize: 11, marginTop: 4 }}>
+            Tap to view profile
+          </Text>
+        )}
+      </TouchableOpacity>
 
       {/* Navigation Menu Items */}
       <View style={styles.menuSection}>
@@ -64,8 +92,46 @@ function CustomDrawerContent(props: any) {
           navigation={props.navigation}
           closeDrawer={() => props.navigation.closeDrawer()}
         />
-      </View>
 
+        {/* Vendor-specific menu items */}
+        {isVendor && (
+          <>
+            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 16 }]}>
+              BUSINESS
+            </Text>
+            <TouchableOpacity
+              onPress={() => navigateTo('VendorProfile')}
+              style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
+              activeOpacity={0.7}>
+              <Ionicons name="business-outline" size={22} color={colors.text} />
+              <Text style={[styles.menuItemText, { color: colors.text }]}>Business Profile</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        {/* Admin-specific menu items */}
+        {isAdmin && (
+          <>
+            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 16 }]}>
+              MANAGEMENT
+            </Text>
+            <TouchableOpacity
+              onPress={() => navigateTo('Vendors')}
+              style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
+              activeOpacity={0.7}>
+              <Ionicons name="storefront-outline" size={22} color={colors.text} />
+              <Text style={[styles.menuItemText, { color: colors.text }]}>Vendors</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigateTo('Users')}
+              style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
+              activeOpacity={0.7}>
+              <Ionicons name="people-outline" size={22} color={colors.text} />
+              <Text style={[styles.menuItemText, { color: colors.text }]}>Users</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
 
       {/* Additional Options */}
       <View style={[styles.bottomSection, { borderTopColor: colors.border }]}>
@@ -77,8 +143,7 @@ function CustomDrawerContent(props: any) {
             setTheme(theme === 'dark' ? 'light' : 'dark');
           }}
           style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <Ionicons
             name={theme === 'dark' ? 'sunny-outline' : 'moon-outline'}
             size={22}
@@ -96,8 +161,7 @@ function CustomDrawerContent(props: any) {
             // Navigate to notifications if you have a screen
           }}
           style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <View>
             <Ionicons name="notifications-outline" size={22} color={colors.text} />
             <View
@@ -115,30 +179,24 @@ function CustomDrawerContent(props: any) {
               <Text style={{ color: 'white', fontSize: 9, fontWeight: 'bold' }}>3</Text>
             </View>
           </View>
-          <Text style={[styles.menuItemText, { color: colors.text }]}>
-            Notifications
-          </Text>
+          <Text style={[styles.menuItemText, { color: colors.text }]}>Notifications</Text>
         </TouchableOpacity>
 
         {/* Logout */}
         <TouchableOpacity
           onPress={handleLogout}
           style={[styles.menuItem, { backgroundColor: '#ef444410' }]}
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <Ionicons name="log-out-outline" size={22} color="#ef4444" />
-          <Text style={[styles.menuItemText, { color: '#ef4444', fontWeight: '600' }]}>
-            Logout
-          </Text>
+          <Text style={[styles.menuItemText, { color: '#ef4444', fontWeight: '600' }]}>Logout</Text>
         </TouchableOpacity>
       </View>
 
       {/* Footer */}
       <View style={[styles.footer, { borderTopColor: colors.border }]}>
-        <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-          Version 1.0.0
-        </Text>
+        <Text style={[styles.footerText, { color: colors.textSecondary }]}>Version 1.0.0</Text>
       </View>
+      </ScrollView>
     </DrawerContentScrollView>
   );
 }
@@ -157,13 +215,79 @@ export default function DrawerNavigator() {
         },
         headerShown: false, // Hide drawer header since TabNavigator has its own
         drawerType: 'front', // Drawer slides over content
-      }}
-    >
+      }}>
       {/* Main Tab Navigator */}
+      <Drawer.Screen name="MainTabs" component={TabNavigator}/>
+
+      {/* Vendor Profile Screen */}
       <Drawer.Screen
-        name="MainTabs"
-        component={TabNavigator}
+        name="VendorProfile"
+        component={VendorProfile}
+        options={{
+          headerShown: false,
+          headerTitle: 'Business Profile',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
       />
+
+      {/* Statistics Screen (Drawer-only for Vendor) */}
+      <Drawer.Screen
+        name="Statistics"
+        component={Statistics}
+        options={{
+          headerShown: true,
+          headerTitle: 'Statistics',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Customers Screen (Drawer-only for Vendor) */}
+      <Drawer.Screen
+        name="Customers"
+        component={Customers}
+        options={{
+          headerShown: true,
+          headerTitle: 'Customers',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Admin Profile Screen */}
+      <Drawer.Screen
+        name="AdminProfile"
+        component={AdminProfile}
+        options={{
+          headerShown: false,
+        }}
+      />
+
+      {/* Vendors Screen (Admin) */}
+      <Drawer.Screen
+        name="Vendors"
+        component={Vendors}
+        options={{
+          headerShown: true,
+          headerTitle: 'Vendors',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Users Screen (Admin) */}
+      <Drawer.Screen
+        name="Users"
+        component={Users}
+        options={{
+          headerShown: true,
+          headerTitle: 'Users',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
     </Drawer.Navigator>
   );
 }

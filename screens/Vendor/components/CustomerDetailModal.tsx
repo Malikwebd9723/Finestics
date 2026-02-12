@@ -1,519 +1,534 @@
-import React, { useEffect, useState } from "react";
+// screens/Vendor/components/CustomerDetailModal.tsx
+import React, { useEffect, useState, useRef } from 'react';
 import {
-    View,
-    Text,
-    Modal,
-    Pressable,
-    ScrollView,
-    Animated,
-    Dimensions,
-    ActivityIndicator,
-    Alert,
-    ToastAndroid,
-} from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useThemeContext } from "context/ThemeProvider";
-import { deleteUserAccount, fetchUserDetail} from "api/actions/userActions";
-import { UserDetailModalProps, UserDetailResponse } from "constants/types";
+  View,
+  Text,
+  Modal,
+  Pressable,
+  ScrollView,
+  Animated,
+  Dimensions,
+  ActivityIndicator,
+  ToastAndroid,
+  TouchableOpacity,
+} from 'react-native';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useThemeContext } from 'context/ThemeProvider';
+import { deleteCustomer, fetchCustomerSummary } from 'api/actions/customerActions';
+import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
+import CustomerOrderHistory from './CustomerOrderHistory';
+import OrderDetailModal from './OrderDetailModal'; // ADD THIS
+import PaymentModal from './PaymentModal'; // ADD THIS
+import {
+  Customer,
+  CustomerDetailResponse,
+  getBusinessTypeLabel,
+  getPaymentTermsLabel,
+  getInitials,
+  formatCurrency,
+  formatDate,
+} from 'types/customer.types';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native'; // ADD THIS
 
-const { height } = Dimensions.get("window");
+const { height } = Dimensions.get('window');
 
-export default function CustomerDetailModal({
-    visible,
-    userId,
-    onClose,
-}: UserDetailModalProps) {
-    const { colors } = useThemeContext();
-    const queryClient = useQueryClient();
-    const [slideAnim] = useState(new Animated.Value(height));
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    // Fetch user details
-    const { data, isLoading, error } = useQuery<UserDetailResponse>({
-        queryKey: ["userDetail", userId],
-        queryFn: () => fetchUserDetail(userId!),
-        enabled: !!userId && visible,
-    });
-
-    // Delete user mutation
-    const deleteUserMutation = useMutation({
-        mutationFn: ({ userId }: { userId: number }) => deleteUserAccount(userId),
-        onSuccess: (data) => {
-            if (!data?.success) {
-                ToastAndroid.show("Unable to delete user account!", ToastAndroid.SHORT);
-                return;
-            }
-            ToastAndroid.show("User account deleted!", ToastAndroid.SHORT);
-            queryClient.invalidateQueries({ queryKey: ["users"], refetchType: "all" });
-            setShowDeleteDialog(false);
-            onClose();
-        },
-        onError: (error: any) => {
-            ToastAndroid.show(error?.message || "Failed to delete user", ToastAndroid.SHORT);
-        },
-    });
-    // Slide animation
-    useEffect(() => {
-        if (visible) {
-            Animated.spring(slideAnim, {
-                toValue: 0,
-                tension: 50,
-                friction: 8,
-                useNativeDriver: true,
-            }).start();
-        } else {
-            Animated.timing(slideAnim, {
-                toValue: height,
-                duration: 300,
-                useNativeDriver: true,
-            }).start();
-        }
-    }, [visible]);
-
-
-    const handleDeleteUser = () => {
-        Alert.alert(
-            "Confirm Delete",
-            "Are you sure you want to delete this user? This action cannot be undone.",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: () => deleteUserMutation.mutate({ userId: userId! }),
-                },
-            ]
-        );
-    };
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "active":
-                return colors.success;
-            case "pending":
-                return "#f59e0b";
-            case "rejected":
-            case "suspended":
-                return colors.error;
-            case "deleted":
-                return "#6b7280";
-            default:
-                return "#6b7280";
-        }
-    };
-
-    if (!visible) return null;
-
-    return (
-        <Modal
-            visible={visible}
-            transparent
-            animationType="slide"
-            onRequestClose={onClose}
-        >
-            <View className="flex-1 bg-black/50">
-                <Pressable className="flex-1" onPress={onClose} />
-
-                <Animated.View
-                    style={{
-                        transform: [{ translateY: slideAnim }],
-                        backgroundColor: colors.card,
-                        height: height * 0.85,
-                        borderTopLeftRadius: 30,
-                        borderTopRightRadius: 30,
-                        shadowColor: "#000",
-                        shadowOffset: { width: 0, height: -4 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 8,
-                        elevation: 20,
-                    }}
-                >
-                    {/* Header */}
-                    <View
-                        className="flex-row items-center justify-between p-5 border-b"
-                        style={{ borderColor: colors.muted }}
-                    >
-                        <Text className="text-xl font-bold" style={{ color: colors.text }}>
-                            Customer Details
-                        </Text>
-                        <Pressable
-                            onPress={onClose}
-                            className="w-10 h-10 rounded-full items-center justify-center"
-                            style={{ backgroundColor: colors.background }}
-                        >
-                            <MaterialIcons name="close" size={24} color={colors.text} />
-                        </Pressable>
-                    </View>
-
-                    {/* Content */}
-                    {isLoading ? (
-                        <View className="flex-1 items-center justify-center">
-                            <ActivityIndicator size="large" color={colors.primary} />
-                            <Text className="mt-4 text-base" style={{ color: colors.text }}>
-                                Loading customer details...
-                            </Text>
-                        </View>
-                    ) : error ? (
-                        <View className="flex-1 items-center justify-center px-6">
-                            <MaterialIcons name="error-outline" size={64} color={colors.error} />
-                            <Text className="text-lg font-semibold mt-4" style={{ color: colors.text }}>
-                                Failed to load details
-                            </Text>
-                            <Text className="text-sm text-gray-500 mt-2">
-                                Please try again later
-                            </Text>
-                        </View>
-                    ) : data?.data ? (
-                        <>
-                            <ScrollView className="flex-1 px-5 py-4">
-                                {/* User Info Card */}
-                                <View
-                                    className="p-4 rounded-3xl mb-4"
-                                    style={{ backgroundColor: colors.background }}
-                                >
-                                    <View className="flex-row items-center mb-3">
-                                        <View
-                                            className="w-16 h-16 rounded-full items-center justify-center"
-                                            style={{ backgroundColor: colors.primary + "20" }}
-                                        >
-                                            <Text className="text-2xl font-bold" style={{ color: colors.primary }}>
-                                                {data.data?.user?.firstName.charAt(0)}
-                                                {data.data?.user?.lastName.charAt(0)}
-                                            </Text>
-                                        </View>
-                                        <View className="ml-4 flex-1">
-                                            <Text className="text-xl font-bold" style={{ color: colors.text }}>
-                                                {data.data?.user?.firstName} {data.data?.user?.lastName}
-                                            </Text>
-                                            <View
-                                                className="px-3 py-1 rounded-full self-start mt-1"
-                                                style={{ backgroundColor: colors.primary + "30" }}
-                                            >
-                                                <Text
-                                                    className="text-xs font-bold"
-                                                    style={{ color: colors.primary }}
-                                                >
-                                                    {data.data?.user?.role.toUpperCase()}
-                                                </Text>
-                                            </View>
-                                        </View>
-                                    </View>
-
-                                    <View className="space-y-2">
-                                        <InfoRow
-                                            icon="email"
-                                            label="Email"
-                                            value={data.data?.user?.email}
-                                            colors={colors}
-                                        />
-                                        <InfoRow
-                                            icon="phone"
-                                            label="Phone"
-                                            value={data.data?.user?.phone || "Not provided"}
-                                            colors={colors}
-                                        />
-                                        <InfoRow
-                                            icon="verified-user"
-                                            label="Account Status"
-                                            value={data.data?.user?.accountStatus}
-                                            colors={colors}
-                                            badge
-                                            badgeColor={getStatusColor(data.data?.user?.accountStatus)}
-                                        />
-                                        <InfoRow
-                                            icon="check-circle"
-                                            label="Email Verified"
-                                            value={data.data?.user?.isEmailVerified ? "Yes" : "No"}
-                                            colors={colors}
-                                            badge
-                                            badgeColor={data.data?.user?.isEmailVerified ? colors.success : colors.error}
-                                        />
-                                        <InfoRow
-                                            icon="access-time"
-                                            label="Last Login"
-                                            value={formatDate(data.data?.user?.lastLoginAt)}
-                                            colors={colors}
-                                        />
-                                        <InfoRow
-                                            icon="event"
-                                            label="Joined"
-                                            value={formatDate(data.data?.user?.createdAt)}
-                                            colors={colors}
-                                        />
-                                    </View>
-                                </View>
-
-                                {/* Business Profile */}
-                                {data.data.profile && (
-                                    <View
-                                        className="p-4 rounded-3xl mb-4"
-                                        style={{ backgroundColor: colors.background }}
-                                    >
-                                        <View className="flex-row items-center mb-3">
-                                            <MaterialIcons name="business" size={24} color={colors.primary} />
-                                            <Text className="text-lg font-bold ml-2" style={{ color: colors.text }}>
-                                                Business Profile
-                                            </Text>
-                                            <View
-                                                className="ml-auto px-3 py-1 rounded-full"
-                                                style={{
-                                                    backgroundColor: getStatusColor(data.data.profile.status) + "20",
-                                                }}
-                                            >
-                                                <Text
-                                                    className="text-xs font-bold"
-                                                    style={{ color: getStatusColor(data.data.profile.status) }}
-                                                >
-                                                    {data.data.profile.status.toUpperCase()}
-                                                </Text>
-                                            </View>
-                                        </View>
-
-                                        <InfoRow
-                                            icon="store"
-                                            label="Business Name"
-                                            value={data.data.profile.businessName}
-                                            colors={colors}
-                                        />
-                                        <InfoRow
-                                            icon="category"
-                                            label="Business Type"
-                                            value={data.data.profile.businessType}
-                                            colors={colors}
-                                        />
-                                        <InfoRow
-                                            icon="description"
-                                            label="Description"
-                                            value={data.data.profile.description}
-                                            colors={colors}
-                                        />
-                                        <InfoRow
-                                            icon="badge"
-                                            label="Business License"
-                                            value={data.data.profile.businessLicense}
-                                            colors={colors}
-                                        />
-                                        <InfoRow
-                                            icon="phone"
-                                            label="Business Phone"
-                                            value={data.data.profile.businessPhone}
-                                            colors={colors}
-                                        />
-                                        <InfoRow
-                                            icon="email"
-                                            label="Business Email"
-                                            value={data.data.profile.businessEmail}
-                                            colors={colors}
-                                        />
-                                        <InfoRow
-                                            icon="cloud-circle"
-                                            label="Business Website"
-                                            value={data.data.profile.website}
-                                            colors={colors}
-                                        />
-
-                                        {/* Address */}
-                                        {data.data.profile.addresses?.length > 0 && (
-                                            <View className="mt-3 pt-3 border-t" style={{ borderColor: colors.muted }}>
-                                                <View className="flex-row items-center mb-2">
-                                                    <MaterialIcons name="location-on" size={18} color={colors.text} />
-                                                    <Text className="text-sm font-bold ml-2" style={{ color: colors.text }}>
-                                                        Business Address
-                                                    </Text>
-                                                </View>
-                                                {data.data.profile.addresses?.map((address, index) => (
-                                                    <View key={address.id} className="mb-2 ml-6">
-                                                        <Text className="text-sm" style={{ color: colors.text }}>
-                                                            {address.street}, {address.city}
-                                                        </Text>
-                                                        <Text className="text-xs text-gray-500">
-                                                            {address.state}, {address.postalCode}, {address.country}
-                                                        </Text>
-                                                    </View>
-                                                ))}
-                                            </View>
-                                        )}
-                                    </View>
-                                )}
-
-                                {/* Payments */}
-                                {data.data.payments?.length > 0 && (
-                                    <View
-                                        className="p-4 rounded-3xl mb-4"
-                                        style={{ backgroundColor: colors.background }}
-                                    >
-                                        <View className="flex-row items-center mb-3">
-                                            <MaterialIcons name="account-balance-wallet" size={24} color={colors.primary} />
-                                            <Text className="text-lg font-bold ml-2" style={{ color: colors.text }}>
-                                                Payment History
-                                            </Text>
-                                        </View>
-
-                                        {data.data.payments.map((payment) => (
-                                            <View
-                                                key={payment.id}
-                                                className="p-3 rounded-2xl mb-2"
-                                                style={{ backgroundColor: colors.card }}
-                                            >
-                                                <View className="flex-row items-center justify-between mb-2">
-                                                    <Text className="font-semibold" style={{ color: colors.text }}>
-                                                        {payment.selectedPlan.name}
-                                                    </Text>
-                                                    <View
-                                                        className="px-2 py-1 rounded-full"
-                                                        style={{
-                                                            backgroundColor: getStatusColor(payment.status) + "20",
-                                                        }}
-                                                    >
-                                                        <Text
-                                                            className="text-xs font-bold"
-                                                            style={{ color: getStatusColor(payment.status) }}
-                                                        >
-                                                            {payment.status.toUpperCase()}
-                                                        </Text>
-                                                    </View>
-                                                </View>
-                                                <Text className="text-sm text-gray-500">
-                                                    Amount: {payment.currency} {payment.amount}
-                                                </Text>
-                                                <Text className="text-sm text-gray-500">
-                                                    Duration: {payment.selectedPlan.duration} months
-                                                </Text>
-                                            </View>
-                                        ))}
-                                    </View>
-                                )}
-                            </ScrollView>
-
-                            {/* Action Buttons - For Approved/Active Profiles */}
-                            {data.data.profile?.status === "active" && (
-                                <View className="p-5 border-t" style={{ borderColor: colors.muted }}>
-                                    <View className="flex-row gap-2">
-
-                                        {/* Delete Account Button */}
-                                        <Pressable
-                                            onPress={() => setShowDeleteDialog(true)}
-                                            className="flex-1 py-2 rounded-xl items-center justify-center flex-row"
-                                            style={{ backgroundColor: "#ef444420", borderWidth: 1, borderColor: colors.error }}
-                                        >
-                                            <MaterialIcons name="delete" size={16} color={colors.error} />
-                                            <Text className="text-xs font-bold ml-1" style={{ color: colors.error }}>
-                                                Delete
-                                            </Text>
-                                        </Pressable>
-                                    </View>
-                                </View>
-                            )}
-
-                            {/* Delete Confirmation Dialog */}
-                            <Modal visible={showDeleteDialog} transparent animationType="fade" onRequestClose={() => setShowDeleteDialog(false)}>
-                                <View className="flex-1 bg-black/70 items-center justify-center px-6">
-                                    <View className="w-full rounded-3xl p-6" style={{ backgroundColor: colors.card, maxWidth: 400 }}>
-                                        <View className="flex-row items-center mb-4">
-                                            <MaterialIcons name="warning" size={28} color={colors.error} />
-                                            <Text className="text-xl font-bold ml-3" style={{ color: colors.text }}>
-                                                Delete Account
-                                            </Text>
-                                        </View>
-
-                                        <Text className="text-sm text-gray-500 mb-2">
-                                            Are you sure you want to delete this account?
-                                        </Text>
-                                        <Text className="text-sm font-bold mb-4" style={{ color: colors.text }}>
-                                            {data?.data?.user?.firstName} {data?.data?.user?.lastName} ({data?.data?.user?.email})
-                                        </Text>
-                                        <Text className="text-sm text-red-600 mb-6">
-                                            This action cannot be undone. All user data will be permanently deleted.
-                                        </Text>
-
-                                        <View className="flex-row gap-3">
-                                            <Pressable
-                                                onPress={() => setShowDeleteDialog(false)}
-                                                className="flex-1 py-3 rounded-2xl items-center justify-center"
-                                                style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.muted }}
-                                            >
-                                                <Text className="text-base font-bold" style={{ color: colors.text }}>
-                                                    Cancel
-                                                </Text>
-                                            </Pressable>
-
-                                            <Pressable
-                                                onPress={handleDeleteUser}
-                                                disabled={deleteUserMutation.isPending}
-                                                className="flex-1 py-3 rounded-2xl items-center justify-center"
-                                                style={{ backgroundColor: colors.error }}
-                                            >
-                                                {deleteUserMutation.isPending ? (
-                                                    <ActivityIndicator size="small" color="#fff" />
-                                                ) : (
-                                                    <Text className="text-base font-bold text-white">
-                                                        Delete
-                                                    </Text>
-                                                )}
-                                            </Pressable>
-                                        </View>
-                                    </View>
-                                </View>
-                            </Modal>
-                        </>
-                    ) : (
-                        <View className="flex-1 items-center justify-center px-6">
-                            <MaterialIcons name="error-outline" size={64} color={colors.primary} />
-                            <Text className="text-lg font-semibold mt-4" style={{ color: colors.text }}>
-                                No customer data available
-                            </Text>
-                        </View>
-                    )}
-                </Animated.View>
-            </View>
-        </Modal>
-    );
+interface CustomerDetailModalProps {
+  visible: boolean;
+  customerId: number | null;
+  onClose: () => void;
+  onEdit: (customerId: number) => void;
 }
 
-// Helper Component
-const InfoRow = ({
-    icon,
-    label,
-    value,
-    colors,
-    badge,
-    badgeColor,
-}: {
-    icon: string;
-    label: string;
-    value: string;
-    colors: any;
-    badge?: boolean;
-    badgeColor?: string;
-}) => (
-    <View className="flex-row items-center py-2">
-        <MaterialIcons name={icon as any} size={18} color={colors.text} />
-        <Text className="text-sm text-gray-500 ml-2 w-32">{label}:</Text>
-        {badge ? (
-            <View
-                className="px-2 py-1 rounded-full"
-                style={{ backgroundColor: (badgeColor || colors.primary) + "20" }}
-            >
-                <Text
-                    className="text-xs font-semibold"
-                    style={{ color: badgeColor || colors.primary }}
-                >
-                    {value.toUpperCase()}
-                </Text>
-            </View>
-        ) : (
-            <Text className="text-sm font-medium flex-1" style={{ color: colors.text }}>
-                {value}
+export default function CustomerDetailModal({
+  visible,
+  customerId,
+  onClose,
+  onEdit,
+}: CustomerDetailModalProps) {
+  const { colors } = useThemeContext();
+  const queryClient = useQueryClient();
+  const navigation = useNavigation<any>();
+  const slideAnim = useRef(new Animated.Value(height)).current;
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
+  // ADD: Order detail modal state
+  const [orderDetailVisible, setOrderDetailVisible] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+
+  // Fetch customer details
+  const { data, isLoading, error } = useQuery<CustomerDetailResponse>({
+    queryKey: ['customerSummary', customerId],
+    queryFn: () => fetchCustomerSummary(customerId!),
+    enabled: !!customerId && visible,
+  });
+
+  const customer = data?.data;
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteCustomer(customerId!),
+    onSuccess: () => {
+      ToastAndroid.show('Customer deleted successfully!', ToastAndroid.SHORT);
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      setDeleteModalVisible(false);
+      onClose();
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to delete customer';
+      ToastAndroid.show(message, ToastAndroid.SHORT);
+    },
+  });
+
+  // Slide animation
+  useEffect(() => {
+    if (visible) {
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 9,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: height,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible, slideAnim]);
+
+  // ADD: Order handlers
+  const handleViewOrder = (orderId: number) => {
+    setSelectedOrderId(orderId);
+    setOrderDetailVisible(true);
+  };
+
+  const handleCloseOrderDetail = () => {
+    setOrderDetailVisible(false);
+    setSelectedOrderId(null);
+  };
+
+  const handleEditOrder = (orderId: number) => {
+    handleCloseOrderDetail();
+    onClose();
+    setTimeout(() => {
+      navigation.navigate('CreateOrderScreen', { orderId });
+    }, 300);
+  };
+
+  const handleRecordPayment = (orderId: number) => {
+    setSelectedOrderId(orderId);
+    setPaymentModalVisible(true);
+  };
+
+  const handleClosePaymentModal = () => {
+    setPaymentModalVisible(false);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'active':
+        return colors.success;
+      case 'inactive':
+      case 'blocked':
+        return colors.error;
+      default:
+        return colors.muted;
+    }
+  };
+
+  if (!visible) return null;
+
+  return (
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+      <SafeAreaView className="flex-1 bg-black/50">
+        <Pressable className="flex-1" onPress={onClose} />
+
+        <Animated.View
+          style={{
+            transform: [{ translateY: slideAnim }],
+            backgroundColor: colors.card,
+            height: height * 0.85,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.2,
+            shadowRadius: 8,
+            elevation: 20,
+          }}>
+          {/* Header */}
+          <View
+            className="flex-row items-center justify-between border-b px-5 py-4"
+            style={{ borderColor: colors.border }}>
+            <Text className="text-xl font-bold" style={{ color: colors.text }}>
+              Customer Details
             </Text>
-        )}
+            <Pressable
+              onPress={onClose}
+              className="h-10 w-10 items-center justify-center rounded-full"
+              style={{ backgroundColor: colors.background }}>
+              <MaterialIcons name="close" size={22} color={colors.text} />
+            </Pressable>
+          </View>
+
+          {/* Content */}
+          {isLoading ? (
+            <View className="flex-1 items-center justify-center">
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text className="mt-4 text-base" style={{ color: colors.muted }}>
+                Loading details...
+              </Text>
+            </View>
+          ) : error ? (
+            <View className="flex-1 items-center justify-center px-6">
+              <MaterialIcons name="error-outline" size={64} color={colors.error} />
+              <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
+                Failed to load details
+              </Text>
+              <Text className="mt-2 text-center text-sm" style={{ color: colors.muted }}>
+                Please try again later
+              </Text>
+            </View>
+          ) : customer ? (
+            <>
+              <ScrollView className="flex-1 px-5 py-4" showsVerticalScrollIndicator={false}>
+                {/* Profile Header */}
+                <View
+                  className="mb-4 rounded-2xl p-5"
+                  style={{ backgroundColor: colors.background }}>
+                  <View className="flex-row items-center">
+                    <View
+                      className="h-16 w-16 items-center justify-center rounded-full"
+                      style={{ backgroundColor: colors.primary + '15' }}>
+                      <Text className="text-2xl font-bold" style={{ color: colors.primary }}>
+                        {getInitials(customer.businessName)}
+                      </Text>
+                    </View>
+                    <View className="ml-4 flex-1">
+                      <Text className="text-xl font-bold" style={{ color: colors.text }}>
+                        {customer.businessName}
+                      </Text>
+                      <View
+                        className="mt-1 self-start rounded-full px-3 py-1"
+                        style={{
+                          backgroundColor: getStatusColor(customer.status) + '20',
+                        }}>
+                        <Text
+                          className="text-xs font-bold uppercase"
+                          style={{ color: getStatusColor(customer.status) }}>
+                          {customer.status}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Contact Information */}
+                <SectionCard title="Contact Information" icon="person" colors={colors}>
+                  <InfoRow
+                    icon="person"
+                    label="Contact Person"
+                    value={customer.contactPerson}
+                    colors={colors}
+                  />
+                  <InfoRow icon="phone" label="Phone" value={customer.phone} colors={colors} />
+                  {customer.alternatePhone && (
+                    <InfoRow
+                      icon="phone"
+                      label="Alt. Phone"
+                      value={customer.alternatePhone}
+                      colors={colors}
+                    />
+                  )}
+                  {customer.email && (
+                    <InfoRow icon="email" label="Email" value={customer.email} colors={colors} />
+                  )}
+                  <InfoRow
+                    icon="business"
+                    label="Business Type"
+                    value={getBusinessTypeLabel(customer.businessType)}
+                    colors={colors}
+                  />
+                  <InfoRow
+                    icon="event"
+                    label="Joined"
+                    value={formatDate(customer.createdAt)}
+                    colors={colors}
+                  />
+                </SectionCard>
+
+                {/* Financial Information */}
+                <SectionCard
+                  title="Financial Information"
+                  icon="account-balance-wallet"
+                  colors={colors}>
+                  <InfoRow
+                    icon="credit-card"
+                    label="Payment Terms"
+                    value={getPaymentTermsLabel(customer.paymentTerms)}
+                    colors={colors}
+                  />
+                  <InfoRow
+                    icon="trending-up"
+                    label="Credit Limit"
+                    value={formatCurrency(customer.creditLimit)}
+                    colors={colors}
+                  />
+                  <InfoRow
+                    icon="account-balance"
+                    label="Current Balance"
+                    value={formatCurrency(
+                      customer.stats?.totalOutstanding || customer.currentBalance || 0
+                    )}
+                    colors={colors}
+                    highlight={
+                      parseFloat(
+                        customer.stats?.totalOutstanding || customer.currentBalance || '0'
+                      ) > 0
+                    }
+                    highlightColor={colors.error}
+                  />
+                  {customer.stats && (
+                    <>
+                      <InfoRow
+                        icon="receipt-long"
+                        label="Total Orders"
+                        value={customer.stats.totalOrders?.toString() || '0'}
+                        colors={colors}
+                      />
+                      <InfoRow
+                        icon="payments"
+                        label="Total Spent"
+                        value={formatCurrency(customer.stats.totalSpent || 0)}
+                        colors={colors}
+                      />
+                    </>
+                  )}
+                </SectionCard>
+
+                {/* Address Information */}
+                {customer.address && (
+                  <SectionCard title="Address" icon="location-on" colors={colors}>
+                    <View className="mb-3 flex-row flex-wrap items-center gap-2">
+                      {customer.address.label && (
+                        <View
+                          className="rounded-lg px-3 py-1"
+                          style={{ backgroundColor: colors.primary + '15' }}>
+                          <Text className="text-xs font-bold" style={{ color: colors.primary }}>
+                            {customer.address.label}
+                          </Text>
+                        </View>
+                      )}
+                      <View
+                        className="rounded-lg px-3 py-1"
+                        style={{ backgroundColor: colors.card }}>
+                        <Text
+                          className="text-xs font-semibold capitalize"
+                          style={{ color: colors.text }}>
+                          {customer.address.type}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Text className="mb-1 text-sm" style={{ color: colors.text }}>
+                      {customer.address.street}
+                    </Text>
+                    <Text className="mb-1 text-sm" style={{ color: colors.text }}>
+                      {customer.address.city}
+                      {customer.address.state && `, ${customer.address.state}`}
+                      {customer.address.postalCode && ` ${customer.address.postalCode}`}
+                    </Text>
+                    <Text className="text-sm" style={{ color: colors.muted }}>
+                      {customer.address.country}
+                    </Text>
+
+                    {customer.address.instructions && (
+                      <View
+                        className="mt-3 rounded-xl p-3"
+                        style={{ backgroundColor: colors.card }}>
+                        <Text className="mb-1 text-xs font-semibold" style={{ color: colors.text }}>
+                          Delivery Instructions
+                        </Text>
+                        <Text className="text-xs" style={{ color: colors.muted }}>
+                          {customer.address.instructions}
+                        </Text>
+                      </View>
+                    )}
+                  </SectionCard>
+                )}
+
+                {/* Additional Notes */}
+                {(customer.notes || customer.deliveryInstructions) && (
+                  <SectionCard title="Additional Notes" icon="info" colors={colors}>
+                    {customer.notes && (
+                      <View className="mb-3">
+                        <Text
+                          className="mb-1 text-xs font-semibold"
+                          style={{ color: colors.muted }}>
+                          Notes
+                        </Text>
+                        <Text className="text-sm" style={{ color: colors.text }}>
+                          {customer.notes}
+                        </Text>
+                      </View>
+                    )}
+                    {customer.deliveryInstructions && (
+                      <View>
+                        <Text
+                          className="mb-1 text-xs font-semibold"
+                          style={{ color: colors.muted }}>
+                          Delivery Instructions
+                        </Text>
+                        <Text className="text-sm" style={{ color: colors.text }}>
+                          {customer.deliveryInstructions}
+                        </Text>
+                      </View>
+                    )}
+                  </SectionCard>
+                )}
+
+                {/* Order History - NOW WITH onViewOrder */}
+                <SectionCard title="Order History" icon="receipt-long" colors={colors}>
+                  <CustomerOrderHistory
+                    customerId={customerId!}
+                    maxOrders={5}
+                    onViewOrder={handleViewOrder} // ADD THIS
+                  />
+                </SectionCard>
+
+                {/* Spacer for bottom buttons */}
+                <View className="h-4" />
+              </ScrollView>
+
+              {/* Action Buttons */}
+              <View
+                className="flex-row gap-3 border-t px-5 py-4"
+                style={{ borderColor: colors.border }}>
+                <TouchableOpacity
+                  onPress={() => setDeleteModalVisible(true)}
+                  className="flex-1 flex-row items-center justify-center rounded-xl py-3"
+                  style={{
+                    backgroundColor: colors.error + '15',
+                    borderWidth: 1,
+                    borderColor: colors.error,
+                  }}>
+                  <MaterialIcons name="delete" size={18} color={colors.error} />
+                  <Text className="ml-2 text-sm font-bold" style={{ color: colors.error }}>
+                    Delete
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    onClose();
+                    setTimeout(() => onEdit(customerId!), 300);
+                  }}
+                  className="flex-1 flex-row items-center justify-center rounded-xl py-3"
+                  style={{ backgroundColor: colors.primary }}>
+                  <MaterialIcons name="edit" size={18} color="#fff" />
+                  <Text className="ml-2 text-sm font-bold text-white">Edit</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Delete Confirmation Modal */}
+              <ConfirmDeleteModal
+                visible={deleteModalVisible}
+                loading={deleteMutation.isPending}
+                onCancel={() => setDeleteModalVisible(false)}
+                onConfirm={() => deleteMutation.mutate()}
+              />
+            </>
+          ) : (
+            <View className="flex-1 items-center justify-center px-6">
+              <MaterialIcons name="error-outline" size={64} color={colors.muted} />
+              <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
+                No data available
+              </Text>
+            </View>
+          )}
+        </Animated.View>
+
+        {/* ADD: Order Detail Modal */}
+        <OrderDetailModal
+          visible={orderDetailVisible}
+          orderId={selectedOrderId}
+          onClose={handleCloseOrderDetail}
+          onEdit={handleEditOrder}
+          onRecordPayment={handleRecordPayment}
+        />
+
+        {/* ADD: Payment Modal */}
+        <PaymentModal
+          visible={paymentModalVisible}
+          orderId={selectedOrderId}
+          onClose={handleClosePaymentModal}
+        />
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+// Section Card Component
+interface SectionCardProps {
+  title: string;
+  icon: string;
+  colors: any;
+  children: React.ReactNode;
+}
+
+function SectionCard({ title, icon, colors, children }: SectionCardProps) {
+  return (
+    <View className="mb-4 rounded-2xl p-4" style={{ backgroundColor: colors.background }}>
+      <View className="mb-3 flex-row items-center">
+        <MaterialIcons name={icon as any} size={20} color={colors.primary} />
+        <Text className="ml-2 text-base font-bold" style={{ color: colors.text }}>
+          {title}
+        </Text>
+      </View>
+      {children}
     </View>
-);
+  );
+}
+
+// Info Row Component
+interface InfoRowProps {
+  icon: string;
+  label: string;
+  value: string;
+  colors: any;
+  highlight?: boolean;
+  highlightColor?: string;
+}
+
+function InfoRow({ icon, label, value, colors, highlight, highlightColor }: InfoRowProps) {
+  return (
+    <View className="flex-row items-center py-2">
+      <MaterialIcons name={icon as any} size={16} color={colors.muted} />
+      <Text className="ml-2 w-28 text-sm" style={{ color: colors.muted }}>
+        {label}
+      </Text>
+      {highlight ? (
+        <View
+          className="rounded-full px-2 py-1"
+          style={{ backgroundColor: (highlightColor || colors.primary) + '20' }}>
+          <Text
+            className="text-xs font-semibold"
+            style={{ color: highlightColor || colors.primary }}>
+            {value}
+          </Text>
+        </View>
+      ) : (
+        <Text
+          className="flex-1 text-sm font-medium"
+          style={{ color: colors.text }}
+          numberOfLines={1}>
+          {value || '-'}
+        </Text>
+      )}
+    </View>
+  );
+}

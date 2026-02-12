@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Center - Finestics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Tone 1: Dark Slate/Green for Sidebar */
+            --sidebar-bg: #1a2e35;
+            --sidebar-text: #e0e0e0;
+            --sidebar-accent: #4caf50;
+
+            /* Tone 2: Light for Content */
+            --content-bg: #ffffff;
+            --content-text: #333333;
+            --heading-color: #1a2e35;
+            --border-color: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            min-height: 100vh;
+            color: var(--content-text);
+            background-color: var(--content-bg);
+        }
+
+        /* Sidebar (Tone 1) */
+        .sidebar {
+            width: 350px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            padding: 40px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .sidebar h1 {
+            color: #ffffff;
+            font-size: 2.5rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .sidebar .nav-links {
+            margin-top: 20px;
+        }
+
+        .sidebar .nav-links a {
+            display: block;
+            color: #b0bec5;
+            text-decoration: none;
+            padding: 10px 0;
+            transition: color 0.2s;
+            font-size: 1.05rem;
+        }
+
+        .sidebar .nav-links a:hover {
+            color: var(--sidebar-accent);
+        }
+
+        .sidebar .contact-preview {
+            margin-top: auto;
+            padding-top: 40px;
+        }
+
+        .sidebar .contact-preview h3 {
+            color: var(--sidebar-accent);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar .contact-preview p {
+            margin: 8px 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #cfd8dc;
+        }
+
+        /* Main Content (Tone 2) */
+        .main-content {
+            margin-left: 350px;
+            padding: 60px 80px;
+            flex: 1;
+            max-width: 900px;
+        }
+
+        section {
+            margin-bottom: 50px;
+        }
+
+        h2 {
+            color: var(--heading-color);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        h3 {
+            color: #2e7d32;
+            font-size: 1.25rem;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            line-height: 1.7;
+            margin-bottom: 15px;
+            color: #4a4a4a;
+        }
+
+        ul {
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+            color: #4a4a4a;
+        }
+
+        strong {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        /* Help Badge */
+        .badge {
+            display: inline-block;
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--sidebar-accent);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+                padding: 40px 20px;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 40px 20px;
+                max-width: 100%;
+            }
+
+            .sidebar .contact-preview {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Tone 1: Sidebar -->
+    <aside class="sidebar">
+        <div>
+            <div class="badge">Finestics</div>
+            <h1>Help Center</h1>
+            <div class="nav-links">
+                <a href="#getting-started">Getting Started</a>
+                <a href="#managing-orders">Managing Orders</a>
+                <a href="#deliveries">Deliveries</a>
+                <a href="#payments">Payments & Invoices</a>
+                <a href="#faq">FAQ</a>
+                <a href="#account-deletion">Account Deletion</a>
+                <a href="privacy_policy.html" style="margin-top: 20px; color: var(--sidebar-accent);">Privacy Policy</a>
+                <a href="terms_of_service.html" style="color: var(--sidebar-accent);">Terms of Service</a>
+            </div>
+        </div>
+
+        <div class="contact-preview">
+            <h3>Need More Help?</h3>
+            <p><strong>Email:</strong> mishfaq2021347@gmail.com</p>
+            <p><strong>Phone:</strong> +44 07432 495215</p>
+            <p>Support hours: 9am - 6pm GMT</p>
+        </div>
+    </aside>
+
+    <!-- Tone 2: Content -->
+    <main class="main-content">
+        <section id="getting-started">
+            <h2>1. Getting Started</h2>
+            <p>Welcome to Finestics. This guide will help you set up your account and start managing your
+                business efficiently.</p>
+
+            <h3>Setting Up Your Profile</h3>
+            <p>To ensure smooth operations, complete your business profile with accurate details:</p>
+            <ul>
+                <li><strong>Business Info:</strong> Enter your official business name and registration number.</li>
+                <li><strong>Contact Details:</strong> Add a valid phone number and email for order notifications.</li>
+                <li><strong>Address:</strong> Set your primary pickup/warehouse address.</li>
+            </ul>
+        </section>
+
+        <section id="managing-orders">
+            <h2>2. Managing Orders</h2>
+            <p>Efficiently handle incoming orders from your customers.</p>
+
+            <h3>Processing New Orders</h3>
+            <p>When a new order arrives, you'll receive a notification. To process it:</p>
+            <ul>
+                <li>Go to the <strong>"Orders"</strong> tab.</li>
+                <li>Review the items and quantities requested.</li>
+                <li>Click <strong>"Accept"</strong> to confirm availability or <strong>"Edit"</strong> to propose
+                    changes.</li>
+            </ul>
+
+            <h3>Updating Order Status</h3>
+            <p>Keep your customers informed by updating the order status as it moves through processing, packing, and
+                dispatch.</p>
+        </section>
+
+        <section id="deliveries">
+            <h2>3. Deliveries</h2>
+            <p>Manage your fleet, drivers, and delivery routes.</p>
+
+            <h3>Assigning Drivers</h3>
+            <p>You can assign specific orders to drivers or vans:</p>
+            <ul>
+                <li>Navigate to the <strong>"Delivery"</strong> section.</li>
+                <li>Select pending orders.</li>
+                <li>Choose a driver from the list to assign the route.</li>
+            </ul>
+        </section>
+
+        <section id="payments">
+            <h2>4. Payments & Invoices</h2>
+            <p>Track your earnings and manage financial records.</p>
+
+            <h3>Invoices</h3>
+            <p>Invoices are automatically generated for completed orders. You can download them as PDF files for your
+                records or to send to customers.</p>
+
+            <h3>Tracking Payments</h3>
+            <p>Monitor which orders have been paid and which are outstanding in the <strong>"Payments"</strong>
+                dashboard.</p>
+        </section>
+
+        <section id="faq">
+            <h2>5. FAQ</h2>
+
+            <h3>How do I reset my password?</h3>
+            <p>Go to the login screen and click "Forgot Password". Follow the instructions sent to your email to reset
+                it.</p>
+
+            <h3>Can I change my business address?</h3>
+            <p>Yes, you can update your address in the <strong>"Settings"</strong> > <strong>"Profile"</strong> section.
+            </p>
+
+            <h3>Is my data secure?</h3>
+            <p>Yes, we use industry-standard encryption to protect your business and customer data. See our <a
+                    href="privacy_policy.html" style="color: #2e7d32;">Privacy Policy</a> for more details.</p>
+        </section>
+
+        <section id="troubleshooting">
+            <h2>6. Troubleshooting</h2>
+            <p>Experiencing issues? Try these common fixes:</p>
+            <ul>
+                <li><strong>App Crashing:</strong> Ensure you are using the latest version of the app. Try clearing the
+                    app cache.</li>
+                <li><strong>Login Issues:</strong> Check your internet connection. Verify your credentials.</li>
+                <li><strong>Notifications Not Working:</strong> Check your device settings to ensure notifications are
+                    enabled for Finestics.</li>
+            </ul>
+        </section>
+
+        <section id="account-deletion">
+            <h2>7. Account Deletion & Deactivation</h2>
+            <p>If you wish to delete or deactivate your account, please note that this action cannot be performed
+                directly through the app for security reasons.</p>
+
+            <h3>How to Request Account Deletion</h3>
+            <p>To permanently delete your account and associated data:</p>
+            <ul>
+                <li>Send an email to our support team at <strong>mishfaq2021347@gmail.com</strong>.</li>
+                <li>Use the subject line: <strong>"Account Deletion Request - [Your Business Name]"</strong>.</li>
+                <li>Please include your registered email address and phone number for verification.</li>
+            </ul>
+            <p>We will process your request within 10 days, subject to any legal retention requirements.</p>
+
+            <h3>Temporary Deactivation</h3>
+            <p>If you only wish to temporarily pause your account, you can also contact support with the subject line
+                <strong>"Account Deactivation Request"</strong>. Deactivated accounts can be reactivated later by
+                contacting us again.
+            </p>
+        </section>
+
+        <footer>
+            <p>&copy; 2026 Finestics. All rights reserved.</p>
+        </footer>
+    </main>
+</body>
+
+</html>

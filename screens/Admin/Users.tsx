@@ -1,36 +1,27 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  Animated,
-  Alert,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useThemeContext } from "context/ThemeProvider";
+// screens/Admin/Users.tsx
+import React, { useState } from 'react';
+import { View, Text, Pressable } from 'react-native';
+import { useThemeContext } from 'context/ThemeProvider';
+import { useRoute } from '@react-navigation/native';
+import { ScrollView } from 'react-native-gesture-handler';
+import SearchBar from 'components/SearchBar';
+import UsersList from './components/UsersList';
 
-// Import the separate components
-import AllUsersList from "./components/AllUsersList";
-import { ScrollView } from "react-native-gesture-handler";
-import PendingVendorsList from "./components/PendingVendorsList";
-import PendingCustomersList from "./components/PendingCustomersList";
-import AllPendingUserList from "./components/AllPendingUsersList";
-import SearchBar from "components/SearchBar";
-
-type FilterType = "all" | "allPending" | "pendingVendors" | "pendingCustomers";
+type StatusFilter = 'all' | 'active' | 'suspended';
+type RoleFilter = 'all' | 'admin' | 'vendor' | 'customer';
 
 export default function Users() {
   const { colors } = useThemeContext();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const route = useRoute<any>();
+  const initialFilter = route.params?.filter || 'all';
 
-  // Add user handler
-  const handleAddUser = () => {
-    Alert.alert("Add User", "Add user button clicked!");
-  };
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>(
+    ['admin', 'vendor', 'customer'].includes(initialFilter) ? initialFilter : 'all'
+  );
 
-  // Custom chip component
+  // Filter chip component
   const FilterChip = ({
     label,
     isActive,
@@ -42,74 +33,83 @@ export default function Users() {
   }) => (
     <Pressable
       onPress={onPress}
-      className={`px-5 py-2.5 rounded-2xl mr-3 shadow-sm ${
-        isActive ? "" : "border border-gray-300"
-      }`}
+      className={`px-4 py-2.5 rounded-2xl mr-3 shadow-sm ${isActive ? '' : 'border border-gray-300'}`}
       style={{
         backgroundColor: isActive ? colors.primary : colors.card,
         elevation: isActive ? 4 : 0,
-      }}
-    >
+      }}>
       <View className="flex-row items-center">
-        <Text
-          className="text-sm font-bold"
-          style={{ color: isActive ? "#fff" : colors.text }}
-        >
+        <Text className="text-sm font-bold" style={{ color: isActive ? '#fff' : colors.text }}>
           {label}
         </Text>
       </View>
     </Pressable>
   );
 
-  // Render the appropriate component based on active filter
-  const renderContent = () => {
-    switch (activeFilter) {
-      case "all":
-        return <AllUsersList searchQuery={searchQuery} />;
-      case "allPending":
-        return <AllPendingUserList searchQuery={searchQuery} />;
-      case "pendingVendors":
-        return <PendingVendorsList searchQuery={searchQuery} />;
-      case "pendingCustomers":
-        return <PendingCustomersList searchQuery={searchQuery} />;
-      default:
-        return;
-    }
-  };
-
   return (
     <View className="flex-1 pt-2" style={{ backgroundColor: colors.background }}>
-      {/* Search & Add Button */}
-      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} onAddPress={handleAddUser} />
+      {/* Search */}
+      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
-      {/* Filter Chips */}
-      <View className="px-4 mb-4">
-        <ScrollView className="flex-row"  horizontal showsHorizontalScrollIndicator={false}>
+      {/* Status Filter Chips */}
+      <View className="px-4 mb-2">
+        <Text className="text-xs font-semibold mb-2" style={{ color: colors.muted }}>
+          STATUS
+        </Text>
+        <ScrollView className="flex-row" horizontal showsHorizontalScrollIndicator={false}>
           <FilterChip
             label="All"
-            isActive={activeFilter === "all"}
-            onPress={() => setActiveFilter("all")}
+            isActive={statusFilter === 'all'}
+            onPress={() => setStatusFilter('all')}
           />
           <FilterChip
-            label="All-Pending"
-            isActive={activeFilter === "allPending"}
-            onPress={() => setActiveFilter("allPending")}
+            label="Active"
+            isActive={statusFilter === 'active'}
+            onPress={() => setStatusFilter('active')}
           />
           <FilterChip
-            label="Pending-Vendors"
-            isActive={activeFilter === "pendingVendors"}
-            onPress={() => setActiveFilter("pendingVendors")}
-          />
-          <FilterChip
-            label="Pending-Customers"
-            isActive={activeFilter === "pendingCustomers"}
-            onPress={() => setActiveFilter("pendingCustomers")}
+            label="Suspended"
+            isActive={statusFilter === 'suspended'}
+            onPress={() => setStatusFilter('suspended')}
           />
         </ScrollView>
       </View>
 
-      {/* Dynamic Content */}
-      {renderContent()}
+      {/* Role Filter Chips */}
+      <View className="px-4 mb-4">
+        <Text className="text-xs font-semibold mb-2" style={{ color: colors.muted }}>
+          ROLE
+        </Text>
+        <ScrollView className="flex-row" horizontal showsHorizontalScrollIndicator={false}>
+          <FilterChip
+            label="All Roles"
+            isActive={roleFilter === 'all'}
+            onPress={() => setRoleFilter('all')}
+          />
+          <FilterChip
+            label="Admins"
+            isActive={roleFilter === 'admin'}
+            onPress={() => setRoleFilter('admin')}
+          />
+          <FilterChip
+            label="Vendors"
+            isActive={roleFilter === 'vendor'}
+            onPress={() => setRoleFilter('vendor')}
+          />
+          <FilterChip
+            label="Customers"
+            isActive={roleFilter === 'customer'}
+            onPress={() => setRoleFilter('customer')}
+          />
+        </ScrollView>
+      </View>
+
+      {/* Users List */}
+      <UsersList
+        searchQuery={searchQuery}
+        statusFilter={statusFilter}
+        roleFilter={roleFilter}
+      />
     </View>
   );
 }

@@ -1,253 +1,598 @@
-import React, { useState } from "react";
-import { View, Text, ScrollView, Image } from "react-native";
-import { LineChart, BarChart, PieChart } from "react-native-gifted-charts";
-import { Ionicons } from "@expo/vector-icons";
-import { Button } from "react-native-paper";
-import { useThemeContext } from "context/ThemeProvider";
+// screens/Admin/Statistics.tsx
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
+} from 'react-native';
+import { useQuery } from '@tanstack/react-query';
+import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useThemeContext } from 'context/ThemeProvider';
+import {
+  fetchPlatformStats,
+  fetchVendorPerformanceStats,
+  fetchUserGrowthStats,
+} from 'api/actions/adminActions';
 
-interface User {
-    id: number;
-    name: string;
-    email: string;
-    org: string;
-    image: any;
-    isNew?: boolean;
-}
+type Period = 'week' | 'month' | 'quarter' | 'year';
+type TabType = 'overview' | 'vendors' | 'users';
 
-interface ChartData {
-    value: number;
-    label: string;
-}
+export default function AdminStatistics() {
+  const { colors } = useThemeContext();
+  const [period, setPeriod] = useState<Period>('month');
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
 
-export default function Statistics() {
-    const { colors } = useThemeContext();
-    const [activeTab, setActiveTab] = useState<"Daily" | "Weekly" | "Monthly">("Monthly");
+  // Fetch platform stats
+  const {
+    data: platformData,
+    isLoading: platformLoading,
+    refetch: refetchPlatform,
+    isRefetching: platformRefetching,
+  } = useQuery({
+    queryKey: ['adminPlatformStats', period],
+    queryFn: () => fetchPlatformStats(period),
+  });
 
-    const users: User[] = [
-        {
-            id: 1,
-            name: "Usman Ahmed",
-            email: "user@email.com",
-            org: "Org name",
-            image: require("../../assets/user.jpg"),
-        },
-        {
-            id: 2,
-            name: "Maaz Khan",
-            email: "user@email.com",
-            org: "Org name",
-            image: require("../../assets/user.jpg"),
-        },
-        {
-            id: 3,
-            name: "Test user",
-            email: "user@email.com",
-            org: "Org name",
-            image: require("../../assets/user.jpg"),
-            isNew: true,
-        },
-    ];
+  // Fetch vendor performance stats
+  const { data: vendorData, isLoading: vendorLoading } = useQuery({
+    queryKey: ['adminVendorStats', period],
+    queryFn: () => fetchVendorPerformanceStats(period),
+    enabled: activeTab === 'vendors',
+  });
 
-    const monthlySales: ChartData[] = [
-        { value: 10, label: "Jan" },
-        { value: 30, label: "Feb" },
-        { value: 45, label: "Mar" },
-        { value: 65, label: "Apr" },
-        { value: 50, label: "May" },
-        { value: 40, label: "Jun" },
-        { value: 80, label: "Jul" },
-        { value: 70, label: "Aug" },
-        { value: 90, label: "Sep" },
-        { value: 100, label: "Oct" },
-        { value: 75, label: "Nov" },
-        { value: 100, label: "Dec" },
-    ];
+  // Fetch user growth stats
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ['adminUserStats', period],
+    queryFn: () => fetchUserGrowthStats(period),
+    enabled: activeTab === 'users',
+  });
 
-    const monthlyRevenue: ChartData[] = [
-        { value: 120, label: "Jan" },
-        { value: 144, label: "Feb" },
-        { value: 350, label: "Mar" },
-        { value: 420, label: "Apr" },
-        { value: 600, label: "May" },
-        { value: 700, label: "Jun" },
-        { value: 500, label: "Jul" },
-        { value: 300, label: "Aug" },
-        { value: 800, label: "Sep" },
-        { value: 0, label: "Oct" },
-        { value: 0, label: "Nov" },
-        { value: 0, label: "Dec" },
-    ];
+  // Placeholder data
+  const platformStats = platformData?.data || {
+    totalRevenue: 0,
+    totalOrders: 0,
+    totalUsers: 0,
+    userGrowth: 0,
+    activeVendors: 0,
+    vendorGrowth: 0,
+  };
 
-    const progress = 84;
-    const data = [
-        { value: progress, color: colors.primary },
-        { value: 100 - progress, color: colors.card },
-    ];
+  const vendorStats = vendorData?.data || {
+    topVendors: [],
+    vendorsByOrders: [],
+    vendorsByRevenue: [],
+    newVendors: 0,
+  };
 
+  const userStats = userData?.data || {
+    totalUsers: 0,
+    newUsers: 0,
+    usersByRole: { admin: 0, vendor: 0, customer: 0 },
+    activeUsers: 0,
+    growthRate: 0,
+  };
+
+  const isLoading =
+    platformLoading ||
+    (activeTab === 'vendors' && vendorLoading) ||
+    (activeTab === 'users' && userLoading);
+  const isRefetching = platformRefetching;
+
+  const periodLabels: Record<Period, string> = {
+    week: 'Week',
+    month: 'Month',
+    quarter: 'Quarter',
+    year: 'Year',
+  };
+
+  if (isLoading && !platformStats) {
     return (
-        <ScrollView
-            className="flex-1 px-4 pt-4"
-            style={{ backgroundColor: colors.background }}
-            showsVerticalScrollIndicator={false}
-        >
-            {/* TOTAL CARD */}
-            <View className="mb-4 rounded-2xl p-4" style={{ backgroundColor: colors.card }}>
-                <Text className="text-center text-gray-500">Total</Text>
-                <Text className="text-center text-2xl font-semibold" style={{ color: colors.text }}>
-                    $188,458.00
-                </Text>
-            </View>
-
-            {/* INCOME & EXPENSES */}
-            <View className="mb-4 flex-row justify-between">
-                <View className="mr-2 flex-1 rounded-2xl p-4" style={{ backgroundColor: colors.card }}>
-                    <Text className="text-center text-gray-500">Income</Text>
-                    <Text className="text-center font-semibold" style={{ color: colors.text }}>
-                        $167,456.00
-                    </Text>
-                </View>
-
-                <View className="ml-2 flex-1 rounded-2xl p-4" style={{ backgroundColor: colors.card }}>
-                    <Text className="text-center text-gray-500">Expenses</Text>
-                    <Text className="text-center font-semibold text-red-500">$9,328.00</Text>
-                </View>
-            </View>
-
-            {/* STATISTICS */}
-            <Text className="mb-2 text-lg font-semibold" style={{ color: colors.text }}>
-                Statistics
-            </Text>
-
-            {/* Tabs */}
-            <View className="mb-3 flex-row">
-                {["Daily", "Weekly", "Monthly"].map((tab) => (
-                    <Button
-                        key={tab}
-                        mode={activeTab === tab ? "contained" : "outlined"}
-                        onPress={() => setActiveTab(tab as "Daily" | "Weekly" | "Monthly")}
-                        style={{
-                            flex: 1,
-                            marginHorizontal: 4,
-                            borderRadius: 10,
-                            borderColor: colors.primary,
-                            backgroundColor: activeTab === tab ? colors.primary : colors.card,
-                        }}
-                        labelStyle={{
-                            fontSize: 13,
-                            color: activeTab === tab ? "#fff" : colors.text,
-                        }}
-                    >
-                        {tab}
-                    </Button>
-                ))}
-            </View>
-
-            {/* Line Chart - Sales */}
-            <View className="mb-4 overflow-hidden rounded-2xl p-4" style={{ backgroundColor: colors.card }}>
-                <Text className="mb-2 font-semibold" style={{ color: colors.text }}>
-                    Sales
-                </Text>
-                <View className="mb-3 flex-row justify-between">
-                    <Text style={{ color: colors.text }}>Orders completed: 11,496</Text>
-                    <Text style={{ color: colors.text }}>Total Sales: $33,570.00</Text>
-                </View>
-
-                <LineChart
-                    isAnimated
-                    data={monthlySales}
-                    curved
-                    height={150}
-                    color={colors.primary}
-                    thickness={3}
-                    hideDataPoints={false}
-                    hideRules={false}
-                    backgroundColor={colors.card}
-                    yAxisTextStyle={{ color: colors.text }}
-                    xAxisLabelTextStyle={{ color: colors.text }}
-                    noOfSections={5}
-                    areaChart
-                    startFillColor={colors.primary}
-                    endFillColor="transparent"
-                    startOpacity={0.3}
-                    endOpacity={0.1}
-                />
-            </View>
-
-            {/* Bar Chart - Revenue */}
-            <View className="mb-4 overflow-hidden rounded-2xl p-4" style={{ backgroundColor: colors.card }}>
-                <Text className="mb-2 font-semibold" style={{ color: colors.text }}>
-                    Revenue
-                </Text>
-                <Text style={{ color: colors.text, marginBottom: 5 }}>$5,425.00</Text>
-                <BarChart
-                    data={monthlyRevenue}
-                    barWidth={22}
-                    frontColor={colors.primary}
-                    height={280}
-                    yAxisTextStyle={{ color: colors.text }}
-                    xAxisLabelTextStyle={{ color: colors.text }}
-                />
-            </View>
-
-            {/* Newly Registered Customers */}
-            <View className="mb-4 rounded-2xl p-4" style={{ backgroundColor: colors.card }}>
-                <View className="mb-2 flex-row items-center justify-between">
-                    <Text className="font-semibold" style={{ color: colors.text }}>
-                        Newly Registered Customers
-                    </Text>
-                    <Ionicons name="people-outline" size={20} color={colors.text} />
-                </View>
-                <Text className="mb-3 text-sm text-gray-400">In last 30 days</Text>
-                {users.map((user) => (
-                    <View key={user.id} className="mb-3 flex-row items-center justify-between">
-                        <View className="flex-row items-center">
-                            <Image source={user.image} className="h-10 w-10 rounded-full" resizeMode="cover" />
-                            <View className="ml-3">
-                                <View className="flex-row items-center">
-                                    <Text style={{ color: colors.text, fontWeight: "600" }}>{user.name}</Text>
-                                    {user.isNew && (
-                                        <Text
-                                            className="ml-2 rounded-full px-2 py-0.5 text-xs"
-                                            style={{ backgroundColor: colors.primary, color: "#fff" }}
-                                        >
-                                            New
-                                        </Text>
-                                    )}
-                                </View>
-                                <Text className="text-sm text-gray-500">{user.email}</Text>
-                            </View>
-                        </View>
-                        <Text className="text-sm text-gray-400">{user.org}</Text>
-                    </View>
-                ))}
-            </View>
-
-            {/* Yearly Sales Goal */}
-            <View className="mb-10 rounded-2xl p-4" style={{ backgroundColor: colors.card }}>
-                <Text className="mb-4 font-semibold" style={{ color: colors.text }}>
-                    Yearly Sales Goal
-                </Text>
-                <View className="items-center justify-center">
-                    <PieChart
-                        donut
-                        radius={70}
-                        innerRadius={55}
-                        data={data}
-                        innerCircleColor={colors.card}
-                        centerLabelComponent={() => (
-                            <Text style={{ color: colors.text, fontWeight: "bold", fontSize: 18 }}>
-                                {progress}%
-                            </Text>
-                        )}
-                    />
-                    <Text style={{ color: colors.text, marginTop: 8 }}>Progress</Text>
-                </View>
-
-                <View className="mt-4 flex-row justify-between">
-                    <Text style={{ color: colors.text }}>• Total Sales: $33,570.00</Text>
-                    <Text style={{ color: colors.text }}>• Target: $40,000.00</Text>
-                </View>
-            </View>
-        </ScrollView>
+      <View
+        className="flex-1 items-center justify-center"
+        style={{ backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text className="mt-4" style={{ color: colors.muted }}>
+          Loading statistics...
+        </Text>
+      </View>
     );
+  }
+
+  return (
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
+      {/* Header */}
+      <View className="px-4 pb-2 pt-4">
+        <Text className="text-2xl font-bold" style={{ color: colors.text }}>
+          Statistics
+        </Text>
+      </View>
+
+      {/* Period Selector */}
+      <View className="px-4 py-2">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View className="flex-row gap-2">
+            {(['week', 'month', 'quarter', 'year'] as Period[]).map((p) => (
+              <TouchableOpacity
+                key={p}
+                onPress={() => setPeriod(p)}
+                className="items-center justify-center rounded-full px-4"
+                style={{
+                  height: 36,
+                  backgroundColor: period === p ? colors.primary : colors.card,
+                  borderWidth: 1,
+                  borderColor: period === p ? colors.primary : colors.border,
+                }}>
+                <Text
+                  className="text-sm font-medium"
+                  style={{ color: period === p ? '#fff' : colors.text }}>
+                  {periodLabels[p]}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+
+      {/* Tab Selector */}
+      <View className="flex-row border-b px-4" style={{ borderColor: colors.border }}>
+        {[
+          { key: 'overview', label: 'Overview', icon: 'bar-chart' },
+          { key: 'vendors', label: 'Vendors', icon: 'storefront' },
+          { key: 'users', label: 'Users', icon: 'people' },
+        ].map((tab) => (
+          <TouchableOpacity
+            key={tab.key}
+            onPress={() => setActiveTab(tab.key as TabType)}
+            className="mr-4 flex-row items-center pb-3 pt-2"
+            style={{
+              borderBottomWidth: 2,
+              borderBottomColor: activeTab === tab.key ? colors.primary : 'transparent',
+            }}>
+            <Ionicons
+              name={tab.icon as any}
+              size={16}
+              color={activeTab === tab.key ? colors.primary : colors.muted}
+            />
+            <Text
+              className="ml-1.5 text-sm font-medium"
+              style={{ color: activeTab === tab.key ? colors.primary : colors.muted }}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetchPlatform}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }>
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <View className="px-4 py-4">
+            {/* Platform Summary Cards */}
+            <View className="mb-4 flex-row gap-3">
+              <View className="flex-1 rounded-xl p-4" style={{ backgroundColor: colors.primary }}>
+                <Text className="text-2xl font-bold text-white">
+                  ${platformStats.totalRevenue?.toLocaleString() || 0}
+                </Text>
+                <Text className="text-sm text-white/80">Total Revenue</Text>
+              </View>
+              <View className="flex-1 rounded-xl p-4" style={{ backgroundColor: colors.success }}>
+                <Text className="text-2xl font-bold text-white">
+                  {platformStats.totalOrders?.toLocaleString() || 0}
+                </Text>
+                <Text className="text-sm text-white/80">Total Orders</Text>
+              </View>
+            </View>
+
+            <View className="mb-4 flex-row gap-3">
+              <View
+                className="flex-1 rounded-xl p-4"
+                style={{
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}>
+                <Text className="text-xl font-bold" style={{ color: colors.text }}>
+                  {platformStats.totalUsers?.toLocaleString() || 0}
+                </Text>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  Total Users
+                </Text>
+                {platformStats.userGrowth !== 0 && (
+                  <View className="mt-1 flex-row items-center">
+                    <MaterialIcons
+                      name={platformStats.userGrowth > 0 ? 'trending-up' : 'trending-down'}
+                      size={14}
+                      color={platformStats.userGrowth > 0 ? colors.success : colors.error}
+                    />
+                    <Text
+                      className="ml-1 text-xs font-medium"
+                      style={{ color: platformStats.userGrowth > 0 ? colors.success : colors.error }}>
+                      {platformStats.userGrowth > 0 ? '+' : ''}{platformStats.userGrowth}%
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <View
+                className="flex-1 rounded-xl p-4"
+                style={{
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}>
+                <Text className="text-xl font-bold" style={{ color: colors.primary }}>
+                  {platformStats.activeVendors || 0}
+                </Text>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  Active Vendors
+                </Text>
+                {platformStats.vendorGrowth !== 0 && (
+                  <View className="mt-1 flex-row items-center">
+                    <MaterialIcons
+                      name={platformStats.vendorGrowth > 0 ? 'trending-up' : 'trending-down'}
+                      size={14}
+                      color={platformStats.vendorGrowth > 0 ? colors.success : colors.error}
+                    />
+                    <Text
+                      className="ml-1 text-xs font-medium"
+                      style={{ color: platformStats.vendorGrowth > 0 ? colors.success : colors.error }}>
+                      {platformStats.vendorGrowth > 0 ? '+' : ''}{platformStats.vendorGrowth}%
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            {/* Platform Health */}
+            <View
+              className="mb-4 rounded-xl p-4"
+              style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+              <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
+                PLATFORM SUMMARY
+              </Text>
+              <View className="gap-3">
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View
+                      className="mr-3 h-8 w-8 items-center justify-center rounded-full"
+                      style={{ backgroundColor: colors.primary + '20' }}>
+                      <MaterialIcons name="store" size={16} color={colors.primary} />
+                    </View>
+                    <Text style={{ color: colors.text }}>Active Vendors</Text>
+                  </View>
+                  <Text className="font-bold" style={{ color: colors.text }}>
+                    {platformStats.activeVendors || 0}
+                  </Text>
+                </View>
+
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View
+                      className="mr-3 h-8 w-8 items-center justify-center rounded-full"
+                      style={{ backgroundColor: colors.success + '20' }}>
+                      <Ionicons name="people" size={16} color={colors.success} />
+                    </View>
+                    <Text style={{ color: colors.text }}>Total Users</Text>
+                  </View>
+                  <Text className="font-bold" style={{ color: colors.text }}>
+                    {platformStats.totalUsers || 0}
+                  </Text>
+                </View>
+
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View
+                      className="mr-3 h-8 w-8 items-center justify-center rounded-full"
+                      style={{ backgroundColor: '#8b5cf6' + '20' }}>
+                      <MaterialIcons name="receipt" size={16} color="#8b5cf6" />
+                    </View>
+                    <Text style={{ color: colors.text }}>Total Orders</Text>
+                  </View>
+                  <Text className="font-bold" style={{ color: colors.text }}>
+                    {platformStats.totalOrders || 0}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Vendors Tab */}
+        {activeTab === 'vendors' && (
+          <View className="px-4 py-4">
+            {/* Vendor Overview */}
+            <View className="mb-4 flex-row gap-3">
+              <View
+                className="flex-1 rounded-xl p-4"
+                style={{
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}>
+                <MaterialIcons name="store" size={24} color={colors.primary} />
+                <Text className="mt-2 text-2xl font-bold" style={{ color: colors.text }}>
+                  {vendorStats.newVendors || 0}
+                </Text>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  New Vendors
+                </Text>
+              </View>
+              <View
+                className="flex-1 rounded-xl p-4"
+                style={{
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}>
+                <MaterialIcons name="trending-up" size={24} color={colors.success} />
+                <Text className="mt-2 text-2xl font-bold" style={{ color: colors.success }}>
+                  {vendorStats.topVendors?.length || 0}
+                </Text>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  Top Performers
+                </Text>
+              </View>
+            </View>
+
+            {/* Top Vendors by Revenue */}
+            {vendorStats.vendorsByRevenue?.length > 0 && (
+              <View
+                className="mb-4 rounded-xl p-4"
+                style={{
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}>
+                <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
+                  TOP VENDORS BY REVENUE
+                </Text>
+                {vendorStats.vendorsByRevenue.slice(0, 5).map((vendor: any, idx: number) => (
+                  <View
+                    key={vendor.id || idx}
+                    className={`flex-row items-center py-2 ${idx > 0 ? 'border-t' : ''}`}
+                    style={{ borderColor: colors.border }}>
+                    <View
+                      className="mr-3 h-8 w-8 items-center justify-center rounded-full"
+                      style={{ backgroundColor: colors.success + '20' }}>
+                      <Text className="text-xs font-bold" style={{ color: colors.success }}>
+                        #{idx + 1}
+                      </Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="font-medium" style={{ color: colors.text }}>
+                        {vendor.businessName || 'Unknown'}
+                      </Text>
+                      <Text className="text-xs" style={{ color: colors.muted }}>
+                        {vendor.orderCount || 0} orders
+                      </Text>
+                    </View>
+                    <Text className="font-bold" style={{ color: colors.success }}>
+                      ${vendor.revenue?.toLocaleString() || 0}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Top Vendors by Orders */}
+            {vendorStats.vendorsByOrders?.length > 0 && (
+              <View
+                className="rounded-xl p-4"
+                style={{
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}>
+                <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
+                  TOP VENDORS BY ORDERS
+                </Text>
+                {vendorStats.vendorsByOrders.slice(0, 5).map((vendor: any, idx: number) => (
+                  <View
+                    key={vendor.id || idx}
+                    className={`flex-row items-center py-2 ${idx > 0 ? 'border-t' : ''}`}
+                    style={{ borderColor: colors.border }}>
+                    <View
+                      className="mr-3 h-8 w-8 items-center justify-center rounded-full"
+                      style={{ backgroundColor: colors.primary + '20' }}>
+                      <Text className="text-xs font-bold" style={{ color: colors.primary }}>
+                        #{idx + 1}
+                      </Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="font-medium" style={{ color: colors.text }}>
+                        {vendor.businessName || 'Unknown'}
+                      </Text>
+                      <Text className="text-xs" style={{ color: colors.muted }}>
+                        ${vendor.revenue?.toLocaleString() || 0} revenue
+                      </Text>
+                    </View>
+                    <Text className="font-bold" style={{ color: colors.primary }}>
+                      {vendor.orderCount || 0} orders
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Empty state */}
+            {(!vendorStats.vendorsByRevenue || vendorStats.vendorsByRevenue.length === 0) &&
+              (!vendorStats.vendorsByOrders || vendorStats.vendorsByOrders.length === 0) && (
+                <View className="items-center py-12">
+                  <MaterialIcons name="store" size={48} color={colors.muted} />
+                  <Text className="mt-4 text-center" style={{ color: colors.muted }}>
+                    No vendor data available for this period
+                  </Text>
+                </View>
+              )}
+          </View>
+        )}
+
+        {/* Users Tab */}
+        {activeTab === 'users' && (
+          <View className="px-4 py-4">
+            {/* User Overview Cards */}
+            <View className="mb-4 flex-row gap-3">
+              <View
+                className="flex-1 rounded-xl p-4"
+                style={{
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}>
+                <Ionicons name="people" size={24} color={colors.primary} />
+                <Text className="mt-2 text-2xl font-bold" style={{ color: colors.text }}>
+                  {userStats.totalUsers || 0}
+                </Text>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  Total Users
+                </Text>
+              </View>
+              <View
+                className="flex-1 rounded-xl p-4"
+                style={{
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}>
+                <MaterialIcons name="person-add" size={24} color={colors.success} />
+                <Text className="mt-2 text-2xl font-bold" style={{ color: colors.success }}>
+                  {userStats.newUsers || 0}
+                </Text>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  New Users
+                </Text>
+              </View>
+            </View>
+
+            <View className="mb-4 flex-row gap-3">
+              <View
+                className="flex-1 rounded-xl p-4"
+                style={{
+                  backgroundColor: colors.success + '10',
+                  borderWidth: 1,
+                  borderColor: colors.success + '30',
+                }}>
+                <Text className="text-xl font-bold" style={{ color: colors.success }}>
+                  {userStats.activeUsers || 0}
+                </Text>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  Active Users
+                </Text>
+              </View>
+              <View
+                className="flex-1 rounded-xl p-4"
+                style={{
+                  backgroundColor: colors.primary + '10',
+                  borderWidth: 1,
+                  borderColor: colors.primary + '30',
+                }}>
+                <Text className="text-xl font-bold" style={{ color: colors.primary }}>
+                  {userStats.growthRate || 0}%
+                </Text>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  Growth Rate
+                </Text>
+              </View>
+            </View>
+
+            {/* User Distribution */}
+            <View
+              className="mb-4 rounded-xl p-4"
+              style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+              <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
+                USER DISTRIBUTION BY ROLE
+              </Text>
+              <View className="gap-3">
+                {[
+                  { key: 'admin', label: 'Admins', color: '#8b5cf6', icon: 'admin-panel-settings' },
+                  { key: 'vendor', label: 'Vendors', color: '#3b82f6', icon: 'store' },
+                  { key: 'customer', label: 'Customers', color: '#10b981', icon: 'person' },
+                ].map((role) => {
+                  const count = userStats.usersByRole?.[role.key] || 0;
+                  const total = userStats.totalUsers || 1;
+                  const percentage = Math.round((count / total) * 100);
+                  return (
+                    <View key={role.key}>
+                      <View className="mb-1 flex-row items-center justify-between">
+                        <View className="flex-row items-center">
+                          <MaterialIcons name={role.icon as any} size={16} color={role.color} />
+                          <Text className="ml-2 text-sm" style={{ color: colors.text }}>
+                            {role.label}
+                          </Text>
+                        </View>
+                        <Text className="text-sm font-medium" style={{ color: colors.text }}>
+                          {count} ({percentage}%)
+                        </Text>
+                      </View>
+                      <View
+                        className="h-2 overflow-hidden rounded-full"
+                        style={{ backgroundColor: colors.border }}>
+                        <View
+                          className="h-full rounded-full"
+                          style={{ width: `${percentage}%`, backgroundColor: role.color }}
+                        />
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Activity Summary */}
+            <View
+              className="rounded-xl p-4"
+              style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+              <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
+                ACTIVITY METRICS
+              </Text>
+              <View className="flex-row gap-3">
+                <View
+                  className="flex-1 items-center rounded-lg p-3"
+                  style={{ backgroundColor: colors.background }}>
+                  <Text className="text-xl font-bold" style={{ color: colors.success }}>
+                    {userStats.activeUsers || 0}
+                  </Text>
+                  <Text className="text-xs" style={{ color: colors.muted }}>
+                    Active
+                  </Text>
+                </View>
+                <View
+                  className="flex-1 items-center rounded-lg p-3"
+                  style={{ backgroundColor: colors.background }}>
+                  <Text className="text-xl font-bold" style={{ color: colors.primary }}>
+                    {userStats.newUsers || 0}
+                  </Text>
+                  <Text className="text-xs" style={{ color: colors.muted }}>
+                    New
+                  </Text>
+                </View>
+                <View
+                  className="flex-1 items-center rounded-lg p-3"
+                  style={{ backgroundColor: colors.background }}>
+                  <Text className="text-xl font-bold" style={{ color: '#f59e0b' }}>
+                    {(userStats.totalUsers || 0) - (userStats.activeUsers || 0)}
+                  </Text>
+                  <Text className="text-xs" style={{ color: colors.muted }}>
+                    Inactive
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
 }
