@@ -2,7 +2,7 @@
   "expo": {
     "name": "Finestics",
     "slug": "Finestics",
-    "version": "1.0.1",
+    "version": "1.0.0",
     "scheme": "finestics",
     "owner": "maazkh01",
     "web": {
@@ -18,7 +18,11 @@
           "photosPermission": "Allow Finestics to access your photos.",
           "savePhotosPermission": "Allow Finestics to save images to your gallery.",
           "isAccessMediaLocationEnabled": true,
-          "permissions": ["READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO", "WRITE_EXTERNAL_STORAGE"]
+          "permissions": [
+            "READ_MEDIA_IMAGES",
+            "READ_MEDIA_VIDEO",
+            "WRITE_EXTERNAL_STORAGE"
+          ]
         }
       ]
     ],
@@ -30,10 +34,12 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "bundleIdentifier": "com.usmanahmed.finestics",
-      "buildNumber": "2",
+      "bundleIdentifier": "com.finestics.app",
+      "buildNumber": "1",
       "supportsTablet": false,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Finestics needs photo access to save your financial reports and receipts.",
@@ -43,12 +49,12 @@
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
-      "versionCode": 2,
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.usmanahmed.finestics",
+      "package": "com.finestics.app",
       "permissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
