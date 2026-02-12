@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service - Finestics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Tone 1: Dark Slate/Green for Sidebar */
+            --sidebar-bg: #1a2e35;
+            --sidebar-text: #e0e0e0;
+            --sidebar-accent: #4caf50;
+
+            /* Tone 2: Light for Content */
+            --content-bg: #ffffff;
+            --content-text: #333333;
+            --heading-color: #1a2e35;
+            --border-color: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            min-height: 100vh;
+            color: var(--content-text);
+            background-color: var(--content-bg);
+        }
+
+        /* Sidebar (Tone 1) */
+        .sidebar {
+            width: 350px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            padding: 40px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .sidebar h1 {
+            color: #ffffff;
+            font-size: 2.5rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .sidebar .meta {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #b0bec5;
+        }
+
+        .sidebar .meta strong {
+            color: #fff;
+        }
+
+        .sidebar .nav-links {
+            margin-top: 20px;
+        }
+
+        .sidebar .nav-links a {
+            display: block;
+            color: #b0bec5;
+            text-decoration: none;
+            padding: 8px 0;
+            transition: color 0.2s;
+            font-size: 1.05rem;
+        }
+
+        .sidebar .nav-links a:hover {
+            color: var(--sidebar-accent);
+        }
+
+        .sidebar .contact-preview {
+            margin-top: auto;
+            padding-top: 40px;
+        }
+
+        .sidebar .contact-preview h3 {
+            color: var(--sidebar-accent);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar .contact-preview p {
+            margin: 8px 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #cfd8dc;
+        }
+
+        .sidebar a {
+            color: var(--sidebar-accent);
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .sidebar a:hover {
+            opacity: 0.8;
+        }
+
+        /* Main Content (Tone 2) */
+        .main-content {
+            margin-left: 350px;
+            padding: 60px 80px;
+            flex: 1;
+            max-width: 900px;
+        }
+
+        section {
+            margin-bottom: 50px;
+        }
+
+        h2 {
+            color: var(--heading-color);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        h3 {
+            color: #2e7d32;
+            font-size: 1.25rem;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            line-height: 1.7;
+            margin-bottom: 15px;
+            color: #4a4a4a;
+        }
+
+        ul {
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        strong {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--sidebar-accent);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+                padding: 40px 20px;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 40px 20px;
+                max-width: 100%;
+            }
+
+            .sidebar .contact-preview {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Tone 1: Sidebar -->
+    <aside class="sidebar">
+        <div>
+            <div class="badge">Finestics</div>
+            <h1>Terms of Service</h1>
+            <div class="meta">
+                <p><strong>Last Updated:</strong> February 2026</p>
+                <p>Please read these terms carefully before using Finestics.</p>
+            </div>
+            <div class="nav-links">
+                <a href="privacy_policy.html">Privacy Policy</a>
+                <a href="help.html">Help Center</a>
+            </div>
+        </div>
+
+        <div class="contact-preview">
+            <h3>Contact Us</h3>
+            <p><strong>Email:</strong> mishfaq2021347@gmail.com</p>
+            <p><strong>Support:</strong> +44 07432 495215</p>
+        </div>
+    </aside>
+
+    <!-- Tone 2: Content -->
+    <main class="main-content">
+        <section>
+            <h2>1. Acceptance of Terms</h2>
+            <p>By downloading, installing, or using the Finestics mobile application ("App"), you agree to be bound by
+                these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the App.</p>
+            <p>These Terms constitute a legally binding agreement between you and Finestics. We may update these Terms
+                from time to time, and your continued use of the App constitutes acceptance of any changes.</p>
+        </section>
+
+        <section>
+            <h2>2. Description of Service</h2>
+            <p>Finestics is a business management application that provides the following services:</p>
+            <ul>
+                <li><strong>Order Management:</strong> Create, track, and manage sales orders through their full
+                    lifecycle</li>
+                <li><strong>Payment Tracking:</strong> Record and monitor payment collections, outstanding balances, and
+                    financial summaries</li>
+                <li><strong>Customer Management:</strong> Maintain customer profiles, contact details, and transaction
+                    histories</li>
+                <li><strong>Product Management:</strong> Manage your product catalogue, pricing, and inventory</li>
+                <li><strong>Expense Tracking:</strong> Log and categorise business expenses</li>
+                <li><strong>Analytics & Reporting:</strong> View business insights, sales trends, and performance
+                    metrics</li>
+                <li><strong>Delivery Management:</strong> Assign orders to vans and manage delivery routes</li>
+            </ul>
+            <p>Finestics is a record-keeping and management tool. It does <strong>not</strong> process payments, transfer
+                money, or provide financial, legal, or tax advice.</p>
+        </section>
+
+        <section>
+            <h2>3. Account Registration</h2>
+            <h3>3.1 Eligibility</h3>
+            <p>You must be at least 18 years old and have the legal capacity to enter into a binding agreement to use
+                this App. The App is intended for business professionals and vendors.</p>
+
+            <h3>3.2 Account Creation</h3>
+            <p>To use the App, you must create an account by providing accurate and complete information including your
+                name, email address, and business details. New vendor accounts require administrative approval before
+                full access is granted.</p>
+
+            <h3>3.3 Account Security</h3>
+            <p>You are responsible for maintaining the confidentiality of your login credentials. You agree to notify us
+                immediately of any unauthorised use of your account. We are not liable for any loss arising from
+                unauthorised access to your account.</p>
+        </section>
+
+        <section>
+            <h2>4. Acceptable Use</h2>
+            <p>You agree to use the App only for lawful business purposes. You must not:</p>
+            <ul>
+                <li>Use the App for any illegal or fraudulent activity</li>
+                <li>Attempt to gain unauthorised access to the App or its systems</li>
+                <li>Upload malicious code, viruses, or harmful content</li>
+                <li>Interfere with or disrupt the App's functionality</li>
+                <li>Use the App to collect or store data about other users without their consent</li>
+                <li>Reverse engineer, decompile, or disassemble any part of the App</li>
+                <li>Use automated tools to access or scrape data from the App</li>
+                <li>Impersonate another person or entity</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>5. Your Data & Content</h2>
+            <h3>5.1 Ownership</h3>
+            <p>You retain ownership of all business data you enter into the App, including orders, customer information,
+                product details, payment records, and expense data.</p>
+
+            <h3>5.2 Licence to Us</h3>
+            <p>By using the App, you grant us a limited licence to store, process, and display your data solely for the
+                purpose of providing the App's services to you.</p>
+
+            <h3>5.3 Data Accuracy</h3>
+            <p>You are responsible for the accuracy and completeness of the data you enter. Finestics is not responsible
+                for any losses resulting from inaccurate data entry.</p>
+
+            <h3>5.4 Data Handling</h3>
+            <p>Our collection, use, and protection of your data is governed by our <a href="privacy_policy.html"
+                    style="color: #2e7d32;">Privacy Policy</a>, which forms part of these Terms.</p>
+        </section>
+
+        <section>
+            <h2>6. Intellectual Property</h2>
+            <p>The App, including its design, code, graphics, logos, and content (excluding your business data), is owned
+                by Finestics and is protected by intellectual property laws. You may not copy, modify, distribute, or
+                create derivative works from any part of the App without our written permission.</p>
+        </section>
+
+        <section>
+            <h2>7. Service Availability</h2>
+            <p>We strive to keep the App available at all times, but we do not guarantee uninterrupted access. The App
+                may be temporarily unavailable due to:</p>
+            <ul>
+                <li>Scheduled maintenance and updates</li>
+                <li>Server or infrastructure issues</li>
+                <li>Circumstances beyond our control</li>
+            </ul>
+            <p>We will make reasonable efforts to notify you of planned downtime in advance.</p>
+        </section>
+
+        <section>
+            <h2>8. Limitation of Liability</h2>
+            <p>To the fullest extent permitted by law:</p>
+            <ul>
+                <li>The App is provided "as is" without warranties of any kind, express or implied</li>
+                <li>We do not guarantee the accuracy, completeness, or reliability of any data generated by the App</li>
+                <li>We are not liable for any indirect, incidental, special, or consequential damages arising from your
+                    use of the App</li>
+                <li>Our total liability shall not exceed the amount you paid (if any) for using the App in the 12 months
+                    preceding the claim</li>
+            </ul>
+            <p>You acknowledge that Finestics is a management tool and should not be relied upon as the sole source for
+                financial, tax, or legal decisions.</p>
+        </section>
+
+        <section>
+            <h2>9. Account Termination</h2>
+            <h3>9.1 By You</h3>
+            <p>You may request account deletion at any time by contacting our support team at
+                <strong>mishfaq2021347@gmail.com</strong>. We will process deletion requests within 10 days.</p>
+
+            <h3>9.2 By Us</h3>
+            <p>We reserve the right to suspend or terminate your account if you:</p>
+            <ul>
+                <li>Violate these Terms of Service</li>
+                <li>Engage in fraudulent or illegal activity</li>
+                <li>Abuse the App or its infrastructure</li>
+                <li>Fail to provide accurate registration information</li>
+            </ul>
+            <p>We will provide reasonable notice before termination where possible, unless immediate action is required
+                to protect our users or systems.</p>
+        </section>
+
+        <section>
+            <h2>10. Indemnification</h2>
+            <p>You agree to indemnify and hold Finestics harmless from any claims, damages, losses, or expenses arising
+                from your use of the App, your violation of these Terms, or your violation of any rights of a third
+                party.</p>
+        </section>
+
+        <section>
+            <h2>11. Governing Law</h2>
+            <p>These Terms are governed by the laws of England and Wales. Any disputes arising from these Terms or your
+                use of the App shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
+        </section>
+
+        <section>
+            <h2>12. Changes to These Terms</h2>
+            <p>We may update these Terms from time to time. We will notify you of material changes by:</p>
+            <ul>
+                <li>Updating the "Last Updated" date at the top of this page</li>
+                <li>Sending you an email notification for significant changes</li>
+            </ul>
+            <p>Your continued use of the App after changes are posted constitutes acceptance of the updated Terms.</p>
+        </section>
+
+        <section>
+            <h2>13. Contact Us</h2>
+            <p>If you have any questions about these Terms of Service, please contact us:</p>
+            <ul>
+                <li><strong>Email:</strong> mishfaq2021347@gmail.com</li>
+                <li><strong>Phone:</strong> +44 07432 495215</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>&copy; 2026 Finestics. All rights reserved.</p>
+        </footer>
+    </main>
+</body>
+
+</html>
