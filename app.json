@@ -18,11 +18,7 @@
           "photosPermission": "Allow Finestics to access your photos.",
           "savePhotosPermission": "Allow Finestics to save images to your gallery.",
           "isAccessMediaLocationEnabled": true,
-          "permissions": [
-            "READ_MEDIA_IMAGES",
-            "READ_MEDIA_VIDEO",
-            "WRITE_EXTERNAL_STORAGE"
-          ]
+          "permissions": ["READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO", "WRITE_EXTERNAL_STORAGE"]
         }
       ]
     ],
@@ -34,9 +30,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "bundleIdentifier": "com.finestics.app",
       "buildNumber": "1",
@@ -44,7 +38,8 @@
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Finestics needs photo access to save your financial reports and receipts.",
         "NSPhotoLibraryAddUsageDescription": "Allow Finestics to save images to your photo library.",
-        "CFBundleAllowMixedLocalizations": true
+        "CFBundleAllowMixedLocalizations": true,
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
