@@ -1,6 +1,23 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { config } from 'config';
 
+/**
+ * Extract a human-readable error message from any server response shape.
+ * Checks common fields: message, error, errors array, etc.
+ */
+export function getErrorMessage(data: any, fallback = 'Something went wrong'): string {
+  if (!data) return fallback;
+  if (typeof data === 'string') return data;
+  if (typeof data.message === 'string' && data.message) return data.message;
+  if (typeof data.error === 'string' && data.error) return data.error;
+  if (typeof data.error?.message === 'string') return data.error.message;
+  if (Array.isArray(data.errors) && data.errors.length > 0) {
+    const first = data.errors[0];
+    return typeof first === 'string' ? first : first?.message || first?.msg || fallback;
+  }
+  return fallback;
+}
+
 export const apiRequest = async (
   route: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',

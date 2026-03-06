@@ -1,5 +1,5 @@
 // api/actions/orderActions.ts
-import { apiRequest } from 'api/clients';
+import { apiRequest, getErrorMessage } from 'api/clients';
 import {
   CreateOrderPayload,
   UpdateOrderPayload,
@@ -10,6 +10,13 @@ import {
 
 // Base path for vendor orders
 const BASE_PATH = '/vendor-orders';
+
+/** Throw if the API response indicates failure */
+function throwIfError(res: { success: boolean; data: any }, fallback: string) {
+  if (!res.success) {
+    throw new Error(getErrorMessage(res.data, fallback));
+  }
+}
 
 // ==================== ORDERS CRUD ====================
 
@@ -47,6 +54,7 @@ export const fetchOrderDetails = async (orderId: number) => {
  */
 export const createOrder = async (data: CreateOrderPayload) => {
   const res = await apiRequest(BASE_PATH, 'POST', data);
+  throwIfError(res, 'Failed to create order');
   return res.data;
 };
 
@@ -55,6 +63,7 @@ export const createOrder = async (data: CreateOrderPayload) => {
  */
 export const updateOrder = async (orderId: number, data: UpdateOrderPayload) => {
   const res = await apiRequest(`${BASE_PATH}/${orderId}`, 'PUT', data);
+  throwIfError(res, 'Failed to update order');
   return res.data;
 };
 
@@ -65,6 +74,7 @@ export const updateOrder = async (orderId: number, data: UpdateOrderPayload) => 
  */
 export const updateOrderStatus = async (orderId: number, status: OrderStatus) => {
   const res = await apiRequest(`${BASE_PATH}/${orderId}/status`, 'PATCH', { status });
+  throwIfError(res, 'Failed to update order status');
   return res.data;
 };
 
@@ -73,6 +83,7 @@ export const updateOrderStatus = async (orderId: number, status: OrderStatus) =>
  */
 export const recordPayment = async (orderId: number, data: RecordPaymentPayload) => {
   const res = await apiRequest(`${BASE_PATH}/${orderId}/payment`, 'POST', data);
+  throwIfError(res, 'Failed to record payment');
   return res.data;
 };
 
@@ -81,6 +92,7 @@ export const recordPayment = async (orderId: number, data: RecordPaymentPayload)
  */
 export const cancelOrder = async (orderId: number, reason?: string) => {
   const res = await apiRequest(`${BASE_PATH}/${orderId}/cancel`, 'POST', { reason });
+  throwIfError(res, 'Failed to cancel order');
   return res.data;
 };
 
@@ -92,6 +104,7 @@ export const duplicateOrder = async (
   data?: { deliveryDate?: string; vanName?: string; notes?: string }
 ) => {
   const res = await apiRequest(`${BASE_PATH}/${orderId}/duplicate`, 'POST', data || {});
+  throwIfError(res, 'Failed to duplicate order');
   return res.data;
 };
 
@@ -110,6 +123,7 @@ export const addOrderItem = async (
   }
 ) => {
   const res = await apiRequest(`${BASE_PATH}/${orderId}/items`, 'POST', data);
+  throwIfError(res, 'Failed to add item');
   return res.data;
 };
 
@@ -126,6 +140,7 @@ export const addMultipleOrderItems = async (
   }[]
 ) => {
   const res = await apiRequest(`${BASE_PATH}/${orderId}/items/bulk`, 'POST', { items });
+  throwIfError(res, 'Failed to add items');
   return res.data;
 };
 
@@ -144,6 +159,7 @@ export const updateOrderItem = async (
   }
 ) => {
   const res = await apiRequest(`${BASE_PATH}/${orderId}/items/${itemId}`, 'PATCH', data);
+  throwIfError(res, 'Failed to update item');
   return res.data;
 };
 
@@ -152,6 +168,7 @@ export const updateOrderItem = async (
  */
 export const removeOrderItem = async (orderId: number, itemId: number) => {
   const res = await apiRequest(`${BASE_PATH}/${orderId}/items/${itemId}`, 'DELETE');
+  throwIfError(res, 'Failed to remove item');
   return res.data;
 };
 
@@ -199,6 +216,7 @@ export const fetchDailySummary = async (date: string) => {
  */
 export const bulkUpdateStatus = async (orderIds: number[], status: OrderStatus) => {
   const res = await apiRequest(`${BASE_PATH}/bulk/status`, 'POST', { orderIds, status });
+  throwIfError(res, 'Failed to update orders');
   return res.data;
 };
 
@@ -207,6 +225,7 @@ export const bulkUpdateStatus = async (orderIds: number[], status: OrderStatus) 
  */
 export const bulkAssignVan = async (orderIds: number[], vanName: string) => {
   const res = await apiRequest(`${BASE_PATH}/bulk/assign-van`, 'POST', { orderIds, vanName });
+  throwIfError(res, 'Failed to assign van');
   return res.data;
 };
 
@@ -215,6 +234,7 @@ export const bulkAssignVan = async (orderIds: number[], vanName: string) => {
  */
 export const bulkCancel = async (orderIds: number[], reason?: string) => {
   const res = await apiRequest(`${BASE_PATH}/bulk/cancel`, 'POST', { orderIds, reason });
+  throwIfError(res, 'Failed to cancel orders');
   return res.data;
 };
 
@@ -285,5 +305,6 @@ export const fetchCustomerLastOrder = async (customerId: number) => {
  */
 export const deleteOrder = async (orderId: number) => {
   const res = await apiRequest(`${BASE_PATH}/${orderId}`, 'DELETE');
+  throwIfError(res, 'Failed to delete order');
   return res.data;
 };

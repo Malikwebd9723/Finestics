@@ -7,10 +7,10 @@ import {
   Modal,
   ScrollView,
   ActivityIndicator,
-  ToastAndroid,
   Alert,
   TextInput,
 } from 'react-native';
+import Toast from 'utils/Toast';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
@@ -49,16 +49,15 @@ export default function BulkActionsBar({
   const statusMutation = useMutation({
     mutationFn: ({ status }: { status: OrderStatus }) => bulkUpdateStatus(selectedOrderIds, status),
     onSuccess: (response) => {
-      ToastAndroid.show(
-        `${response?.data?.updated || selectedOrderIds.length} orders updated`,
-        ToastAndroid.SHORT
+      Toast.success(
+        `${response?.data?.updated || selectedOrderIds.length} orders updated`
       );
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       setStatusModalVisible(false);
       onComplete();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.response?.data?.message || 'Failed to update orders');
+      Alert.alert('Error', error?.message || 'Failed to update orders');
     },
   });
 
@@ -66,16 +65,15 @@ export default function BulkActionsBar({
   const vanMutation = useMutation({
     mutationFn: ({ vanName }: { vanName: string }) => bulkAssignVan(selectedOrderIds, vanName),
     onSuccess: (response) => {
-      ToastAndroid.show(
-        `${response?.data?.updated || selectedOrderIds.length} orders assigned to ${response?.data?.vanName}`,
-        ToastAndroid.SHORT
+      Toast.success(
+        `${response?.data?.updated || selectedOrderIds.length} orders assigned to ${response?.data?.vanName}`
       );
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       setVanModalVisible(false);
       onComplete();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.response?.data?.message || 'Failed to assign van');
+      Alert.alert('Error', error?.message || 'Failed to assign van');
     },
   });
 
@@ -83,9 +81,8 @@ export default function BulkActionsBar({
   const cancelMutation = useMutation({
     mutationFn: ({ reason }: { reason?: string }) => bulkCancel(selectedOrderIds, reason),
     onSuccess: (response) => {
-      ToastAndroid.show(
-        `${response?.data?.cancelled || selectedOrderIds.length} orders cancelled`,
-        ToastAndroid.SHORT
+      Toast.success(
+        `${response?.data?.cancelled || selectedOrderIds.length} orders cancelled`
       );
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       setCancelModalVisible(false);
@@ -93,7 +90,7 @@ export default function BulkActionsBar({
       onComplete();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.response?.data?.message || 'Failed to cancel orders');
+      Alert.alert('Error', error?.message || 'Failed to cancel orders');
     },
   });
 

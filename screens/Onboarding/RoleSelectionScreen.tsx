@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, ActivityIndicator, ToastAndroid } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import Toast from 'utils/Toast';
 import { Ionicons } from '@expo/vector-icons';
 import { useForm } from 'react-hook-form';
 import { useThemeContext } from '../../context/ThemeProvider';
@@ -24,7 +25,7 @@ export default function RoleStep() {
             if (!response.success) {
                 errorHandler(response.data);
             }
-            ToastAndroid.show("Role Selected", ToastAndroid.SHORT);
+            Toast.success("Role Selected");
             navigation.navigate("BusinessInfoScreen" as never);
         } catch (error) {
             console.log('Request Failed:', error);

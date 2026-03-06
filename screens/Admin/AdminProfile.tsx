@@ -8,7 +8,6 @@ import {
   TextInput,
   RefreshControl,
   Alert,
-  ToastAndroid,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -18,6 +17,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAdminProfile, updateAdminProfile } from 'api/actions/adminActions';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'utils/Toast';
 import { useNavigation } from '@react-navigation/native';
 
 export default function AdminProfile() {
@@ -46,7 +46,7 @@ export default function AdminProfile() {
     mutationFn: updateAdminProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminProfile'] });
-      ToastAndroid.show('Profile updated successfully', ToastAndroid.SHORT);
+      Toast.success('Profile updated successfully');
       setIsEditing(false);
     },
     onError: (error: any) => {

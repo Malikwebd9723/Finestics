@@ -5,8 +5,8 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  ToastAndroid,
 } from 'react-native';
+import Toast from 'utils/Toast';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeContext } from '../../context/ThemeProvider';
@@ -64,7 +64,7 @@ const SubscriptionScreen = () => {
             }
           : {}
       );
-      ToastAndroid.show('Plan selected successfully!', ToastAndroid.SHORT);
+      Toast.success('Plan selected successfully!');
       navigation.navigate('SubmitOnboardingScreen' as never);
     } catch (e) {
       console.log('Failed to submit selected plan:', e);

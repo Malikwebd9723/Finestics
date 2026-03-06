@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import {
     ScrollView,
     Alert,
-    ToastAndroid,
     Platform,
     View,
 } from "react-native";
+import Toast from "utils/Toast";
 import { useThemeContext } from "context/ThemeProvider";
 import { Button, Text, Card } from "react-native-paper";
 import * as FileSystem from "expo-file-system/legacy";
@@ -65,8 +65,7 @@ export default function TransactionHistory() {
 
     // Toast helper
     const showToast = (msg: string) => {
-        if (Platform.OS === "android") ToastAndroid.show(msg, ToastAndroid.SHORT);
-        else Alert.alert(msg);
+        Toast.info(msg);
     };
 
     // PDF Download Function

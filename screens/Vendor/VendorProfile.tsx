@@ -8,11 +8,11 @@ import {
   TextInput,
   RefreshControl,
   Alert,
-  ToastAndroid,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import Toast from 'utils/Toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
@@ -63,7 +63,7 @@ export default function VendorProfile() {
     mutationFn: updateVendorProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendorProfile'] });
-      ToastAndroid.show('Profile updated successfully', ToastAndroid.SHORT);
+      Toast.success('Profile updated successfully');
       setIsEditing(false);
     },
     onError: (error: any) => {
@@ -76,7 +76,7 @@ export default function VendorProfile() {
     mutationFn: addVan,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vans'] });
-      ToastAndroid.show('Van added successfully', ToastAndroid.SHORT);
+      Toast.success('Van added successfully');
       setNewVanName('');
       setShowAddVan(false);
     },
@@ -90,7 +90,7 @@ export default function VendorProfile() {
     mutationFn: removeVan,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vans'] });
-      ToastAndroid.show('Van removed', ToastAndroid.SHORT);
+      Toast.success('Van removed');
     },
     onError: (error: any) => {
       Alert.alert('Error', error?.response?.data?.message || 'Failed to remove van');

@@ -4,10 +4,9 @@ import {
     Text,
     Pressable,
     ScrollView,
-    ToastAndroid,
     Alert,
-    Platform,
 } from "react-native";
+import Toast from "utils/Toast";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeContext } from "context/ThemeProvider";
 import { captureRef } from "react-native-view-shot";
@@ -55,11 +54,7 @@ export default function InvoiceScreen() {
     };
 
     function showToast(msg: string) {
-        if (Platform.OS === "android") {
-            ToastAndroid.show(msg, ToastAndroid.SHORT);
-        } else {
-            Alert.alert(msg);
-        }
+        Toast.info(msg);
     }
 
     return (

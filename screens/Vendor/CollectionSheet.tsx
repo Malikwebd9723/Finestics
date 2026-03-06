@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   Share,
   Platform,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
@@ -49,6 +51,7 @@ export default function CollectionSheet() {
 
   // Expanded items state
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+  const [shareMenuVisible, setShareMenuVisible] = useState(false);
 
   // Format date for API
   const dateString = selectedDate.toISOString().split('T')[0];
@@ -106,8 +109,9 @@ export default function CollectionSheet() {
   };
 
   // Share collection sheet
-  const handleShare = async () => {
+  const handleShare = async (includeCosts: boolean) => {
     if (!collectionSheet?.items?.length) return;
+    setShareMenuVisible(false);
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -118,12 +122,17 @@ export default function CollectionSheet() {
     collectionSheet.items.forEach((item, index) => {
       text += `${index + 1}. ${item.productName}\n`;
       text += `   Qty: ${item.totalQuantity} ${item.unit}\n`;
-      text += `   Est. Cost: ${formatPrice(item.totalQuantity * item.avgBuyingPrice)}\n\n`;
+      if (includeCosts) {
+        text += `   Est. Cost: ${formatPrice(item.totalQuantity * item.avgBuyingPrice)}\n`;
+      }
+      text += `\n`;
     });
 
     text += `━━━━━━━━━━━━━━━━━━━━━\n`;
     text += `Total Items: ${totals.items}\n`;
-    text += `Est. Total Cost: ${formatPrice(totals.cost)}\n`;
+    if (includeCosts) {
+      text += `Est. Total Cost: ${formatPrice(totals.cost)}\n`;
+    }
     text += `Orders: ${collectionSheet.totalOrders}`;
 
     try {
@@ -177,7 +186,7 @@ export default function CollectionSheet() {
 
         {/* Share Button */}
         <TouchableOpacity
-          onPress={handleShare}
+          onPress={() => setShareMenuVisible(true)}
           disabled={!collectionSheet?.items?.length}
           className="p-2"
           style={{ opacity: collectionSheet?.items?.length ? 1 : 0.5 }}>
@@ -309,6 +318,61 @@ export default function CollectionSheet() {
           </View>
         )}
       </ScrollView>
+
+      {/* Share Options Menu */}
+      <Modal
+        visible={shareMenuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShareMenuVisible(false)}>
+        <Pressable
+          className="flex-1 items-center justify-center"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onPress={() => setShareMenuVisible(false)}>
+          <Pressable
+            className="mx-6 w-full max-w-sm rounded-2xl p-5"
+            style={{ backgroundColor: colors.card }}
+            onPress={(e) => e.stopPropagation()}>
+            <Text className="mb-4 text-lg font-bold" style={{ color: colors.text }}>
+              Share Collection Sheet
+            </Text>
+            <TouchableOpacity
+              onPress={() => handleShare(true)}
+              className="mb-3 flex-row items-center rounded-xl p-4"
+              style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
+              <MaterialIcons name="attach-money" size={22} color={colors.primary} />
+              <View className="ml-3 flex-1">
+                <Text className="font-semibold" style={{ color: colors.text }}>
+                  With Costs
+                </Text>
+                <Text className="mt-0.5 text-xs" style={{ color: colors.muted }}>
+                  Includes estimated costs and prices
+                </Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleShare(false)}
+              className="mb-3 flex-row items-center rounded-xl p-4"
+              style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
+              <MaterialIcons name="money-off" size={22} color={colors.muted} />
+              <View className="ml-3 flex-1">
+                <Text className="font-semibold" style={{ color: colors.text }}>
+                  Without Costs
+                </Text>
+                <Text className="mt-0.5 text-xs" style={{ color: colors.muted }}>
+                  Only items and quantities (for workers)
+                </Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setShareMenuVisible(false)}
+              className="items-center rounded-lg py-3"
+              style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
+              <Text className="font-semibold" style={{ color: colors.text }}>Cancel</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Date Picker */}
       {showDatePicker && (

@@ -8,12 +8,12 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
-  ToastAndroid,
   KeyboardAvoidingView,
   Platform,
   Modal,
   ScrollView,
 } from 'react-native';
+import Toast from 'utils/Toast';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -64,7 +64,7 @@ export default function CreateOrderScreen() {
   const [cart, setCart] = useState<ExtendedCartItem[]>([]);
   const [originalItems, setOriginalItems] = useState<any[]>([]);
   const [orderDate, setOrderDate] = useState<Date>(new Date());
-  const [deliveryDate, setDeliveryDate] = useState<Date | null>(null);
+  const [deliveryDate, setDeliveryDate] = useState<Date | null>(new Date());
   const [deliveryFee, setDeliveryFee] = useState('0');
   const [discount, setDiscount] = useState('0');
   const [notes, setNotes] = useState('');
@@ -142,34 +142,26 @@ export default function CreateOrderScreen() {
   // Mutations
   const createMutation = useMutation({
     mutationFn: (payload: CreateOrderPayload) => createOrder(payload),
-    onSuccess: (response) => {
-      if (!response.success) {
-        ToastAndroid.show(response.message || 'Something went wrong', ToastAndroid.SHORT);
-        return;
-      }
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
-      ToastAndroid.show('Order created successfully!', ToastAndroid.SHORT);
+      Toast.success('Order created successfully!');
       navigation.goBack();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.response?.data?.message || 'Failed to create order');
+      Toast.error(error?.message || 'Failed to create order');
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: (payload: UpdateOrderPayload) => updateOrder(orderId, payload),
-    onSuccess: (response) => {
-      if (!response.success) {
-        ToastAndroid.show(response.message || 'Something went wrong', ToastAndroid.SHORT);
-        return;
-      }
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['orders', orderId] });
-      ToastAndroid.show('Order updated successfully!', ToastAndroid.SHORT);
+      Toast.success('Order updated successfully!');
       navigation.goBack();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.response?.data?.message || 'Failed to update order');
+      Toast.error(error?.message || 'Failed to update order');
     },
   });
 
@@ -237,10 +229,10 @@ export default function CreateOrderScreen() {
             removeItemMutation.mutate(item.itemId!, {
               onSuccess: () => {
                 setCart((prev) => prev.filter((i) => i.productId !== productId));
-                ToastAndroid.show('Item removed', ToastAndroid.SHORT);
+                Toast.success('Item removed');
               },
               onError: (error: any) => {
-                Alert.alert('Error', error?.response?.data?.message || 'Failed to remove item');
+                Toast.error(error?.message || 'Failed to remove item');
               },
             });
           },
@@ -292,6 +284,13 @@ export default function CreateOrderScreen() {
       return;
     }
 
+    // Validate all items have valid quantities and prices
+    const invalidItem = cart.find((item) => !item.quantity || item.quantity <= 0 || isNaN(item.sellingPrice));
+    if (invalidItem) {
+      Alert.alert('Validation Error', `"${invalidItem.name}" has an invalid quantity or price`);
+      return;
+    }
+
     if (isEditMode) {
       try {
         const newItems = cart.filter((item) => !item.isOriginal);
@@ -334,7 +333,7 @@ export default function CreateOrderScreen() {
         };
         updateMutation.mutate(payload);
       } catch (error: any) {
-        Alert.alert('Error', error?.response?.data?.message || 'Failed to update order');
+        Toast.error(error?.message || 'Failed to update order');
       }
     } else {
       const payload: CreateOrderPayload = {
@@ -825,7 +824,35 @@ function CartItemCard({
   onUpdateQuantity,
   onUpdatePrice,
 }: CartItemCardProps) {
+  const [qtyText, setQtyText] = useState(item.quantity.toString());
+  const [priceText, setPriceText] = useState(item.sellingPrice.toString());
   const itemTotal = item.sellingPrice * item.quantity;
+
+  // Sync local text when item values change from outside (e.g. +/- buttons)
+  useEffect(() => {
+    setQtyText(item.quantity.toString());
+  }, [item.quantity]);
+  useEffect(() => {
+    setPriceText(item.sellingPrice.toString());
+  }, [item.sellingPrice]);
+
+  const handleQtyBlur = () => {
+    const val = parseFloat(qtyText);
+    if (!isNaN(val) && val > 0) {
+      onUpdateQuantity(val);
+    } else {
+      setQtyText(item.quantity.toString());
+    }
+  };
+
+  const handlePriceBlur = () => {
+    const val = parseFloat(priceText);
+    if (!isNaN(val) && val >= 0) {
+      onUpdatePrice(val.toString());
+    } else {
+      setPriceText(item.sellingPrice.toString());
+    }
+  };
 
   return (
     <View
@@ -866,8 +893,9 @@ function CartItemCard({
             Price:
           </Text>
           <TextInput
-            value={item.sellingPrice.toString()}
-            onChangeText={onUpdatePrice}
+            value={priceText}
+            onChangeText={setPriceText}
+            onBlur={handlePriceBlur}
             keyboardType="decimal-pad"
             editable={!disabled}
             className="w-20 rounded-lg px-3 py-1.5"
@@ -882,18 +910,19 @@ function CartItemCard({
         </View>
         <View className="flex-row items-center">
           <TouchableOpacity
-            onPress={() => onUpdateQuantity(item.quantity - 1)}
+            onPress={() => onUpdateQuantity(Math.max(0, item.quantity - 1))}
             disabled={disabled}
             className="h-8 w-8 items-center justify-center rounded-full"
             style={{ backgroundColor: colors.background }}>
             <Ionicons name="remove" size={18} color={colors.primary} />
           </TouchableOpacity>
           <TextInput
-            value={item.quantity.toString()}
-            onChangeText={(text) => onUpdateQuantity(parseFloat(text) || 0)}
+            value={qtyText}
+            onChangeText={setQtyText}
+            onBlur={handleQtyBlur}
             keyboardType="decimal-pad"
             editable={!disabled}
-            className="mx-2 w-12 rounded-lg py-1.5"
+            className="mx-2 w-16 rounded-lg py-1.5"
             style={{
               backgroundColor: colors.background,
               color: colors.text,

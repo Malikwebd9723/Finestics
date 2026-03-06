@@ -7,11 +7,11 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-  ToastAndroid,
   Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import Toast from 'utils/Toast';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
@@ -63,7 +63,7 @@ export default function PaymentModal({ visible, orderId, onClose }: PaymentModal
         paymentMethod,
       }),
     onSuccess: () => {
-      ToastAndroid.show('Payment recorded successfully!', ToastAndroid.SHORT);
+      Toast.success('Payment recorded successfully!');
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       onClose();

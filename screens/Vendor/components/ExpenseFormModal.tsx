@@ -8,10 +8,10 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  ToastAndroid,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import Toast from 'utils/Toast';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
@@ -144,11 +144,11 @@ export default function ExpenseFormModal({
     mutationFn: (formData: ExpenseFormData) => createExpense(buildPayload(formData)),
     onSuccess: (response) => {
       if (!response.success) {
-        ToastAndroid.show(response.error?.message || 'Something went wrong', ToastAndroid.SHORT);
+        Toast.error(response.error?.message || 'Something went wrong');
         return;
       }
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
-      ToastAndroid.show('Expense added successfully!', ToastAndroid.SHORT);
+      Toast.success('Expense added successfully!');
       handleClose();
     },
     onError: (error: any) => {
@@ -162,11 +162,11 @@ export default function ExpenseFormModal({
     mutationFn: (formData: ExpenseFormData) => updateExpense(expenseId!, buildPayload(formData)),
     onSuccess: (response) => {
       if (!response.success) {
-        ToastAndroid.show(response.error?.message || 'Something went wrong', ToastAndroid.SHORT);
+        Toast.error(response.error?.message || 'Something went wrong');
         return;
       }
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
-      ToastAndroid.show('Expense updated successfully!', ToastAndroid.SHORT);
+      Toast.success('Expense updated successfully!');
       handleClose();
     },
     onError: (error: any) => {
@@ -180,11 +180,11 @@ export default function ExpenseFormModal({
     mutationFn: () => deleteExpense(expenseId!),
     onSuccess: (response) => {
       if (!response.success) {
-        ToastAndroid.show(response.error?.message || 'Something went wrong', ToastAndroid.SHORT);
+        Toast.error(response.error?.message || 'Something went wrong');
         return;
       }
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
-      ToastAndroid.show('Expense deleted successfully!', ToastAndroid.SHORT);
+      Toast.success('Expense deleted successfully!');
       setDeleteModalVisible(false);
       handleClose();
     },

@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { PaperProvider } from 'react-native-paper';
 import { AuthProvider } from 'context/AuthContext';
+import { SnackbarProvider } from 'context/SnackbarContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // ✅ FIX: Move QueryClient OUTSIDE the component
@@ -35,7 +36,9 @@ function ThemedApp() {
         <QueryClientProvider client={queryClient}>
           <NavigationContainer>
             <AuthProvider>
-              <RootNavigator />
+              <SnackbarProvider>
+                <RootNavigator />
+              </SnackbarProvider>
             </AuthProvider>
           </NavigationContainer>
         </QueryClientProvider>

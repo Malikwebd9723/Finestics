@@ -9,10 +9,10 @@ import {
   Animated,
   Dimensions,
   ActivityIndicator,
-  ToastAndroid,
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import Toast from 'utils/Toast';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
@@ -23,6 +23,7 @@ import {
   duplicateOrder,
   deleteOrder,
 } from 'api/actions/orderActions';
+import { fetchVendorProfile } from 'api/actions/vendorActions';
 import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
 import {
   OrderDetailResponse,
@@ -56,7 +57,7 @@ interface OrderDetailModalProps {
 }
 
 
-const generateInvoiceHTML = (order: any) => {
+const generateInvoiceHTML = (order: any, vendor: any) => {
   const formatPrice = (price: number) => `£${Number(price).toFixed(2)}`;
   const itemsRows = order.items
     ?.map(
@@ -71,6 +72,16 @@ const generateInvoiceHTML = (order: any) => {
     )
     .join('');
 
+  // Vendor business details
+  const businessName = vendor?.businessName || 'Business Name';
+  const businessPhone = vendor?.businessPhone || '';
+  const businessEmail = vendor?.businessEmail || '';
+  const taxId = vendor?.taxId || '';
+  const businessLicense = vendor?.businessLicense || '';
+  const address = vendor?.address
+    ? `${vendor.address.street || ''}${vendor.address.city ? ', ' + vendor.address.city : ''}${vendor.address.postcode ? ' ' + vendor.address.postcode : ''}`
+    : '';
+
   return `
     <html>
       <head>
@@ -80,6 +91,7 @@ const generateInvoiceHTML = (order: any) => {
           .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #1f2937; padding-bottom: 20px; }
           .company-info h1 { margin: 0; font-size: 24px; color: #1f2937; }
           .company-details { font-size: 12px; color: #666; margin-top: 5px; }
+          .company-details p { margin: 2px 0; }
           .invoice-title { font-size: 48px; font-weight: bold; color: #1f2937; }
           .invoice-meta { font-size: 12px; margin-top: 20px; }
           .bill-to { background: #1f2937; color: white; padding: 15px; margin: 20px 0; border-radius: 4px; }
@@ -101,13 +113,12 @@ const generateInvoiceHTML = (order: any) => {
       <body>
         <div class="header">
           <div class="company-info">
-            <h1>Sunshine Vegetables Ltd</h1>
+            <h1>${businessName}</h1>
             <div class="company-details">
-              <p>Stand 12, New Spitalfields Market</p>
-              <p>Leyton, London E10 5SL</p>
-              <p>📞 07876212579</p>
-              <p>📧 info@sunshinevegetables.co.uk</p>
-              <p>Reg No: 15476589, VAT: 468769910</p>
+              ${address ? `<p>${address}</p>` : ''}
+              ${businessPhone ? `<p>Tel: ${businessPhone}</p>` : ''}
+              ${businessEmail ? `<p>${businessEmail}</p>` : ''}
+              ${taxId || businessLicense ? `<p>${taxId ? 'VAT: ' + taxId : ''}${taxId && businessLicense ? ' | ' : ''}${businessLicense ? 'Reg: ' + businessLicense : ''}</p>` : ''}
             </div>
           </div>
           <div style="text-align: right;">
@@ -151,10 +162,6 @@ const generateInvoiceHTML = (order: any) => {
             <span>${formatPrice(order.deliveryFee)}</span>
           </div>
           ${order.discount > 0 ? `<div class="summary-row"><span>Discount</span><span>-${formatPrice(order.discount)}</span></div>` : ''}
-          <div class="summary-row">
-            <span>VAT @ %</span>
-            <span>${formatPrice(0)}</span>
-          </div>
           <div class="summary-row total">
             <span>TOTAL</span>
             <span>${formatPrice(order.totalAmount)}</span>
@@ -175,8 +182,6 @@ const generateInvoiceHTML = (order: any) => {
         ` : ''}
 
         <div class="footer">
-          <p>NO COMPLAINTS OR RETURNS CONSIDERED AFTER 24 HOURS<br>Bank: Metro</p>
-          <p>Acc: 55818878 | Sort Code: 23-05-80</p>
           <p style="margin-top: 10px; color: #999;">Generated on ${new Date().toLocaleDateString()}</p>
         </div>
       </body>
@@ -184,14 +189,14 @@ const generateInvoiceHTML = (order: any) => {
   `;
 };
 
-const handleGenerateAndShareInvoice = async (order: any) => {
+const handleGenerateAndShareInvoice = async (order: any, vendor: any) => {
   try {
-    const html = generateInvoiceHTML(order);
+    const html = generateInvoiceHTML(order, vendor);
     const { uri } = await Print.printToFileAsync({ html });
-    
+
     const filename = `${order.customer?.businessName}-${order.orderNumber}-${formatDate(order.orderDate).replace(/\//g, '-')}.pdf`;
     const newUri = `${documentDirectory}${filename}`;
-    
+
     await copyAsync({ from: uri, to: newUri });
     await Sharing.shareAsync(newUri, { mimeType: 'application/pdf', dialogTitle: filename });
   } catch (error) {
@@ -223,18 +228,26 @@ export default function OrderDetailModal({
     enabled: !!orderId && visible,
   });
 
+  // Fetch vendor profile for invoice
+  const { data: vendorData } = useQuery({
+    queryKey: ['vendorProfile'],
+    queryFn: fetchVendorProfile,
+    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
+  });
+
   const order = data?.data;
+  const vendor = vendorData?.data;
 
   // Update status mutation
   const statusMutation = useMutation({
     mutationFn: ({ status }: { status: OrderStatus }) => updateOrderStatus(orderId!, status),
     onSuccess: () => {
-      ToastAndroid.show('Order status updated!', ToastAndroid.SHORT);
+      Toast.success('Order status updated!');
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       setStatusMenuVisible(false);
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Failed to update status';
+      const message = error?.message || 'Failed to update status';
       Alert.alert('Error', message);
     },
   });
@@ -243,13 +256,13 @@ export default function OrderDetailModal({
   const cancelMutation = useMutation({
     mutationFn: (reason?: string) => cancelOrder(orderId!, reason),
     onSuccess: () => {
-      ToastAndroid.show('Order cancelled!', ToastAndroid.SHORT);
+      Toast.success('Order cancelled!');
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       setCancelModalVisible(false);
       onClose();
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Failed to cancel order';
+      const message = error?.message || 'Failed to cancel order';
       Alert.alert('Error', message);
     },
   });
@@ -258,12 +271,12 @@ export default function OrderDetailModal({
   const duplicateMutation = useMutation({
     mutationFn: () => duplicateOrder(orderId!),
     onSuccess: (response) => {
-      ToastAndroid.show('Order duplicated!', ToastAndroid.SHORT);
+      Toast.success('Order duplicated!');
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       onClose();
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Failed to duplicate order';
+      const message = error?.message || 'Failed to duplicate order';
       Alert.alert('Error', message);
     },
   });
@@ -272,12 +285,12 @@ export default function OrderDetailModal({
   const deleteMutation = useMutation({
     mutationFn: () => deleteOrder(orderId!),
     onSuccess: () => {
-      ToastAndroid.show('Order deleted!', ToastAndroid.SHORT);
+      Toast.success('Order deleted!');
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       onClose();
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Failed to delete order';
+      const message = error?.message || 'Failed to delete order';
       Alert.alert('Error', message);
     },
   });
@@ -660,7 +673,7 @@ export default function OrderDetailModal({
                 <View className="mb-3 flex-row gap-3">
                   {/* Record Payment - Always show (allows adjustments) */}
                   <TouchableOpacity
-                    onPress={() => handleGenerateAndShareInvoice(order)}
+                    onPress={() => handleGenerateAndShareInvoice(order, vendor)}
                     className="flex-1 flex-row items-center justify-center rounded-xl py-3"
                     style={{ backgroundColor: colors.primary }}>
                     <MaterialIcons name="picture-as-pdf" size={18} color="#fff" />

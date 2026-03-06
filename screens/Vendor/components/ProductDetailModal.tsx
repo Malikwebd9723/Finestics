@@ -9,9 +9,9 @@ import {
   Animated,
   Dimensions,
   ActivityIndicator,
-  ToastAndroid,
   TouchableOpacity,
 } from 'react-native';
+import Toast from 'utils/Toast';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
@@ -60,7 +60,7 @@ export default function ProductDetailModal({
   const deleteMutation = useMutation({
     mutationFn: () => deleteProduct(productId!),
     onSuccess: () => {
-      ToastAndroid.show('Product deleted successfully!', ToastAndroid.SHORT);
+      Toast.success('Product deleted successfully!');
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['products', 'tags'] });
       setDeleteModalVisible(false);
@@ -68,7 +68,7 @@ export default function ProductDetailModal({
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Failed to delete product';
-      ToastAndroid.show(message, ToastAndroid.SHORT);
+      Toast.error(message);
     },
   });
 

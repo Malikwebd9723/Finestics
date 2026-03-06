@@ -1,6 +1,7 @@
 // screens/Vendor/ExpensesScreen.tsx
 import React, { useState } from 'react';
-import { View, Text, ToastAndroid, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
+import Toast from 'utils/Toast';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -32,11 +33,11 @@ export default function ExpensesScreen() {
     mutationFn: (expenseIds: number[]) => bulkDeleteExpenses({ expenseIds }),
     onSuccess: (response) => {
       if (!response.success) {
-        ToastAndroid.show(response.error?.message || 'Failed to delete', ToastAndroid.SHORT);
+        Toast.error(response.error?.message || 'Failed to delete');
         return;
       }
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
-      ToastAndroid.show(response.message || 'Expenses deleted', ToastAndroid.SHORT);
+      Toast.success(response.message || 'Expenses deleted');
       exitSelectionMode();
     },
     onError: (error: any) => {

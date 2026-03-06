@@ -1,4 +1,4 @@
-import { ToastAndroid } from 'react-native';
+import Toast from 'utils/Toast';
 
 export const ERROR_MESSAGES = [
   {
@@ -43,7 +43,7 @@ export function errorHandler(data: ResponseProp) {
 
   // Find matching error object
   const matched = ERROR_MESSAGES.find((item) => item.code === code);
-  ToastAndroid.show(matched ? matched.message : 'Something went wrong.', ToastAndroid.SHORT);
+  Toast.error(matched ? matched.message : 'Something went wrong.');
   // Default fallback
   return {
     code,

@@ -9,9 +9,9 @@ import {
   Animated,
   Dimensions,
   ActivityIndicator,
-  ToastAndroid,
   TouchableOpacity,
 } from 'react-native';
+import Toast from 'utils/Toast';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
@@ -71,14 +71,14 @@ export default function CustomerDetailModal({
   const deleteMutation = useMutation({
     mutationFn: () => deleteCustomer(customerId!),
     onSuccess: () => {
-      ToastAndroid.show('Customer deleted successfully!', ToastAndroid.SHORT);
+      Toast.success('Customer deleted successfully!');
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       setDeleteModalVisible(false);
       onClose();
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Failed to delete customer';
-      ToastAndroid.show(message, ToastAndroid.SHORT);
+      Toast.error(message);
     },
   });
 

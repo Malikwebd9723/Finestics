@@ -1,31 +1,45 @@
 // utils/Toast.ts
+import { SnackbarType } from 'components/Snackbar';
 
-import { ToastAndroid, Platform, Alert } from 'react-native';
+type ToastListener = (message: string, type: SnackbarType) => void;
+
+let listener: ToastListener | null = null;
+
+/**
+ * Register a listener for toast events (called by SnackbarProvider)
+ */
+export function registerToastListener(fn: ToastListener) {
+  listener = fn;
+  return () => {
+    listener = null;
+  };
+}
 
 /**
  * Cross-platform toast utility
- * Uses ToastAndroid on Android, Alert on iOS
+ * Routes through global Snackbar when available
  */
 const Toast = {
-  show: (message: string, duration: 'short' | 'long' = 'short') => {
-    if (Platform.OS === 'android') {
-      ToastAndroid.show(message, duration === 'short' ? ToastAndroid.SHORT : ToastAndroid.LONG);
-    } else {
-      // iOS fallback
-      Alert.alert('', message);
+  show: (message: string, type: SnackbarType = 'info') => {
+    if (listener) {
+      listener(message, type);
     }
   },
 
   success: (message: string) => {
-    Toast.show(message, 'short');
+    Toast.show(message, 'success');
   },
 
   error: (message: string) => {
-    Toast.show(message, 'long');
+    Toast.show(message, 'error');
   },
 
   info: (message: string) => {
-    Toast.show(message, 'short');
+    Toast.show(message, 'info');
+  },
+
+  warning: (message: string) => {
+    Toast.show(message, 'warning');
   },
 };
 

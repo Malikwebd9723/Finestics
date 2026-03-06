@@ -8,11 +8,11 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  ToastAndroid,
   KeyboardAvoidingView,
   Platform,
   TextInput,
 } from 'react-native';
+import Toast from 'utils/Toast';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -129,12 +129,12 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
     mutationFn: (formData: ProductFormData) => addProduct(buildPayload(formData)),
     onSuccess: (response) => {
       if (!response.success) {
-        ToastAndroid.show(response.message || 'Something went wrong', ToastAndroid.SHORT);
+        Toast.error(response.message || 'Something went wrong');
         return;
       }
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['products', 'tags'] });
-      ToastAndroid.show('Product added successfully!', ToastAndroid.SHORT);
+      Toast.success('Product added successfully!');
       handleClose();
     },
     onError: (error: any) => {
@@ -148,12 +148,12 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
     mutationFn: (formData: ProductFormData) => updateProduct(productId!, buildPayload(formData)),
     onSuccess: (response) => {
       if (!response.success) {
-        ToastAndroid.show(response.message || 'Something went wrong', ToastAndroid.SHORT);
+        Toast.error(response.message || 'Something went wrong');
         return;
       }
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['products', 'tags'] });
-      ToastAndroid.show('Product updated successfully!', ToastAndroid.SHORT);
+      Toast.success('Product updated successfully!');
       handleClose();
     },
     onError: (error: any) => {
@@ -167,12 +167,12 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
     mutationFn: () => deleteProduct(productId!),
     onSuccess: (response) => {
       if (!response.success) {
-        ToastAndroid.show(response.message || 'Something went wrong', ToastAndroid.SHORT);
+        Toast.error(response.message || 'Something went wrong');
         return;
       }
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['products', 'tags'] });
-      ToastAndroid.show('Product deleted successfully!', ToastAndroid.SHORT);
+      Toast.success('Product deleted successfully!');
       setDeleteModalVisible(false);
       handleClose();
     },
@@ -217,7 +217,7 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
       setSelectedTags([...selectedTags, trimmedTag]);
       setCustomTagInput('');
     } else if (selectedTags.includes(trimmedTag)) {
-      ToastAndroid.show('Tag already added', ToastAndroid.SHORT);
+      Toast.info('Tag already added');
     }
   };
 

@@ -8,10 +8,10 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  ToastAndroid,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import Toast from 'utils/Toast';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -156,11 +156,11 @@ export default function CustomerFormModal({
     mutationFn: (formData: CustomerFormData) => addCustomer(buildPayload(formData)),
     onSuccess: (response) => {
       if (!response.success) {
-        ToastAndroid.show(response.message || 'Something went wrong', ToastAndroid.SHORT);
+        Toast.error(response.message || 'Something went wrong');
         return;
       }
       queryClient.invalidateQueries({ queryKey: ['customers'] });
-      ToastAndroid.show('Customer added successfully!', ToastAndroid.SHORT);
+      Toast.success('Customer added successfully!');
       handleClose();
     },
     onError: (error: any) => {
@@ -174,11 +174,11 @@ export default function CustomerFormModal({
     mutationFn: (formData: CustomerFormData) => updateCustomer(customerId!, buildPayload(formData)),
     onSuccess: (response) => {
       if (!response.success) {
-        ToastAndroid.show(response.message || 'Something went wrong', ToastAndroid.SHORT);
+        Toast.error(response.message || 'Something went wrong');
         return;
       }
       queryClient.invalidateQueries({ queryKey: ['customers'] });
-      ToastAndroid.show('Customer updated successfully!', ToastAndroid.SHORT);
+      Toast.success('Customer updated successfully!');
       handleClose();
     },
     onError: (error: any) => {
@@ -192,11 +192,11 @@ export default function CustomerFormModal({
     mutationFn: () => deleteCustomer(customerId!),
     onSuccess: (response) => {
       if (!response.success) {
-        ToastAndroid.show(response.message || 'Something went wrong', ToastAndroid.SHORT);
+        Toast.error(response.message || 'Something went wrong');
         return;
       }
       queryClient.invalidateQueries({ queryKey: ['customers'] });
-      ToastAndroid.show('Customer deleted successfully!', ToastAndroid.SHORT);
+      Toast.success('Customer deleted successfully!');
       setDeleteModalVisible(false);
       handleClose();
     },
