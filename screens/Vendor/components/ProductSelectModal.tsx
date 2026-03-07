@@ -1,5 +1,5 @@
 // screens/Vendor/components/ProductSelectModal.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAllProducts } from 'api/actions/productActions';
 import { Product, formatPrice } from 'types/product.types';
@@ -36,29 +36,32 @@ export default function ProductSelectModal({
 }: ProductSelectModalProps) {
   const { colors } = useThemeContext();
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  // Fetch products
-  const { data, isLoading } = useQuery({
-    queryKey: ['products'],
-    queryFn: fetchAllProducts,
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Fetch active products with server-side search + pagination
+  const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } = useInfiniteQuery({
+    queryKey: ['products-modal', debouncedSearch],
+    queryFn: ({ pageParam }) =>
+      fetchAllProducts({ page: pageParam, limit: 20, search: debouncedSearch || undefined, isActive: true }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const p = lastPage?.pagination;
+      return p && p.currentPage < p.totalPages ? p.currentPage + 1 : undefined;
+    },
     enabled: visible,
   });
 
-  // Filter active products
-  const filteredProducts = useMemo(() => {
-    const products = data?.data || [];
-    // Only show active products
-    const activeProducts = products.filter((p: Product) => p.isActive);
-
-    if (!search.trim()) return activeProducts;
-
-    const query = search.toLowerCase().trim();
-    return activeProducts.filter(
-      (p: Product) =>
-        p.name?.toLowerCase().includes(query) ||
-        p.tags?.some((tag) => tag.toLowerCase().includes(query))
-    );
-  }, [data, search]);
+  // Flatten pages
+  const filteredProducts = useMemo(
+    () => data?.pages.flatMap((page) => page?.data || []) || [],
+    [data]
+  );
 
   // Get cart item for product
   const getCartItem = (productId: number): CartItem | undefined => {
@@ -130,6 +133,15 @@ export default function ProductSelectModal({
               data={filteredProducts}
               keyExtractor={(item) => item.id.toString()}
               contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+              onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
+              onEndReachedThreshold={0.3}
+              ListFooterComponent={
+                isFetchingNextPage ? (
+                  <View className="items-center py-4">
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  </View>
+                ) : null
+              }
               ListEmptyComponent={
                 <View className="items-center py-12">
                   <MaterialIcons name="inventory-2" size={48} color={colors.muted} />

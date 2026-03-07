@@ -75,7 +75,6 @@ const generateInvoiceHTML = (order: any, vendor: any) => {
   // Vendor business details
   const businessName = vendor?.businessName || 'Business Name';
   const businessPhone = vendor?.businessPhone || '';
-  const businessEmail = vendor?.businessEmail || '';
   const taxId = vendor?.taxId || '';
   const businessLicense = vendor?.businessLicense || '';
   const address = vendor?.address
@@ -93,10 +92,8 @@ const generateInvoiceHTML = (order: any, vendor: any) => {
           .company-details { font-size: 12px; color: #666; margin-top: 5px; }
           .company-details p { margin: 2px 0; }
           .invoice-title { font-size: 48px; font-weight: bold; color: #1f2937; }
-          .invoice-meta { font-size: 12px; margin-top: 20px; }
-          .bill-to { background: #1f2937; color: white; padding: 15px; margin: 20px 0; border-radius: 4px; }
-          .bill-to h3 { margin: 0 0 10px 0; }
-          .bill-to p { margin: 5px 0; font-size: 13px; }
+          .invoice-desc { font-size: 30px; font-weight: bold; color: #1f2937; }
+          .invoice-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
           table { width: 100%; border-collapse: collapse; margin: 20px 0; }
           thead { background: #1f2937; color: white; }
           th { padding: 12px; text-align: left; font-weight: bold; }
@@ -117,25 +114,26 @@ const generateInvoiceHTML = (order: any, vendor: any) => {
             <div class="company-details">
               ${address ? `<p>${address}</p>` : ''}
               ${businessPhone ? `<p>Tel: ${businessPhone}</p>` : ''}
-              ${businessEmail ? `<p>${businessEmail}</p>` : ''}
-              ${taxId || businessLicense ? `<p>${taxId ? 'VAT: ' + taxId : ''}${taxId && businessLicense ? ' | ' : ''}${businessLicense ? 'Reg: ' + businessLicense : ''}</p>` : ''}
             </div>
           </div>
           <div style="text-align: right;">
             <div class="invoice-title">INVOICE</div>
+            <div class="invoice-desc">${order.customer?.businessName || 'N/A'}</div>
           </div>
         </div>
 
         <div class="invoice-meta">
+        <div class="bill-to">
+        <h3>BILL TO: ${order.customer?.businessName || 'N/A'}</h3>
+        <p>Contact: ${order.customer?.phone || 'N/A'}</p>
+        ${order.deliveryAddress ? `<p>${order.deliveryAddress}</p>` : ''}
+        </div>
+
+        <div>
           <p><strong>Date:</strong> ${formatDate(order.orderDate)}</p>
           <p><strong>Invoice No:</strong> ${order.orderNumber}</p>
           <p><strong>Invoice Type:</strong> ${order.invoiceType || 'credit'}</p>
         </div>
-
-        <div class="bill-to">
-          <h3>BILL TO: ${order.customer?.businessName || 'N/A'}</h3>
-          <p>Contact: ${order.customer?.contactPerson || 'N/A'} • ${order.customer?.phone || 'N/A'}</p>
-          ${order.deliveryAddress ? `<p>${order.deliveryAddress}</p>` : ''}
         </div>
 
         <table>
@@ -194,7 +192,7 @@ const handleGenerateAndShareInvoice = async (order: any, vendor: any) => {
     const html = generateInvoiceHTML(order, vendor);
     const { uri } = await Print.printToFileAsync({ html });
 
-    const filename = `${order.customer?.businessName}-${order.orderNumber}-${formatDate(order.orderDate).replace(/\//g, '-')}.pdf`;
+    const filename = `${order.customer?.businessName || 'N/A'}-${order.orderNumber}-${formatDate(order.orderDate).replace(/\//g, '-')}.pdf`;
     const newUri = `${documentDirectory}${filename}`;
 
     await copyAsync({ from: uri, to: newUri });

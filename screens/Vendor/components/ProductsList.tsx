@@ -1,13 +1,12 @@
 // screens/Vendor/components/ProductsList.tsx
-import React, { useMemo } from 'react';
-import { View, Text, FlatList, Pressable, TouchableOpacity, RefreshControl } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import React, { useMemo, useEffect, useState } from 'react';
+import { View, Text, FlatList, Pressable, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAllProducts } from 'api/actions/productActions';
 import {
   Product,
-  ProductApiResponse,
   formatPrice,
   calculateProfit,
   getInitials,
@@ -26,36 +25,41 @@ export default function ProductsList({
   onEditProduct,
 }: ProductsListProps) {
   const { colors } = useThemeContext();
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  const { data, isLoading, error, refetch, isRefetching } = useQuery<ProductApiResponse>({
-    queryKey: ['products'],
-    queryFn: fetchAllProducts,
-  });
+  // Debounce searchQuery prop
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  // Filter products based on search (name or tags)
-  const filteredProducts = useMemo(() => {
-    if (!data?.data) return [];
-
-    if (!searchQuery.trim()) return data.data;
-
-    const query = searchQuery.toLowerCase().trim();
-    return data.data.filter((product) => {
-      const nameMatch = product.name?.toLowerCase().includes(query);
-      const tagsMatch = product.tags?.some((tag) => tag.toLowerCase().includes(query));
-      return nameMatch || tagsMatch;
+  const { data, isLoading, error, refetch, isRefetching, isFetchingNextPage, fetchNextPage, hasNextPage } =
+    useInfiniteQuery({
+      queryKey: ['products', debouncedSearch],
+      queryFn: ({ pageParam }) =>
+        fetchAllProducts({ page: pageParam, limit: 20, search: debouncedSearch || undefined }),
+      initialPageParam: 1,
+      getNextPageParam: (lastPage) => {
+        const p = lastPage?.pagination;
+        return p && p.currentPage < p.totalPages ? p.currentPage + 1 : undefined;
+      },
     });
-  }, [data, searchQuery]);
+
+  // Flatten all pages
+  const filteredProducts = useMemo(
+    () => data?.pages.flatMap((page) => page?.data || []) || [],
+    [data]
+  );
 
   // Stats for header
   const stats = useMemo(() => {
-    if (!data?.data) return { total: 0, active: 0, inactive: 0 };
-    const products = data.data;
+    const totalItems = data?.pages[data.pages.length - 1]?.pagination?.totalItems ?? filteredProducts.length;
     return {
-      total: products.length,
-      active: products.filter((p) => p.isActive).length,
-      inactive: products.filter((p) => !p.isActive).length,
+      total: totalItems,
+      active: filteredProducts.filter((p: Product) => p.isActive).length,
+      inactive: filteredProducts.filter((p: Product) => !p.isActive).length,
     };
-  }, [data]);
+  }, [filteredProducts, data]);
 
   // Loading state
   if (isLoading) {
@@ -121,6 +125,8 @@ export default function ProductsList({
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
+        onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
+        onEndReachedThreshold={0.3}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -128,6 +134,13 @@ export default function ProductsList({
             colors={[colors.primary]}
             tintColor={colors.primary}
           />
+        }
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <View className="items-center py-4">
+              <ActivityIndicator size="small" color={colors.primary} />
+            </View>
+          ) : null
         }
         ListEmptyComponent={
           <View className="items-center justify-center py-20">

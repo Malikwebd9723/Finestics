@@ -770,7 +770,7 @@ export default function CreateOrderScreen() {
           mode="date"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={handleDeliveryDateChange}
-          minimumDate={new Date()}
+          minimumDate={orderDate}
         />
       )}
 
