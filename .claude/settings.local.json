@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"from PIL import Image; img = Image.open\\(''D:/Downloads/finestics icon.png''\\); print\\(img.size, img.mode\\)\")",
+      "Bash(node -e \"const sharp = require\\(''sharp''\\); sharp\\(''D:/Downloads/finestics icon.png''\\).metadata\\(\\).then\\(m => console.log\\(m.width, m.height, m.format\\)\\).catch\\(e => console.log\\(''sharp not available:'', e.message\\)\\)\")",
+      "Bash(npm list sharp jimp)",
+      "Bash(where magick)",
+      "Bash(node -e \":*)",
+      "Bash(powershell -command \"Expand-Archive -Path ''D:\\\\Downloads\\\\AppIcons.zip'' -DestinationPath ''D:\\\\Downloads\\\\AppIcons'' -Force; Get-ChildItem -Recurse ''D:\\\\Downloads\\\\AppIcons'' | Select-Object FullName\")",
+      "Bash(powershell -command \"Get-Item ''D:\\\\Downloads\\\\AppIcons\\\\appstore.png'', ''D:\\\\Downloads\\\\AppIcons\\\\playstore.png'' | Select-Object Name, Length\")",
+      "Bash(powershell -command \"Copy-Item ''D:\\\\Downloads\\\\AppIcons\\\\appstore.png'' ''D:\\\\Finestics\\\\assets\\\\icon.png'' -Force; Copy-Item ''D:\\\\Downloads\\\\AppIcons\\\\playstore.png'' ''D:\\\\Finestics\\\\assets\\\\adaptive-icon.png'' -Force; Copy-Item ''D:\\\\Downloads\\\\AppIcons\\\\Assets.xcassets\\\\AppIcon.appiconset\\\\32.png'' ''D:\\\\Finestics\\\\assets\\\\favicon.png'' -Force; Write-Host ''Done''\")",
+      "Bash(powershell -command \"Get-Item ''D:\\\\Finestics\\\\assets\\\\icon.png'', ''D:\\\\Finestics\\\\assets\\\\adaptive-icon.png'' | Select-Object Name, Length, LastWriteTime\")",
+      "Bash(powershell -command \"Copy-Item ''D:\\\\Downloads\\\\AppIcons\\\\appstore.png'' ''D:\\\\Finestics\\\\assets\\\\splash.png'' -Force; Write-Host ''Done''\")",
+      "Bash(npm install sharp --save-dev)",
+      "Bash(node -e \"const sharp = require\\(''sharp''\\); console.log\\(''sharp ok'', sharp.versions.sharp\\)\")",
+      "Bash(npm uninstall sharp)"
+    ]
+  }
+}

@@ -3,11 +3,26 @@ import { apiRequest } from 'api/clients';
 
 // ==================== PRODUCTS ====================
 
-/**
- * Fetch all products for the vendor
- */
-export const fetchAllProducts = async () => {
-  const res = await apiRequest('/products', 'GET');
+interface FetchProductsParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  tag?: string;
+  isActive?: boolean;
+}
+
+export const fetchAllProducts = async ({
+  page = 1,
+  limit = 20,
+  search,
+  tag,
+  isActive,
+}: FetchProductsParams = {}) => {
+  const parts: string[] = [`page=${page}`, `limit=${limit}`];
+  if (search) parts.push(`search=${encodeURIComponent(search)}`);
+  if (tag) parts.push(`tag=${encodeURIComponent(tag)}`);
+  if (isActive !== undefined) parts.push(`isActive=${isActive}`);
+  const res = await apiRequest(`/products?${parts.join('&')}`, 'GET');
   return res.data;
 };
 
