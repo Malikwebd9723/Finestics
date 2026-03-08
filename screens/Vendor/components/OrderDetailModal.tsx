@@ -683,7 +683,7 @@ export default function OrderDetailModal({
                     style={{ backgroundColor: colors.success }}>
                     <MaterialIcons name="payment" size={18} color="#fff" />
                     <Text className="ml-2 text-sm font-bold text-white">
-                      {order.paymentStatus === 'paid' ? 'Adjust Payment' : 'Record Payment'}
+                      {order.paymentStatus === 'paid' ? 'Adjust' : 'Record'}
                     </Text>
                   </TouchableOpacity>
 

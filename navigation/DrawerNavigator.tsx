@@ -13,6 +13,7 @@ import NavigationList from './NavigationList';
 import VendorProfile from '../screens/Vendor/VendorProfile';
 import Statistics from '../screens/Vendor/Statistics';
 import Customers from '../screens/Vendor/Customers';
+import PaymentsScreen from 'screens/Vendor/PaymentsScreen';
 
 // Admin Screens
 import AdminProfile from '../screens/Admin/AdminProfile';
@@ -61,141 +62,141 @@ function CustomDrawerContent(props: any) {
             }
           }}
           activeOpacity={0.7}>
-        <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-          <Text style={styles.avatarText}>
-            {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'N/A'}
-          </Text>
-        </View>
-        <Text style={[styles.userName, { color: colors.text }]}>
-          {user?.firstName + ' ' + user?.lastName || ''}
-        </Text>
-        <Text style={[styles.userEmail, { color: colors.muted }]}>{user?.email || ''}</Text>
-        {user?.role && (
-          <View style={[styles.roleBadge, { backgroundColor: colors.primary + '20' }]}>
-            <Text style={[styles.roleText, { color: colors.muted }]}>
-              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+            <Text style={styles.avatarText}>
+              {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'N/A'}
             </Text>
           </View>
-        )}
-        {(isAdmin || isVendor) && (
-          <Text style={{ color: colors.muted, fontSize: 11, marginTop: 4 }}>
-            Tap to view profile
+          <Text style={[styles.userName, { color: colors.text }]}>
+            {user?.firstName + ' ' + user?.lastName || ''}
           </Text>
-        )}
-      </TouchableOpacity>
-
-      {/* Navigation Menu Items */}
-      <View style={styles.menuSection}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>MENU</Text>
-
-        <NavigationList
-          navigation={props.navigation}
-          closeDrawer={() => props.navigation.closeDrawer()}
-        />
-
-        {/* Vendor-specific menu items */}
-        {isVendor && (
-          <>
-            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 16 }]}>
-              BUSINESS
-            </Text>
-            <TouchableOpacity
-              onPress={() => navigateTo('VendorProfile')}
-              style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
-              activeOpacity={0.7}>
-              <Ionicons name="business-outline" size={22} color={colors.text} />
-              <Text style={[styles.menuItemText, { color: colors.text }]}>Business Profile</Text>
-            </TouchableOpacity>
-          </>
-        )}
-
-        {/* Admin-specific menu items */}
-        {isAdmin && (
-          <>
-            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 16 }]}>
-              MANAGEMENT
-            </Text>
-            <TouchableOpacity
-              onPress={() => navigateTo('Vendors')}
-              style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
-              activeOpacity={0.7}>
-              <Ionicons name="storefront-outline" size={22} color={colors.text} />
-              <Text style={[styles.menuItemText, { color: colors.text }]}>Vendors</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => navigateTo('Users')}
-              style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
-              activeOpacity={0.7}>
-              <Ionicons name="people-outline" size={22} color={colors.text} />
-              <Text style={[styles.menuItemText, { color: colors.text }]}>Users</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
-
-      {/* Additional Options */}
-      <View style={[styles.bottomSection, { borderTopColor: colors.border }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>SETTINGS</Text>
-
-        {/* Theme Toggle */}
-        <TouchableOpacity
-          onPress={() => {
-            setTheme(theme === 'dark' ? 'light' : 'dark');
-          }}
-          style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
-          activeOpacity={0.7}>
-          <Ionicons
-            name={theme === 'dark' ? 'sunny-outline' : 'moon-outline'}
-            size={22}
-            color={colors.text}
-          />
-          <Text style={[styles.menuItemText, { color: colors.text }]}>
-            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Notifications */}
-        <TouchableOpacity
-          onPress={() => {
-            props.navigation.closeDrawer();
-            // Navigate to notifications if you have a screen
-          }}
-          style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
-          activeOpacity={0.7}>
-          <View>
-            <Ionicons name="notifications-outline" size={22} color={colors.text} />
-            <View
-              style={{
-                position: 'absolute',
-                top: -4,
-                right: -4,
-                backgroundColor: colors.primary,
-                borderRadius: 8,
-                width: 16,
-                height: 16,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}>
-              <Text style={{ color: 'white', fontSize: 9, fontWeight: 'bold' }}>3</Text>
+          <Text style={[styles.userEmail, { color: colors.muted }]}>{user?.email || ''}</Text>
+          {user?.role && (
+            <View style={[styles.roleBadge, { backgroundColor: colors.primary + '20' }]}>
+              <Text style={[styles.roleText, { color: colors.muted }]}>
+                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+              </Text>
             </View>
-          </View>
-          <Text style={[styles.menuItemText, { color: colors.text }]}>Notifications</Text>
+          )}
+          {(isAdmin || isVendor) && (
+            <Text style={{ color: colors.muted, fontSize: 11, marginTop: 4 }}>
+              Tap to view profile
+            </Text>
+          )}
         </TouchableOpacity>
 
-        {/* Logout */}
-        <TouchableOpacity
-          onPress={handleLogout}
-          style={[styles.menuItem, { backgroundColor: '#ef444410' }]}
-          activeOpacity={0.7}>
-          <Ionicons name="log-out-outline" size={22} color="#ef4444" />
-          <Text style={[styles.menuItemText, { color: '#ef4444', fontWeight: '600' }]}>Logout</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Navigation Menu Items */}
+        <View style={styles.menuSection}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>MENU</Text>
 
-      {/* Footer */}
-      <View style={[styles.footer, { borderTopColor: colors.border }]}>
-        <Text style={[styles.footerText, { color: colors.textSecondary }]}>Version 1.0.0</Text>
-      </View>
+          <NavigationList
+            navigation={props.navigation}
+            closeDrawer={() => props.navigation.closeDrawer()}
+          />
+
+          {/* Vendor-specific menu items */}
+          {isVendor && (
+            <>
+              <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 16 }]}>
+                BUSINESS
+              </Text>
+              <TouchableOpacity
+                onPress={() => navigateTo('VendorProfile')}
+                style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
+                activeOpacity={0.7}>
+                <Ionicons name="business-outline" size={22} color={colors.text} />
+                <Text style={[styles.menuItemText, { color: colors.text }]}>Business Profile</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {/* Admin-specific menu items */}
+          {isAdmin && (
+            <>
+              <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 16 }]}>
+                MANAGEMENT
+              </Text>
+              <TouchableOpacity
+                onPress={() => navigateTo('Vendors')}
+                style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
+                activeOpacity={0.7}>
+                <Ionicons name="storefront-outline" size={22} color={colors.text} />
+                <Text style={[styles.menuItemText, { color: colors.text }]}>Vendors</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigateTo('Users')}
+                style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
+                activeOpacity={0.7}>
+                <Ionicons name="people-outline" size={22} color={colors.text} />
+                <Text style={[styles.menuItemText, { color: colors.text }]}>Users</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+
+        {/* Additional Options */}
+        <View style={[styles.bottomSection, { borderTopColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>SETTINGS</Text>
+
+          {/* Theme Toggle */}
+          <TouchableOpacity
+            onPress={() => {
+              setTheme(theme === 'dark' ? 'light' : 'dark');
+            }}
+            style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
+            activeOpacity={0.7}>
+            <Ionicons
+              name={theme === 'dark' ? 'sunny-outline' : 'moon-outline'}
+              size={22}
+              color={colors.text}
+            />
+            <Text style={[styles.menuItemText, { color: colors.text }]}>
+              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Notifications */}
+          <TouchableOpacity
+            onPress={() => {
+              props.navigation.closeDrawer();
+              // Navigate to notifications if you have a screen
+            }}
+            style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
+            activeOpacity={0.7}>
+            <View>
+              <Ionicons name="notifications-outline" size={22} color={colors.text} />
+              <View
+                style={{
+                  position: 'absolute',
+                  top: -4,
+                  right: -4,
+                  backgroundColor: colors.primary,
+                  borderRadius: 8,
+                  width: 16,
+                  height: 16,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <Text style={{ color: 'white', fontSize: 9, fontWeight: 'bold' }}>3</Text>
+              </View>
+            </View>
+            <Text style={[styles.menuItemText, { color: colors.text }]}>Notifications</Text>
+          </TouchableOpacity>
+
+          {/* Logout */}
+          <TouchableOpacity
+            onPress={handleLogout}
+            style={[styles.menuItem, { backgroundColor: '#ef444410' }]}
+            activeOpacity={0.7}>
+            <Ionicons name="log-out-outline" size={22} color="#ef4444" />
+            <Text style={[styles.menuItemText, { color: '#ef4444', fontWeight: '600' }]}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Footer */}
+        <View style={[styles.footer, { borderTopColor: colors.border }]}>
+          <Text style={[styles.footerText, { color: colors.textSecondary }]}>Version 1.0.0</Text>
+        </View>
       </ScrollView>
     </DrawerContentScrollView>
   );
@@ -217,7 +218,7 @@ export default function DrawerNavigator() {
         drawerType: 'front', // Drawer slides over content
       }}>
       {/* Main Tab Navigator */}
-      <Drawer.Screen name="MainTabs" component={TabNavigator}/>
+      <Drawer.Screen name="MainTabs" component={TabNavigator} />
 
       {/* Vendor Profile Screen */}
       <Drawer.Screen
@@ -250,6 +251,17 @@ export default function DrawerNavigator() {
         options={{
           headerShown: true,
           headerTitle: 'Customers',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      <Drawer.Screen
+        name="PaymentsScreen"
+        component={PaymentsScreen}
+        options={{
+          headerShown: true,
+          headerTitle: 'Payments',
           headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.text,
         }}

@@ -22,6 +22,7 @@ import ProductsScreen from '../screens/Vendor/ProductsScreen';
 import OrdersScreen from '../screens/Vendor/OrdersScreen';
 import ExpensesScreen from '../screens/Vendor/ExpensesScreen';
 import PaymentsScreen from '../screens/Vendor/PaymentsScreen';
+import Statistics from '../screens/Vendor/Statistics';
 
 // ==================== CUSTOMER SCREENS ====================
 import CustomersDashboard from '../screens/Customers/CustomersDashboard';
@@ -41,6 +42,7 @@ const screenComponents: Record<string, React.ComponentType<any>> = {
   OrdersScreen,
   ExpensesScreen,
   PaymentsScreen,
+  Statistics,
 
   // Customer
   CustomersDashboard,

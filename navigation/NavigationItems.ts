@@ -49,7 +49,7 @@ export const navigationItems: NavigationItem[] = [
     screen: 'PaymentsScreen',
     icon: 'cash-plus',
     roles: ['vendor'],
-    location: 'both',
+    location: 'drawer',
   },
   // Drawer-only items
   {
@@ -57,7 +57,7 @@ export const navigationItems: NavigationItem[] = [
     screen: 'Statistics',
     icon: 'chart-bar',
     roles: ['vendor'],
-    location: 'drawer',
+    location: 'both',
   },
   {
     label: 'Customers',
