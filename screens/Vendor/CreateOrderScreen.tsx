@@ -325,6 +325,7 @@ export default function CreateOrderScreen() {
         }
 
         const payload: UpdateOrderPayload = {
+          orderDate: orderDate.toISOString(),
           deliveryDate: deliveryDate ? deliveryDate.toISOString() : undefined,
           deliveryFee: parseFloat(deliveryFee) || 0,
           discount: parseFloat(discount) || 0,
@@ -486,14 +487,13 @@ export default function CreateOrderScreen() {
                         Order Date
                       </Text>
                       <TouchableOpacity
-                        onPress={() => !isEditMode && setShowOrderDatePicker(true)}
-                        disabled={isEditMode}
+                        onPress={() => setShowOrderDatePicker(true)}
+                        disabled={isSubmitting}
                         className="flex-row items-center justify-between rounded-xl px-4 py-3"
                         style={{
                           backgroundColor: colors.card,
                           borderWidth: 1,
                           borderColor: colors.border,
-                          opacity: isEditMode ? 0.7 : 1,
                         }}>
                         <Text className="text-sm" style={{ color: colors.text }}>
                           {orderDate.toLocaleDateString('en-US', {
@@ -522,9 +522,9 @@ export default function CreateOrderScreen() {
                           style={{ color: deliveryDate ? colors.text : colors.placeholder }}>
                           {deliveryDate
                             ? deliveryDate.toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                              })
+                              month: 'short',
+                              day: 'numeric',
+                            })
                             : 'Not set'}
                         </Text>
                         <Ionicons name="calendar-outline" size={18} color={colors.muted} />

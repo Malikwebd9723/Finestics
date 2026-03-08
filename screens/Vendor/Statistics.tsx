@@ -48,20 +48,19 @@ export default function Statistics() {
     enabled: activeTab === 'customers',
   });
 
+  const days = period === 'week' ? 7 : period === 'month' ? 30 : period === 'quarter' ? 90 : 365;
+
   // Fetch product stats
   const { data: productData, isLoading: productLoading } = useQuery({
     queryKey: ['productStats', period],
-    queryFn: () =>
-      fetchProductStats(
-        period === 'week' ? 7 : period === 'month' ? 30 : period === 'quarter' ? 90 : 365
-      ),
+    queryFn: () => fetchProductStats(days),
     enabled: activeTab === 'products',
   });
 
   // Fetch sales trend
   const { data: trendData } = useQuery({
-    queryKey: ['salesTrend'],
-    queryFn: () => fetchSalesTrend(7),
+    queryKey: ['salesTrend', period],
+    queryFn: () => fetchSalesTrend(days),
     enabled: activeTab === 'overview',
   });
 
@@ -69,6 +68,57 @@ export default function Statistics() {
   const customerStats: CustomerStats | null = customerData?.data || null;
   const productStats: ProductStats | null = productData?.data || null;
   const salesTrend: SalesTrendItem[] = trendData?.data || [];
+
+  const chartData = React.useMemo(() => {
+    if (!salesTrend || salesTrend.length === 0) return [];
+
+    const data: { id: string; label: string; sales: number }[] = [];
+
+    if (period === 'week') {
+      const recent = salesTrend.slice(-7);
+      recent.forEach((item, idx) => {
+        data.push({
+          id: `week-${idx}`,
+          label: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
+          sales: item.sales,
+        });
+      });
+    } else if (period === 'month') {
+      const recent = salesTrend.slice(-30);
+      for (let i = 0; i < recent.length; i += 7) {
+        const chunk = recent.slice(i, i + 7);
+        const sum = chunk.reduce((acc, curr) => acc + curr.sales, 0);
+        data.push({
+          id: `month-w${i}`,
+          label: `W${Math.floor(i / 7) + 1}`,
+          sales: sum,
+        });
+      }
+    } else {
+      const daysToSlice = period === 'quarter' ? 90 : 365;
+      const recent = salesTrend.slice(-daysToSlice);
+      const groups = new Map<string, { label: string; sales: number }>();
+
+      recent.forEach((item) => {
+        const d = new Date(item.date);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        if (!groups.has(key)) {
+          groups.set(key, { label: d.toLocaleDateString('en-US', { month: 'short' }), sales: 0 });
+        }
+        groups.get(key)!.sales += item.sales;
+      });
+
+      Array.from(groups.values()).forEach((g, idx) => {
+        data.push({
+          id: `${period}-${idx}`,
+          label: g.label,
+          sales: g.sales,
+        });
+      });
+    }
+
+    return data;
+  }, [salesTrend, period]);
 
   const isLoading =
     statsLoading ||
@@ -237,7 +287,7 @@ export default function Statistics() {
             </View>
 
             {/* Daily Trend Mini Chart */}
-            {salesTrend.length > 0 && (
+            {chartData.length > 0 && (
               <View
                 className="mb-4 rounded-xl p-4"
                 style={{
@@ -245,28 +295,28 @@ export default function Statistics() {
                   borderWidth: 1,
                   borderColor: colors.border,
                 }}>
-                <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-                  LAST 7 DAYS
+                <Text className="mb-3 text-sm font-semibold uppercase" style={{ color: colors.muted }}>
+                  SALES TREND
                 </Text>
-                <View className="flex-row items-end justify-between" style={{ height: 80 }}>
-                  {salesTrend.slice(-7).map((day, idx) => {
-                    const maxSales = Math.max(...salesTrend.map((d) => d.sales), 1);
-                    const height = (day.sales / maxSales) * 60 + 10;
-                    return (
-                      <View key={idx} className="flex-1 items-center">
-                        <View
-                          className="w-6 rounded-t"
-                          style={{ height, backgroundColor: colors.primary }}
-                        />
-                        <Text className="mt-1 text-xs" style={{ color: colors.muted }}>
-                          {new Date(day.date)
-                            .toLocaleDateString('en-US', { weekday: 'short' })
-                            .charAt(0)}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View className="flex-row items-end justify-between" style={{ height: 80, minWidth: '100%' }}>
+                    {chartData.map((item) => {
+                      const maxSales = Math.max(...chartData.map((d) => d.sales), 1);
+                      const height = (item.sales / maxSales) * 60 + 10;
+                      return (
+                        <View key={item.id} className="items-center px-2" style={{ minWidth: 40, flex: 1 }}>
+                          <View
+                            className="w-6 rounded-t"
+                            style={{ height, backgroundColor: colors.primary }}
+                          />
+                          <Text className="mt-1 text-xs" style={{ color: colors.muted }} numberOfLines={1}>
+                            {item.label}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
               </View>
             )}
 
@@ -358,7 +408,7 @@ export default function Statistics() {
                 {stats.topCustomers.slice(0, 5).map((customer, idx) => (
                   <View
                     key={customer.id}
-                    className={`flex-row items-center py-2 ${idx > 0 ? 'border-t' : ''}`}
+                    className={`flex-row items-center py-2`}
                     style={{ borderColor: colors.border }}>
                     <View
                       className="mr-3 h-8 w-8 items-center justify-center rounded-full"
@@ -398,7 +448,7 @@ export default function Statistics() {
                 {stats.topProducts.slice(0, 5).map((product, idx) => (
                   <View
                     key={product.id}
-                    className={`flex-row items-center py-2 ${idx > 0 ? 'border-t' : ''}`}
+                    className={`flex-row items-center py-2`}
                     style={{ borderColor: colors.border }}>
                     <View
                       className="mr-3 h-8 w-8 items-center justify-center rounded-full"
@@ -438,7 +488,7 @@ export default function Statistics() {
                 {stats.vanPerformance.map((van, idx) => (
                   <View
                     key={van.vanName}
-                    className={`flex-row items-center py-2 ${idx > 0 ? 'border-t' : ''}`}
+                    className={`flex-row items-center py-2`}
                     style={{ borderColor: colors.border }}>
                     <View
                       className="mr-3 rounded-full p-2"

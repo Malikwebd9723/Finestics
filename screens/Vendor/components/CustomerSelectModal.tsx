@@ -62,7 +62,7 @@ export default function CustomerSelectModal({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <SafeAreaView className="flex-1 justify-end bg-black/50">
-        <View className="rounded-t-3xl" style={{ backgroundColor: colors.card, maxHeight: '80%' }}>
+        <View className="rounded-t-3xl" style={{ backgroundColor: colors.card, height: '95%' }}>
           {/* Header */}
           <View
             className="flex-row items-center justify-between border-b px-5 py-4"
