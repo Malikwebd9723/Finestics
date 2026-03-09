@@ -17,7 +17,7 @@ export interface PaymentOverview {
     unpaid: { count: number; totalAmount: number; balanceAmount: number };
   };
   expenses?: { total: number; count: number };
-  netRevenue?: number;
+  netCashFlow?: number;
 }
 
 export type CollectionGroupBy = 'day' | 'week' | 'month' | 'customer' | 'paymentMethod';
@@ -350,6 +350,31 @@ export const fetchAgingReport = async (
     ? `${BASE_PATH}/outstanding/aging?asOfDate=${asOfDate}`
     : `${BASE_PATH}/outstanding/aging`;
   const res = await apiRequest(url, 'GET');
+  return res.data;
+};
+
+/**
+ * Get outstanding amounts grouped by order date
+ */
+export const fetchOutstandingByOrderDate = async (params: {
+  startDate: string;
+  endDate: string;
+}): Promise<{
+  success: boolean;
+  data: {
+    period: { startDate: string; endDate: string };
+    data: { date: string; orderCount: number; totalAmount: number; outstandingAmount: number }[];
+    totalOutstanding: number;
+  };
+}> => {
+  const queryParams = new URLSearchParams();
+  queryParams.append('startDate', params.startDate);
+  queryParams.append('endDate', params.endDate);
+
+  const res = await apiRequest(
+    `${BASE_PATH}/outstanding/by-order-date?${queryParams.toString()}`,
+    'GET'
+  );
   return res.data;
 };
 

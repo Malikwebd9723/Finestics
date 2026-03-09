@@ -165,7 +165,7 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
         ))}
       </View>
 
-      {/* Expenses & Net Revenue */}
+      {/* Expenses & Net Cash Flow */}
       {overview.expenses && (
         <View
           className="rounded-xl p-4"
@@ -185,14 +185,14 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
             className="mt-3 flex-row items-center justify-between border-t pt-3"
             style={{ borderColor: colors.border }}>
             <Text className="text-sm font-bold" style={{ color: colors.text }}>
-              Net Revenue
+              Net Cash Flow
             </Text>
             <Text
               className="text-lg font-bold"
               style={{
-                color: (overview.netRevenue || 0) >= 0 ? colors.success : colors.error,
+                color: (overview.netCashFlow || 0) >= 0 ? colors.success : colors.error,
               }}>
-              {formatPrice(overview.netRevenue || 0)}
+              {formatPrice(overview.netCashFlow || 0)}
             </Text>
           </View>
         </View>
