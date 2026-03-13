@@ -31,7 +31,6 @@ import {
   CustomerDetailResponse,
   BUSINESS_TYPES,
   PAYMENT_TERMS,
-  ADDRESS_TYPES,
 } from 'types/customer.types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -52,13 +51,13 @@ const DEFAULT_VALUES: CustomerFormData = {
   businessType: '',
   notes: '',
   deliveryInstructions: '',
-  type: 'business',
+  type: 'delivery',
   label: '',
   street: '',
   city: '',
   state: '',
   postalCode: '',
-  country: 'Pakistan',
+  country: 'UK',
   instructions: '',
 };
 
@@ -119,7 +118,7 @@ export default function CustomerFormModal({
         city: editingCustomer.address?.city || '',
         state: editingCustomer.address?.state || '',
         postalCode: editingCustomer.address?.postalCode || '',
-        country: editingCustomer.address?.country || 'Pakistan',
+        country: editingCustomer.address?.country || 'UK',
         instructions: editingCustomer.address?.instructions || '',
       });
     } else if (!isEditMode) {
@@ -146,7 +145,7 @@ export default function CustomerFormModal({
       city: formData.city,
       state: formData.state || null,
       postalCode: formData.postalCode || null,
-      country: formData.country || 'Pakistan',
+      country: formData.country || 'UK',
       instructions: formData.instructions || null,
     },
   });
@@ -322,7 +321,7 @@ export default function CustomerFormModal({
                           value={field.value}
                           onChangeText={field.onChange}
                           onBlur={field.onBlur}
-                          placeholder="03001234567"
+                          placeholder="07700 900000"
                           keyboardType="phone-pad"
                           error={errors.phone?.message}
                           editable={!isSubmitting}
@@ -423,43 +422,6 @@ export default function CustomerFormModal({
 
               {/* Address Information */}
               <FormSection title="Address">
-                <FormRow>
-                  <View className="flex-1">
-                    <Controller
-                      control={control}
-                      name="type"
-                      render={({ field }) => (
-                        <FormSelect
-                          label="Type"
-                          required
-                          options={[...ADDRESS_TYPES]}
-                          value={field.value}
-                          onChange={field.onChange}
-                          error={errors.type?.message}
-                          disabled={isSubmitting}
-                        />
-                      )}
-                    />
-                  </View>
-                  <View className="flex-1">
-                    <Controller
-                      control={control}
-                      name="label"
-                      render={({ field }) => (
-                        <FormInput
-                          label="Label"
-                          value={field.value}
-                          onChangeText={field.onChange}
-                          onBlur={field.onBlur}
-                          placeholder="Main Store"
-                          error={errors.label?.message}
-                          editable={!isSubmitting}
-                        />
-                      )}
-                    />
-                  </View>
-                </FormRow>
-
                 <Controller
                   control={control}
                   name="street"
@@ -470,7 +432,7 @@ export default function CustomerFormModal({
                       value={field.value}
                       onChangeText={field.onChange}
                       onBlur={field.onBlur}
-                      placeholder="Shop 15, Saddar Bazaar"
+                      placeholder="e.g., 14 High Street"
                       error={errors.street?.message}
                       editable={!isSubmitting}
                     />
@@ -489,7 +451,7 @@ export default function CustomerFormModal({
                           value={field.value}
                           onChangeText={field.onChange}
                           onBlur={field.onBlur}
-                          placeholder="Karachi"
+                          placeholder="e.g., Birmingham"
                           error={errors.city?.message}
                           editable={!isSubmitting}
                         />
@@ -499,53 +461,16 @@ export default function CustomerFormModal({
                   <View className="flex-1">
                     <Controller
                       control={control}
-                      name="state"
-                      render={({ field }) => (
-                        <FormInput
-                          label="State/Province"
-                          value={field.value}
-                          onChangeText={field.onChange}
-                          onBlur={field.onBlur}
-                          placeholder="Sindh"
-                          error={errors.state?.message}
-                          editable={!isSubmitting}
-                        />
-                      )}
-                    />
-                  </View>
-                </FormRow>
-
-                <FormRow>
-                  <View className="flex-1">
-                    <Controller
-                      control={control}
                       name="postalCode"
                       render={({ field }) => (
                         <FormInput
-                          label="Postal Code"
+                          label="Postcode"
                           value={field.value}
                           onChangeText={field.onChange}
                           onBlur={field.onBlur}
-                          placeholder="75000"
-                          keyboardType="number-pad"
+                          placeholder="e.g., B1 1AA"
+                          autoCapitalize="characters"
                           error={errors.postalCode?.message}
-                          editable={!isSubmitting}
-                        />
-                      )}
-                    />
-                  </View>
-                  <View className="flex-1">
-                    <Controller
-                      control={control}
-                      name="country"
-                      render={({ field }) => (
-                        <FormInput
-                          label="Country"
-                          value={field.value}
-                          onChangeText={field.onChange}
-                          onBlur={field.onBlur}
-                          placeholder="Pakistan"
-                          error={errors.country?.message}
                           editable={!isSubmitting}
                         />
                       )}
@@ -558,11 +483,11 @@ export default function CustomerFormModal({
                   name="instructions"
                   render={({ field }) => (
                     <FormTextArea
-                      label="Address Instructions"
+                      label="Delivery Instructions"
                       value={field.value}
                       onChangeText={field.onChange}
                       onBlur={field.onBlur}
-                      placeholder="Near old bus stand, blue building"
+                      placeholder="e.g., Side entrance, ring bell twice"
                       minHeight={60}
                       numberOfLines={2}
                       error={errors.instructions?.message}

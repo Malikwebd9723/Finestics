@@ -195,7 +195,7 @@ function CustomDrawerContent(props: any) {
 
         {/* Footer */}
         <View style={[styles.footer, { borderTopColor: colors.border }]}>
-          <Text style={[styles.footerText, { color: colors.textSecondary }]}>Version 1.0.0</Text>
+          <Text style={[styles.footerText, { color: colors.textSecondary }]}>Version 1.3.1</Text>
         </View>
       </ScrollView>
     </DrawerContentScrollView>

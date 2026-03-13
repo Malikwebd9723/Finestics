@@ -37,6 +37,6 @@ export const apiRequest = async (
     const json = await response.json();
     return { success: response.ok, status: response.status, data: json };
   } catch (error) {
-    return { ok: false, status: 500, data: { message: 'Network error' } };
+    return { success: false, status: 500, data: { message: 'Network error' } };
   }
 };
