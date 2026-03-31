@@ -11,6 +11,9 @@ export interface PaymentOverview {
   totalOutstanding: number;
   orderCount: number;
   avgOrderValue: number;
+  totalCost: number;
+  grossProfit: number;
+  grossMargin: number;
   byPaymentStatus: {
     paid: { count: number; totalAmount: number; balanceAmount: number };
     partial: { count: number; totalAmount: number; balanceAmount: number };
@@ -234,7 +237,14 @@ export interface SalesReportData {
 
 export interface ProfitLossPeriod {
   period: { startDate: string; endDate: string };
-  revenue: { total: number; collected: number; orderCount: number };
+  revenue: {
+    total: number;
+    returns?: number;
+    returnCount?: number;
+    netRevenue?: number;
+    collected: number;
+    orderCount: number;
+  };
   cogs: number;
   grossProfit: number;
   grossMargin: number;
@@ -254,7 +264,7 @@ export interface ProfitLossData {
   };
   // flat fields for non-comparison mode
   period?: { startDate: string; endDate: string };
-  revenue?: { total: number; collected: number; orderCount: number };
+  revenue?: { total: number; returns?: number; returnCount?: number; netRevenue?: number; collected: number; orderCount: number };
   cogs?: number;
   grossProfit?: number;
   grossMargin?: number;

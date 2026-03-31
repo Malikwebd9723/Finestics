@@ -241,6 +241,28 @@ export default function Statistics() {
               </View>
             </View>
 
+            {/* Profit Card */}
+            {(stats.summary.grossProfit !== undefined) && (
+              <View className="mb-4 flex-row gap-3">
+                <View className="flex-1 rounded-xl p-4" style={{ backgroundColor: '#8b5cf6' }}>
+                  <Text className="text-2xl font-bold text-white">
+                    {formatPrice(stats.summary.grossProfit || 0)}
+                  </Text>
+                  <Text className="text-sm text-white/80">
+                    Gross Profit ({stats.summary.grossMargin || 0}%)
+                  </Text>
+                </View>
+                <View
+                  className="flex-1 rounded-xl p-4"
+                  style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+                  <Text className="text-xl font-bold" style={{ color: colors.error }}>
+                    {formatPrice(stats.summary.totalCost || 0)}
+                  </Text>
+                  <Text className="text-xs" style={{ color: colors.muted }}>Cost of Goods</Text>
+                </View>
+              </View>
+            )}
+
             <View className="mb-4 flex-row gap-3">
               <View
                 className="flex-1 rounded-xl p-4"

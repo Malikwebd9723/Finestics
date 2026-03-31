@@ -30,6 +30,7 @@ import {
   updateOrderItem,
 } from 'api/actions/orderActions';
 import { fetchVans } from 'api/actions/vendorActions';
+import { checkPendingItems } from 'api/actions/returnActions';
 import CustomerSelectModal from './components/CustomerSelectModal';
 import ProductSelectModal from './components/ProductSelectModal';
 import {
@@ -80,6 +81,9 @@ export default function CreateOrderScreen() {
   const [productModalVisible, setProductModalVisible] = useState(false);
   const [vanModalVisible, setVanModalVisible] = useState(false);
 
+  // Pending items
+  const [includePendingItems, setIncludePendingItems] = useState(false);
+
   // Fetch vans
   const { data: vansData } = useQuery({
     queryKey: ['vans'],
@@ -87,6 +91,15 @@ export default function CreateOrderScreen() {
   });
 
   const vans: string[] = vansData?.data || [];
+
+  // Check for pending items when customer is selected (create mode only)
+  const { data: pendingCheck } = useQuery({
+    queryKey: ['pendingItemsCheck', selectedCustomer?.id],
+    queryFn: () => checkPendingItems(selectedCustomer!.id),
+    enabled: !!selectedCustomer?.id && !isEditMode,
+  });
+  const hasPendingItems = pendingCheck?.data?.hasPendingItems;
+  const pendingItemsCount = pendingCheck?.data?.count || 0;
 
   // Fetch order for editing
   const { data: orderData, isLoading: isLoadingOrder } = useQuery({
@@ -144,6 +157,8 @@ export default function CreateOrderScreen() {
     mutationFn: (payload: CreateOrderPayload) => createOrder(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['pendingItems'] });
+      queryClient.invalidateQueries({ queryKey: ['pendingItemsCheck'] });
       Toast.success('Order created successfully!');
       navigation.goBack();
     },
@@ -352,6 +367,7 @@ export default function CreateOrderScreen() {
           sellingPrice: item.sellingPrice,
           notes: item.notes,
         })),
+        ...(includePendingItems && { includePendingItems: true }),
       };
       createMutation.mutate(payload);
     }
@@ -427,6 +443,32 @@ export default function CreateOrderScreen() {
                   )}
                 </TouchableOpacity>
               </View>
+
+              {/* Pending Items Banner */}
+              {hasPendingItems && !isEditMode && (
+                <View
+                  className="mb-4 rounded-xl p-3"
+                  style={{ backgroundColor: '#3b82f620', borderWidth: 1, borderColor: '#3b82f6' }}>
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center flex-1">
+                      <MaterialIcons name="info" size={20} color="#3b82f6" />
+                      <Text className="ml-2 flex-1 text-sm" style={{ color: colors.text }}>
+                        {pendingItemsCount} pending replacement item(s)
+                      </Text>
+                    </View>
+                    <TouchableOpacity onPress={() => setIncludePendingItems(!includePendingItems)}>
+                      <MaterialIcons
+                        name={includePendingItems ? 'check-box' : 'check-box-outline-blank'}
+                        size={24}
+                        color="#3b82f6"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <Text className="mt-1 ml-7 text-xs" style={{ color: colors.muted }}>
+                    Include free replacement items in this order
+                  </Text>
+                </View>
+              )}
 
               {/* Add Items Button - ALWAYS VISIBLE */}
               <TouchableOpacity
@@ -778,7 +820,10 @@ export default function CreateOrderScreen() {
       <CustomerSelectModal
         visible={customerModalVisible}
         selectedCustomerId={selectedCustomer?.id || null}
-        onSelect={setSelectedCustomer}
+        onSelect={(customer: Customer) => {
+          setSelectedCustomer(customer);
+          setIncludePendingItems(false);
+        }}
         onClose={() => setCustomerModalVisible(false)}
       />
       <ProductSelectModal

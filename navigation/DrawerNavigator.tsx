@@ -14,6 +14,7 @@ import VendorProfile from '../screens/Vendor/VendorProfile';
 import Statistics from '../screens/Vendor/Statistics';
 import Customers from '../screens/Vendor/Customers';
 import PaymentsScreen from 'screens/Vendor/PaymentsScreen';
+import ReturnsScreen from 'screens/Vendor/ReturnsScreen';
 
 // Admin Screens
 import AdminProfile from '../screens/Admin/AdminProfile';
@@ -195,7 +196,7 @@ function CustomDrawerContent(props: any) {
 
         {/* Footer */}
         <View style={[styles.footer, { borderTopColor: colors.border }]}>
-          <Text style={[styles.footerText, { color: colors.textSecondary }]}>Version 1.3.1</Text>
+          <Text style={[styles.footerText, { color: colors.textSecondary }]}>Version 1.4.0</Text>
         </View>
       </ScrollView>
     </DrawerContentScrollView>
@@ -262,6 +263,18 @@ export default function DrawerNavigator() {
         options={{
           headerShown: true,
           headerTitle: 'Payments',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Returns Screen (Drawer-only for Vendor) */}
+      <Drawer.Screen
+        name="ReturnsScreen"
+        component={ReturnsScreen}
+        options={{
+          headerShown: true,
+          headerTitle: 'Returns',
           headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.text,
         }}
