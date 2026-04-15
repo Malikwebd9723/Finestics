@@ -41,6 +41,9 @@ import {
   canCancelOrder,
   canDeleteOrder,
 } from 'types/order.types';
+import { canProcessReturn, getReturnActionColor, getReturnActionLabel } from 'types/return.types';
+import ProcessReturnModal from './ProcessReturnModal';
+import ReturnDetailModal from './ReturnDetailModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -59,17 +62,44 @@ interface OrderDetailModalProps {
 
 const generateInvoiceHTML = (order: any, vendor: any) => {
   const formatPrice = (price: number) => `£${Number(price).toFixed(2)}`;
+
+  // Build a map of return info per order item
+  const returnInfoByItemId: Record<number, { returnedQty: number; actions: string[] }> = {};
+  if (order.returns && order.returns.length > 0) {
+    for (const ret of order.returns) {
+      for (const ri of ret.items || []) {
+        if (!returnInfoByItemId[ri.orderItemId]) {
+          returnInfoByItemId[ri.orderItemId] = { returnedQty: 0, actions: [] };
+        }
+        returnInfoByItemId[ri.orderItemId].returnedQty += parseFloat(ri.quantity) || 0;
+        const label = ri.action === 'credit' ? 'Credit' : ri.action === 'refund' ? 'Refund' : 'Replace';
+        if (!returnInfoByItemId[ri.orderItemId].actions.includes(label)) {
+          returnInfoByItemId[ri.orderItemId].actions.push(label);
+        }
+      }
+    }
+  }
+
   const itemsRows = order.items
-    ?.map(
-      (item: any) => `
+    ?.map((item: any) => {
+      const ri = returnInfoByItemId[item.id];
+      const returnLabel = ri
+        ? `<div style="font-size: 11px; margin-top: 3px;">
+            <span style="color: #f59e0b; font-weight: bold;">Returned: ${ri.returnedQty} ${item.unit}</span>
+            ${ri.actions.map((a: string) => {
+              const color = a === 'Credit' ? '#10b981' : a === 'Refund' ? '#ef4444' : '#3b82f6';
+              return `<span style="background: ${color}20; color: ${color}; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; margin-left: 4px;">${a}</span>`;
+            }).join('')}
+          </div>`
+        : '';
+      return `
     <tr>
-      <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${item.productName}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${item.productName}${returnLabel}</td>
       <td style="padding: 8px; text-align: center; border-bottom: 1px solid #e5e7eb;">${item.orderedQuantity} ${item.unit}</td>
       <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e7eb;">${formatPrice(item.sellingPrice)}</td>
       <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e7eb;">${formatPrice(item.subtotal)}</td>
-    </tr>
-  `
-    )
+    </tr>`;
+    })
     .join('');
 
   // Vendor business details
@@ -86,25 +116,23 @@ const generateInvoiceHTML = (order: any, vendor: any) => {
       <head>
         <meta charset="utf-8">
         <style>
-          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
-          .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #1f2937; padding-bottom: 20px; }
-          .company-info h1 { margin: 0; font-size: 24px; color: #1f2937; }
-          .company-details { font-size: 12px; color: #666; margin-top: 5px; }
-          .company-details p { margin: 2px 0; }
-          .invoice-title { font-size: 48px; font-weight: bold; color: #1f2937; }
-          .invoice-desc { font-size: 30px; font-weight: bold; color: #1f2937; }
-          .invoice-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
-          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          body { font-family: Arial, sans-serif; margin: 0; padding: 14px; color: #333; font-size: 13px; }
+          .header { display: flex; justify-content: space-between; margin-bottom: 16px; border-bottom: 2px solid #1f2937; padding-bottom: 12px; }
+          .company-info h1 { margin: 0; font-size: 20px; color: #1f2937; }
+          .company-details { font-size: 11px; color: #666; margin-top: 3px; }
+          .company-details p { margin: 1px 0; }
+          .invoice-title { font-size: 32px; font-weight: bold; color: #1f2937; }
+          .invoice-desc { font-size: 18px; font-weight: bold; color: #1f2937; }
+          .invoice-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 12px; }
+          table { width: 100%; border-collapse: collapse; margin: 12px 0; }
           thead { background: #1f2937; color: white; }
-          th { padding: 12px; text-align: left; font-weight: bold; }
-          td { padding: 8px; }
-          .text-right { text-align: right; }
-          .text-center { text-align: center; }
-          .summary { margin-top: 30px; }
-          .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
-          .summary-row.total { border-top: 2px solid #1f2937; border-bottom: 2px solid #1f2937; font-weight: bold; font-size: 18px; padding: 12px 0; background: #f3f4f6; }
-          .footer { font-size: 11px; color: #666; margin-top: 30px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 15px; }
-          .footer p { margin: 3px 0; }
+          th { padding: 8px; text-align: left; font-weight: bold; font-size: 12px; }
+          td { padding: 6px 8px; font-size: 12px; }
+          .summary { margin-top: 16px; }
+          .summary-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
+          .summary-row.total { border-top: 2px solid #1f2937; border-bottom: 2px solid #1f2937; font-weight: bold; font-size: 16px; padding: 8px 0; background: #f3f4f6; }
+          .footer { font-size: 10px; color: #666; margin-top: 16px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 8px; }
+          .footer p { margin: 2px 0; }
         </style>
       </head>
       <body>
@@ -187,12 +215,15 @@ const generateInvoiceHTML = (order: any, vendor: any) => {
   `;
 };
 
+const getInvoiceFilename = (order: any) =>
+  `${order.customer?.businessName || 'N/A'}-${order.orderNumber}-${formatDate(order.orderDate).replace(/\//g, '-')}.pdf`;
+
 const handleGenerateAndShareInvoice = async (order: any, vendor: any) => {
   try {
     const html = generateInvoiceHTML(order, vendor);
     const { uri } = await Print.printToFileAsync({ html });
 
-    const filename = `${order.customer?.businessName || 'N/A'}-${order.orderNumber}-${formatDate(order.orderDate).replace(/\//g, '-')}.pdf`;
+    const filename = getInvoiceFilename(order);
     const newUri = `${documentDirectory}${filename}`;
 
     await copyAsync({ from: uri, to: newUri });
@@ -202,6 +233,7 @@ const handleGenerateAndShareInvoice = async (order: any, vendor: any) => {
     console.error(error);
   }
 };
+
 
 
 
@@ -218,6 +250,9 @@ export default function OrderDetailModal({
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [statusMenuVisible, setStatusMenuVisible] = useState(false);
+  const [returnModalVisible, setReturnModalVisible] = useState(false);
+  const [returnDetailId, setReturnDetailId] = useState<number | null>(null);
+  const [returnDetailVisible, setReturnDetailVisible] = useState(false);
 
   // Fetch order details
   const { data, isLoading, error } = useQuery<OrderDetailResponse>({
@@ -581,6 +616,42 @@ export default function OrderDetailModal({
                         {getPaymentMethodLabel(order.paymentMethod)}
                       </Text>
                     </View>
+
+                    {/* Profit Section */}
+                    {order.items && order.items.length > 0 && (() => {
+                      const totalCost = order.items!.reduce((sum, item) => {
+                        const qty = parseFloat(String(item.deliveredQuantity)) || parseFloat(String(item.orderedQuantity)) || 0;
+                        const returnedQty = parseFloat(String(item.returnedQuantity)) || 0;
+                        const effectiveQty = Math.max(0, qty - returnedQty);
+                        return sum + effectiveQty * (parseFloat(String(item.buyingPrice)) || 0);
+                      }, 0);
+                      const revenue = parseFloat(String(order.subtotal)) || 0;
+                      const grossProfit = revenue - totalCost;
+                      const margin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
+
+                      return (
+                        <View className="mt-2 border-t pt-2" style={{ borderColor: colors.border }}>
+                          <View className="flex-row justify-between">
+                            <Text style={{ color: colors.muted }}>Cost</Text>
+                            <Text className="font-semibold" style={{ color: colors.text }}>
+                              {formatPrice(totalCost)}
+                            </Text>
+                          </View>
+                          <View className="flex-row justify-between mt-1">
+                            <Text style={{ color: colors.muted }}>Profit</Text>
+                            <Text className="font-bold" style={{ color: grossProfit >= 0 ? colors.success : colors.error }}>
+                              {formatPrice(grossProfit)}
+                            </Text>
+                          </View>
+                          <View className="flex-row justify-between mt-1">
+                            <Text style={{ color: colors.muted }}>Margin</Text>
+                            <Text className="font-semibold" style={{ color: grossProfit >= 0 ? colors.success : colors.error }}>
+                              {margin.toFixed(1)}%
+                            </Text>
+                          </View>
+                        </View>
+                      );
+                    })()}
                   </View>
                 </View>
 
@@ -616,6 +687,21 @@ export default function OrderDetailModal({
                                   Delivered: {item.deliveredQuantity} {item.unit}
                                 </Text>
                               )}
+                            {parseFloat(String(item.returnedQuantity || 0)) > 0 && (
+                              <Text className="mt-0.5 text-xs" style={{ color: '#f59e0b' }}>
+                                Returned: {item.returnedQuantity} {item.unit}
+                              </Text>
+                            )}
+                            {/* Show replace indicator from returns data */}
+                            {order.returns?.some((r) =>
+                              r.items?.some(
+                                (ri) => ri.orderItemId === item.id && ri.action === 'replace_next_order'
+                              )
+                            ) && (
+                              <Text className="mt-0.5 text-xs" style={{ color: '#3b82f6' }}>
+                                Replacement scheduled for next order
+                              </Text>
+                            )}
                           </View>
                           <View className="items-end">
                             <Text className="font-bold" style={{ color: colors.text }}>
@@ -641,6 +727,71 @@ export default function OrderDetailModal({
                     );
                   })}
                 </View>
+
+                {/* Return History */}
+                {order.returns && order.returns.length > 0 && (
+                  <View
+                    className="mb-4 rounded-2xl p-4"
+                    style={{ backgroundColor: colors.background }}>
+                    <View className="mb-3 flex-row items-center">
+                      <MaterialIcons name="assignment-return" size={18} color="#f59e0b" />
+                      <Text className="ml-2 text-base font-bold" style={{ color: colors.text }}>
+                        Returns ({order.returns.length})
+                      </Text>
+                    </View>
+                    {order.returns.map((ret) => (
+                      <TouchableOpacity
+                        key={ret.id}
+                        onPress={() => {
+                          setReturnDetailId(ret.id);
+                          setReturnDetailVisible(true);
+                        }}
+                        className="py-2 border-b"
+                        style={{ borderColor: colors.border }}>
+                        <View className="flex-row justify-between">
+                          <Text className="text-sm" style={{ color: colors.text }}>
+                            {formatDate(ret.returnDate)}
+                          </Text>
+                          <Text className="text-sm font-bold" style={{ color: colors.error }}>
+                            -{formatPrice(ret.totalRefundAmount)}
+                          </Text>
+                        </View>
+                        {/* Returned item names */}
+                        {ret.items && ret.items.length > 0 && (
+                          <View className="mt-1.5 gap-1">
+                            {ret.items.map((ri) => {
+                              const actionColor = getReturnActionColor(ri.action);
+                              return (
+                                <View key={ri.id} className="flex-row items-center">
+                                  <View
+                                    className="rounded px-1.5 py-0.5 mr-1.5"
+                                    style={{ backgroundColor: actionColor + '20' }}>
+                                    <Text className="text-xs font-semibold" style={{ color: actionColor }}>
+                                      {getReturnActionLabel(ri.action)}
+                                    </Text>
+                                  </View>
+                                  <Text className="text-xs flex-1" style={{ color: colors.text }} numberOfLines={1}>
+                                    {ri.product?.name || 'Item'} — {ri.quantity} {ri.product?.unit || ''}
+                                  </Text>
+                                  {ri.action !== 'replace_next_order' && (
+                                    <Text className="text-xs font-semibold" style={{ color: colors.muted }}>
+                                      {formatPrice(ri.refundAmount)}
+                                    </Text>
+                                  )}
+                                </View>
+                              );
+                            })}
+                          </View>
+                        )}
+                        {ret.notes && (
+                          <Text className="mt-1.5 text-xs italic" style={{ color: colors.muted }}>
+                            {ret.notes}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
 
                 {/* Notes */}
                 {order.notes && (
@@ -669,14 +820,7 @@ export default function OrderDetailModal({
                 {/* Generate Invoice Button */}
 
                 <View className="mb-3 flex-row gap-3">
-                  {/* Record Payment - Always show (allows adjustments) */}
-                  <TouchableOpacity
-                    onPress={() => handleGenerateAndShareInvoice(order, vendor)}
-                    className="flex-1 flex-row items-center justify-center rounded-xl py-3"
-                    style={{ backgroundColor: colors.primary }}>
-                    <MaterialIcons name="picture-as-pdf" size={18} color="#fff" />
-                    <Text className="ml-2 text-sm font-bold text-white">Invoice</Text>
-                  </TouchableOpacity>
+                  {/* Payment */}
                   <TouchableOpacity
                     onPress={() => onRecordPayment(orderId!)}
                     className="flex-1 flex-row items-center justify-center rounded-xl py-3"
@@ -686,6 +830,17 @@ export default function OrderDetailModal({
                       {order.paymentStatus === 'paid' ? 'Adjust' : 'Record'}
                     </Text>
                   </TouchableOpacity>
+
+                  {/* Return - for delivered/completed orders */}
+                  {canProcessReturn(order.status) && (
+                    <TouchableOpacity
+                      onPress={() => setReturnModalVisible(true)}
+                      className="flex-1 flex-row items-center justify-center rounded-xl py-3"
+                      style={{ backgroundColor: '#f59e0b' }}>
+                      <MaterialIcons name="assignment-return" size={18} color="#fff" />
+                      <Text className="ml-2 text-sm font-bold text-white">Return</Text>
+                    </TouchableOpacity>
+                  )}
 
                   {/* Edit - for non-completed, non-cancelled */}
                   {canUpdateOrder(order.status) && !isCancelled && (
@@ -700,6 +855,14 @@ export default function OrderDetailModal({
                       <Text className="ml-2 text-sm font-bold text-white">Edit</Text>
                     </TouchableOpacity>
                   )}
+
+                  {/* Invoice */}
+                  <TouchableOpacity
+                    onPress={() => handleGenerateAndShareInvoice(order, vendor)}
+                    className="items-center justify-center rounded-xl py-3 px-3"
+                    style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
+                    <MaterialIcons name="receipt-long" size={20} color={colors.text} />
+                  </TouchableOpacity>
                 </View>
 
                 {/* Secondary Actions Row */}
@@ -821,6 +984,23 @@ export default function OrderDetailModal({
                 message="This will permanently delete the order. This action cannot be undone."
                 onCancel={() => setDeleteModalVisible(false)}
                 onConfirm={() => deleteMutation.mutate()}
+              />
+
+              {/* Process Return Modal */}
+              <ProcessReturnModal
+                visible={returnModalVisible}
+                orderId={orderId}
+                onClose={() => setReturnModalVisible(false)}
+              />
+
+              {/* Return Detail Modal */}
+              <ReturnDetailModal
+                visible={returnDetailVisible}
+                returnId={returnDetailId}
+                onClose={() => {
+                  setReturnDetailVisible(false);
+                  setReturnDetailId(null);
+                }}
               />
             </>
           )}

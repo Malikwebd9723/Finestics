@@ -1,5 +1,7 @@
 // types/order.types.ts
 
+import type { VendorReturn } from './return.types';
+
 // ==================== ORDER ====================
 
 // Currency Configuration
@@ -38,6 +40,7 @@ export interface Order {
   // Relations
   customer?: OrderCustomer;
   items?: OrderItem[];
+  returns?: VendorReturn[];
 }
 
 export interface OrderCustomer {
@@ -58,6 +61,7 @@ export interface OrderItem {
   unit: string;
   orderedQuantity: string | number;
   deliveredQuantity: string | number;
+  returnedQuantity: string | number;
   buyingPrice: string | number;
   sellingPrice: string | number;
   subtotal: string | number;
@@ -238,6 +242,8 @@ export interface CreateOrderPayload {
   deliveryAddress?: string | null;
   vanName?: string | null;
   items: CreateOrderItemPayload[];
+  includePendingItems?: boolean;
+  pendingItemIds?: number[];
 }
 
 export interface CreateOrderItemPayload {

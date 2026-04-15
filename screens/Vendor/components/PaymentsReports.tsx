@@ -312,6 +312,33 @@ export default function PaymentsReportsTab({ startDate, endDate, isActive }: Pro
                   </View>
                 </View>
 
+                {/* Returns */}
+                {(pnlCurrent.revenue?.returns || 0) > 0 && (
+                  <View className="mb-2 flex-row items-center justify-between">
+                    <View className="flex-row items-center">
+                      <Text className="text-sm" style={{ color: colors.muted }}>Returns</Text>
+                      {(pnlCurrent.revenue?.returnCount || 0) > 0 && (
+                        <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
+                          ({pnlCurrent.revenue?.returnCount})
+                        </Text>
+                      )}
+                    </View>
+                    <Text className="text-sm font-medium" style={{ color: '#f59e0b' }}>
+                      -{formatPrice(pnlCurrent.revenue?.returns || 0)}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Net Revenue (if returns exist) */}
+                {(pnlCurrent.revenue?.returns || 0) > 0 && (
+                  <View className="mb-2 flex-row items-center justify-between">
+                    <Text className="text-sm font-semibold" style={{ color: colors.text }}>Net Revenue</Text>
+                    <Text className="text-sm font-bold" style={{ color: colors.text }}>
+                      {formatPrice(pnlCurrent.revenue?.netRevenue || pnlCurrent.revenue?.total || 0)}
+                    </Text>
+                  </View>
+                )}
+
                 {/* COGS */}
                 <View className="mb-2 flex-row items-center justify-between">
                   <Text className="text-sm" style={{ color: colors.muted }}>Cost of Goods</Text>

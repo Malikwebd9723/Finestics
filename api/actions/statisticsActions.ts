@@ -11,16 +11,25 @@ export interface DashboardStats {
     sales: number;
     collected: number;
     deliveries: number;
+    cost: number;
+    profit: number;
+    margin: number;
   };
   week: {
     orders: number;
     sales: number;
     collected: number;
+    cost: number;
+    profit: number;
+    margin: number;
   };
   month: {
     orders: number;
     sales: number;
     collected: number;
+    cost: number;
+    profit: number;
+    margin: number;
   };
   pendingOrders: number;
   outstandingBalance: number;

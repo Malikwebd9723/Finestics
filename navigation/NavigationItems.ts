@@ -66,6 +66,13 @@ export const navigationItems: NavigationItem[] = [
     roles: ['vendor'],
     location: 'drawer',
   },
+  {
+    label: 'Returns',
+    screen: 'ReturnsScreen',
+    icon: 'package-variant-closed-remove',
+    roles: ['vendor'],
+    location: 'drawer',
+  },
 
   // ==================== ADMIN ITEMS ====================
   // Tab + Drawer items (Vendors and Users are in MANAGEMENT section in DrawerNavigator)

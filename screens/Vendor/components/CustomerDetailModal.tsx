@@ -16,8 +16,10 @@ import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { deleteCustomer, fetchCustomerSummary } from 'api/actions/customerActions';
+import { checkPendingItems } from 'api/actions/returnActions';
 import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
 import CustomerOrderHistory from './CustomerOrderHistory';
+import PendingItemsModal from './PendingItemsModal';
 import OrderDetailModal from './OrderDetailModal'; // ADD THIS
 import PaymentModal from './PaymentModal'; // ADD THIS
 import {
@@ -57,6 +59,7 @@ export default function CustomerDetailModal({
   const [orderDetailVisible, setOrderDetailVisible] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [pendingItemsVisible, setPendingItemsVisible] = useState(false);
 
   // Fetch customer details
   const { data, isLoading, error } = useQuery<CustomerDetailResponse>({
@@ -66,6 +69,15 @@ export default function CustomerDetailModal({
   });
 
   const customer = data?.data;
+
+  // Check for pending items
+  const { data: pendingCheck } = useQuery({
+    queryKey: ['pendingItemsCheck', customerId],
+    queryFn: () => checkPendingItems(customerId!),
+    enabled: !!customerId && visible,
+  });
+  const hasPendingItems = pendingCheck?.data?.hasPendingItems;
+  const pendingCount = pendingCheck?.data?.count || 0;
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -306,6 +318,16 @@ export default function CustomerDetailModal({
                         value={formatCurrency(customer.stats.totalSpent || 0)}
                         colors={colors}
                       />
+                      {customer.stats.grossProfit !== undefined && (
+                        <InfoRow
+                          icon="trending-up"
+                          label="Profit Earned"
+                          value={`${formatCurrency(customer.stats.grossProfit || 0)} (${customer.stats.grossMargin || 0}%)`}
+                          colors={colors}
+                          highlight
+                          highlightColor={(customer.stats.grossProfit || 0) >= 0 ? '#10b981' : '#ef4444'}
+                        />
+                      )}
                     </>
                   )}
                 </SectionCard>
@@ -391,6 +413,25 @@ export default function CustomerDetailModal({
                   </SectionCard>
                 )}
 
+                {/* Pending Items Banner */}
+                {hasPendingItems && (
+                  <TouchableOpacity
+                    onPress={() => setPendingItemsVisible(true)}
+                    className="mb-4 flex-row items-center rounded-2xl p-4"
+                    style={{ backgroundColor: '#3b82f620', borderWidth: 1, borderColor: '#3b82f6' }}>
+                    <MaterialIcons name="schedule" size={22} color="#3b82f6" />
+                    <View className="ml-3 flex-1">
+                      <Text className="text-sm font-bold" style={{ color: '#3b82f6' }}>
+                        {pendingCount} pending replacement item(s)
+                      </Text>
+                      <Text className="text-xs" style={{ color: colors.muted }}>
+                        From previous returns — tap to view
+                      </Text>
+                    </View>
+                    <MaterialIcons name="chevron-right" size={22} color="#3b82f6" />
+                  </TouchableOpacity>
+                )}
+
                 {/* Order History - NOW WITH onViewOrder */}
                 <SectionCard title="Order History" icon="receipt-long" colors={colors}>
                   <CustomerOrderHistory
@@ -466,6 +507,13 @@ export default function CustomerDetailModal({
           visible={paymentModalVisible}
           orderId={selectedOrderId}
           onClose={handleClosePaymentModal}
+        />
+
+        {/* Pending Items Modal */}
+        <PendingItemsModal
+          visible={pendingItemsVisible}
+          customerId={customerId}
+          onClose={() => setPendingItemsVisible(false)}
         />
       </SafeAreaView>
     </Modal>

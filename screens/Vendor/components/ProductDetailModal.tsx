@@ -56,19 +56,23 @@ export default function ProductDetailModal({
 
   const product = data?.data;
 
-  // Delete mutation
+  // Delete mutation — close modals sequentially to avoid iOS freeze
   const deleteMutation = useMutation({
     mutationFn: () => deleteProduct(productId!),
     onSuccess: () => {
-      Toast.success('Product deleted successfully!');
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['products', 'tags'] });
       setDeleteModalVisible(false);
-      onClose();
+      // On iOS, closing two modals at once freezes the screen.
+      // Close the confirmation first, then the parent modal after a short delay.
+      setTimeout(() => {
+        Toast.success('Product deleted successfully!');
+        queryClient.invalidateQueries({ queryKey: ['products'] });
+        queryClient.invalidateQueries({ queryKey: ['products', 'tags'] });
+        onClose();
+      }, 300);
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Failed to delete product';
-      Toast.error(message);
+      setDeleteModalVisible(false);
+      Toast.error(error?.message || 'Failed to delete product');
     },
   });
 

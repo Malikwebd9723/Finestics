@@ -90,6 +90,16 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
         </View>
       </View>
 
+      {/* Profit row */}
+      <View className="mb-3 flex-row gap-3">
+        <View className="flex-1 rounded-2xl p-4" style={{ backgroundColor: '#8b5cf6' }}>
+          <Text className="text-2xl font-bold text-white">
+            {formatPrice(overview.grossProfit)}
+          </Text>
+          <Text className="mt-1 text-xs text-white/70">Gross Profit ({overview.grossMargin}%)</Text>
+        </View>
+      </View>
+
       {/* Secondary stats row */}
       <View className="mb-4 flex-row gap-2">
         <View
@@ -112,9 +122,9 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
           className="flex-1 items-center rounded-xl py-3"
           style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
           <Text className="text-base font-bold" style={{ color: colors.text }}>
-            {formatPrice(overview.avgOrderValue)}
+            {formatPrice(overview.totalCost)}
           </Text>
-          <Text className="text-xs" style={{ color: colors.muted }}>Avg</Text>
+          <Text className="text-xs" style={{ color: colors.muted }}>Cost</Text>
         </View>
       </View>
 
@@ -165,7 +175,7 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
         ))}
       </View>
 
-      {/* Expenses & Net Revenue */}
+      {/* Expenses & Net Cash Flow */}
       {overview.expenses && (
         <View
           className="rounded-xl p-4"
@@ -185,14 +195,14 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
             className="mt-3 flex-row items-center justify-between border-t pt-3"
             style={{ borderColor: colors.border }}>
             <Text className="text-sm font-bold" style={{ color: colors.text }}>
-              Net Revenue
+              Net Cash Flow
             </Text>
             <Text
               className="text-lg font-bold"
               style={{
-                color: (overview.netRevenue || 0) >= 0 ? colors.success : colors.error,
+                color: (overview.netCashFlow || 0) >= 0 ? colors.success : colors.error,
               }}>
-              {formatPrice(overview.netRevenue || 0)}
+              {formatPrice(overview.netCashFlow || 0)}
             </Text>
           </View>
         </View>

@@ -127,20 +127,20 @@ export default function Dashboard() {
             </Text>
           </View>
 
-          {/* Deliveries Today */}
+          {/* Profit Today */}
           <View
             className="flex-1 rounded-2xl p-4"
             style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
             <View className="mb-2 flex-row items-center">
-              <View className="rounded-full p-2" style={{ backgroundColor: colors.primary + '20' }}>
-                <MaterialIcons name="local-shipping" size={18} color={colors.primary} />
+              <View className="rounded-full p-2" style={{ backgroundColor: '#8b5cf620' }}>
+                <MaterialIcons name="trending-up" size={18} color="#8b5cf6" />
               </View>
             </View>
-            <Text className="text-xl font-bold" style={{ color: colors.text }}>
-              {stats?.today.deliveries || 0}
+            <Text className="text-xl font-bold" style={{ color: (stats?.today.profit || 0) >= 0 ? colors.success : colors.error }}>
+              {formatPrice(stats?.today.profit || 0)}
             </Text>
             <Text className="text-xs" style={{ color: colors.muted }}>
-              Deliveries Due
+              Profit Today {stats?.today.margin ? `(${stats.today.margin}%)` : ''}
             </Text>
           </View>
         </View>
@@ -327,6 +327,14 @@ export default function Dashboard() {
                   Collected
                 </Text>
               </View>
+              <View className="flex-1">
+                <Text className="text-lg font-bold" style={{ color: (stats?.week.profit || 0) >= 0 ? '#8b5cf6' : colors.error }}>
+                  {formatPrice(stats?.week.profit || 0)}
+                </Text>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  Profit
+                </Text>
+              </View>
             </View>
           </View>
 
@@ -361,6 +369,14 @@ export default function Dashboard() {
                 </Text>
                 <Text className="text-xs" style={{ color: colors.muted }}>
                   Collected
+                </Text>
+              </View>
+              <View className="flex-1">
+                <Text className="text-lg font-bold" style={{ color: (stats?.month.profit || 0) >= 0 ? '#8b5cf6' : colors.error }}>
+                  {formatPrice(stats?.month.profit || 0)}
+                </Text>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  Profit
                 </Text>
               </View>
             </View>

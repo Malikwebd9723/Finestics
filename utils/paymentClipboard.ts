@@ -59,7 +59,7 @@ export function formatOverviewText(
   if (overview.expenses) {
     lines.push('');
     lines.push(`💸 Expenses: ${formatPrice(overview.expenses.total)}`);
-    lines.push(`📈 Net Revenue: ${formatPrice(overview.netRevenue || 0)}`);
+    lines.push(`📈 Net Cash Flow: ${formatPrice(overview.netCashFlow || 0)}`);
   }
 
   return lines.join('\n');

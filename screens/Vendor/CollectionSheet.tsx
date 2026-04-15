@@ -12,14 +12,17 @@ import {
   Modal,
   Pressable,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import Toast from 'utils/Toast';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchCollectionSheet } from 'api/actions/orderActions';
 import { formatPrice } from 'types/order.types';
+import { ViewToggle } from './components/OrderTableView';
 
 interface CollectionItem {
   productId: number;
@@ -52,6 +55,7 @@ export default function CollectionSheet() {
   // Expanded items state
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   const [shareMenuVisible, setShareMenuVisible] = useState(false);
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
 
   // Format date for API
   const dateString = selectedDate.toISOString().split('T')[0];
@@ -108,15 +112,14 @@ export default function CollectionSheet() {
     setSelectedDate(newDate);
   };
 
-  // Share collection sheet
-  const handleShare = async (includeCosts: boolean) => {
-    if (!collectionSheet?.items?.length) return;
-    setShareMenuVisible(false);
+  // Build share text
+  const buildShareText = (includeCosts: boolean) => {
+    if (!collectionSheet?.items?.length) return '';
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-    let text = `📋 Collection Sheet - ${dateStr} , ${timeStr}\n`;
+    let text = `Collection Sheet - ${dateStr} , ${timeStr}\n`;
     text += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
     collectionSheet.items.forEach((item, index) => {
@@ -134,11 +137,31 @@ export default function CollectionSheet() {
       text += `Est. Total Cost: ${formatPrice(totals.cost)}\n`;
     }
     text += `Orders: ${collectionSheet.totalOrders}`;
+    return text;
+  };
 
+  // Share collection sheet
+  const handleShare = async (includeCosts: boolean) => {
+    setShareMenuVisible(false);
+    const text = buildShareText(includeCosts);
+    if (!text) return;
     try {
       await Share.share({ message: text });
     } catch (error) {
       console.error('Share error:', error);
+    }
+  };
+
+  // Copy to clipboard
+  const handleCopy = async (includeCosts: boolean) => {
+    setShareMenuVisible(false);
+    const text = buildShareText(includeCosts);
+    if (!text) return;
+    try {
+      await Clipboard.setStringAsync(text);
+      Toast.success('Copied to clipboard');
+    } catch (error) {
+      Toast.error('Failed to copy');
     }
   };
 
@@ -224,100 +247,113 @@ export default function CollectionSheet() {
         </TouchableOpacity>
       </View>
 
-      {/* Summary Stats */}
+      {/* Stats Bar + View Toggle */}
       {collectionSheet && (
-        <View className="flex-row gap-2 px-4 py-3">
-          <View
-            className="flex-1 rounded-xl p-3"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <Text className="text-xs" style={{ color: colors.muted }}>
-              Orders
+        <View className="px-4 py-3">
+          <View className="mb-3 flex-row items-center justify-between">
+            <Text className="text-sm font-semibold" style={{ color: colors.muted }}>
+              {totals.items} items from {collectionSheet.totalOrders} orders
             </Text>
-            <Text className="text-lg font-bold" style={{ color: colors.text }}>
-              {collectionSheet.totalOrders}
-            </Text>
+            <ViewToggle viewMode={viewMode} onToggle={setViewMode} />
           </View>
-          <View
-            className="flex-1 rounded-xl p-3"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <Text className="text-xs" style={{ color: colors.muted }}>
-              Items
-            </Text>
-            <Text className="text-lg font-bold" style={{ color: colors.text }}>
-              {totals.items}
-            </Text>
-          </View>
-          <View
-            className="flex-1 rounded-xl p-3"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <Text className="text-xs" style={{ color: colors.muted }}>
-              Est. Cost
-            </Text>
-            <Text className="text-lg font-bold" style={{ color: colors.primary }}>
-              {formatPrice(totals.cost)}
-            </Text>
+
+          <View className="flex-row gap-2">
+            <View
+              className="flex-1 rounded-xl p-3"
+              style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+              <Text className="text-xs" style={{ color: colors.muted }}>
+                Orders
+              </Text>
+              <Text className="text-lg font-bold" style={{ color: colors.text }}>
+                {collectionSheet.totalOrders}
+              </Text>
+            </View>
+            <View
+              className="flex-1 rounded-xl p-3"
+              style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+              <Text className="text-xs" style={{ color: colors.muted }}>
+                Items
+              </Text>
+              <Text className="text-lg font-bold" style={{ color: colors.text }}>
+                {totals.items}
+              </Text>
+            </View>
+            <View
+              className="flex-1 rounded-xl p-3"
+              style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+              <Text className="text-xs" style={{ color: colors.muted }}>
+                Est. Cost
+              </Text>
+              <Text className="text-lg font-bold" style={{ color: colors.primary }}>
+                {formatPrice(totals.cost)}
+              </Text>
+            </View>
           </View>
         </View>
       )}
 
       {/* Content */}
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetch}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }>
-        {isLoading ? (
-          <View className="items-center py-20">
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text className="mt-4" style={{ color: colors.muted }}>
-              Loading collection sheet...
-            </Text>
-          </View>
-        ) : error ? (
-          <View className="items-center py-20">
-            <Ionicons name="alert-circle" size={48} color={colors.error} />
-            <Text className="mt-4 text-center" style={{ color: colors.text }}>
-              Failed to load collection sheet
-            </Text>
-            <TouchableOpacity
-              onPress={() => refetch()}
-              className="mt-4 rounded-lg px-6 py-2"
-              style={{ backgroundColor: colors.primary }}>
-              <Text className="font-semibold text-white">Retry</Text>
-            </TouchableOpacity>
-          </View>
-        ) : !collectionSheet?.items?.length ? (
-          <View className="items-center py-20">
-            <MaterialIcons name="shopping-basket" size={64} color={colors.muted} />
-            <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
-              No items to collect
-            </Text>
-            <Text className="mt-2 px-8 text-center" style={{ color: colors.muted }}>
-              No orders scheduled for delivery on {formatDisplayDate(selectedDate)}
-            </Text>
-          </View>
-        ) : (
-          <View className="gap-3">
-            {collectionSheet.items.map((item, index) => (
-              <CollectionItemCard
-                key={item.productId}
-                item={item}
-                index={index + 1}
-                isExpanded={expandedItems.has(item.productId)}
-                onToggle={() => toggleExpand(item.productId)}
-                colors={colors}
-              />
-            ))}
-          </View>
-        )}
-      </ScrollView>
+      {viewMode === 'table' && collectionSheet?.items?.length ? (
+        <CollectionTableView items={collectionSheet.items} colors={colors} />
+      ) : (
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }>
+          {isLoading ? (
+            <View className="items-center py-20">
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text className="mt-4" style={{ color: colors.muted }}>
+                Loading collection sheet...
+              </Text>
+            </View>
+          ) : error ? (
+            <View className="items-center py-20">
+              <Ionicons name="alert-circle" size={48} color={colors.error} />
+              <Text className="mt-4 text-center" style={{ color: colors.text }}>
+                Failed to load collection sheet
+              </Text>
+              <TouchableOpacity
+                onPress={() => refetch()}
+                className="mt-4 rounded-lg px-6 py-2"
+                style={{ backgroundColor: colors.primary }}>
+                <Text className="font-semibold text-white">Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : !collectionSheet?.items?.length ? (
+            <View className="items-center py-20">
+              <MaterialIcons name="shopping-basket" size={64} color={colors.muted} />
+              <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
+                No items to collect
+              </Text>
+              <Text className="mt-2 px-8 text-center" style={{ color: colors.muted }}>
+                No orders scheduled for delivery on {formatDisplayDate(selectedDate)}
+              </Text>
+            </View>
+          ) : (
+            <View className="gap-3">
+              {collectionSheet.items.map((item, index) => (
+                <CollectionItemCard
+                  key={item.productId}
+                  item={item}
+                  index={index + 1}
+                  isExpanded={expandedItems.has(item.productId)}
+                  onToggle={() => toggleExpand(item.productId)}
+                  colors={colors}
+                />
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      )}
 
       {/* Share Options Menu */}
       <Modal
@@ -340,10 +376,10 @@ export default function CollectionSheet() {
               onPress={() => handleShare(true)}
               className="mb-3 flex-row items-center rounded-xl p-4"
               style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
-              <MaterialIcons name="attach-money" size={22} color={colors.primary} />
+              <MaterialIcons name="share" size={22} color={colors.primary} />
               <View className="ml-3 flex-1">
                 <Text className="font-semibold" style={{ color: colors.text }}>
-                  With Costs
+                  Share With Costs
                 </Text>
                 <Text className="mt-0.5 text-xs" style={{ color: colors.muted }}>
                   Includes estimated costs and prices
@@ -354,13 +390,35 @@ export default function CollectionSheet() {
               onPress={() => handleShare(false)}
               className="mb-3 flex-row items-center rounded-xl p-4"
               style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
-              <MaterialIcons name="money-off" size={22} color={colors.muted} />
+              <MaterialIcons name="share" size={22} color={colors.muted} />
               <View className="ml-3 flex-1">
                 <Text className="font-semibold" style={{ color: colors.text }}>
-                  Without Costs
+                  Share Without Costs
                 </Text>
                 <Text className="mt-0.5 text-xs" style={{ color: colors.muted }}>
                   Only items and quantities (for workers)
+                </Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleCopy(true)}
+              className="mb-3 flex-row items-center rounded-xl p-4"
+              style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
+              <MaterialIcons name="content-copy" size={22} color={colors.primary} />
+              <View className="ml-3 flex-1">
+                <Text className="font-semibold" style={{ color: colors.text }}>
+                  Copy With Costs
+                </Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleCopy(false)}
+              className="mb-3 flex-row items-center rounded-xl p-4"
+              style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
+              <MaterialIcons name="content-copy" size={22} color={colors.muted} />
+              <View className="ml-3 flex-1">
+                <Text className="font-semibold" style={{ color: colors.text }}>
+                  Copy Without Costs
                 </Text>
               </View>
             </TouchableOpacity>
@@ -384,6 +442,82 @@ export default function CollectionSheet() {
         />
       )}
     </SafeAreaView>
+  );
+}
+
+// Collection Table View
+function CollectionTableView({ items, colors }: { items: CollectionItem[]; colors: any }) {
+  return (
+    <ScrollView
+      className="flex-1"
+      contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+      scrollEnabled={true}>
+      <View style={{ backgroundColor: colors.card, borderRadius: 12, overflow: 'hidden' }}>
+        {/* Table Header */}
+        <View
+          className="flex-row items-center px-4 py-3"
+          style={{ backgroundColor: colors.primary + '20', borderBottomColor: colors.border, borderBottomWidth: 1 }}>
+          <Text className="w-10 text-xs font-bold" style={{ color: colors.primary }}>
+            #
+          </Text>
+          <Text className="flex-1 text-xs font-bold" style={{ color: colors.primary }}>
+            Product
+          </Text>
+          <Text className="w-20 text-right text-xs font-bold" style={{ color: colors.primary }}>
+            Qty
+          </Text>
+          <Text className="w-24 text-right text-xs font-bold" style={{ color: colors.primary }}>
+            Est. Cost
+          </Text>
+        </View>
+
+        {/* Table Rows */}
+        {items.map((item, index) => (
+          <View
+            key={item.productId}
+            className="flex-row items-center px-4 py-3"
+            style={{
+              backgroundColor: colors.background,
+              borderBottomColor: colors.border,
+              borderBottomWidth: index < items.length - 1 ? 1 : 0,
+            }}>
+            <Text className="w-10 text-sm font-semibold" style={{ color: colors.muted }}>
+              {index + 1}
+            </Text>
+            <View className="flex-1">
+              <Text className="text-sm font-medium" style={{ color: colors.text }}>
+                {item.productName}
+              </Text>
+              <Text className="text-xs" style={{ color: colors.muted }}>
+                {item.orders.length} order{item.orders.length !== 1 ? 's' : ''}
+              </Text>
+            </View>
+            <Text className="w-20 text-right text-sm font-bold" style={{ color: colors.primary }}>
+              {item.totalQuantity} {item.unit}
+            </Text>
+            <Text className="w-24 text-right text-sm" style={{ color: colors.text }}>
+              {formatPrice(item.totalQuantity * item.avgBuyingPrice)}
+            </Text>
+          </View>
+        ))}
+
+        {/* Totals Row */}
+        <View
+          className="flex-row items-center px-4 py-3"
+          style={{ backgroundColor: colors.primary + '10', borderTopColor: colors.border, borderTopWidth: 1 }}>
+          <Text className="w-10 text-xs font-bold" style={{ color: colors.primary }} />
+          <Text className="flex-1 text-sm font-bold" style={{ color: colors.text }}>
+            Total
+          </Text>
+          <Text className="w-20 text-right text-sm font-bold" style={{ color: colors.primary }}>
+            {items.reduce((sum, i) => sum + i.totalQuantity, 0)}
+          </Text>
+          <Text className="w-24 text-right text-sm font-bold" style={{ color: colors.primary }}>
+            {formatPrice(items.reduce((sum, i) => sum + i.totalQuantity * i.avgBuyingPrice, 0))}
+          </Text>
+        </View>
+      </View>
+    </ScrollView>
   );
 }
 

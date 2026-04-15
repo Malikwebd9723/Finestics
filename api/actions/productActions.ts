@@ -1,5 +1,12 @@
 // api/actions/productActions.ts
-import { apiRequest } from 'api/clients';
+import { apiRequest, getErrorMessage } from 'api/clients';
+
+/** Throw if the API response indicates failure */
+function throwIfError(res: { success: boolean; data: any }, fallback: string) {
+  if (!res.success) {
+    throw new Error(getErrorMessage(res.data, fallback));
+  }
+}
 
 // ==================== PRODUCTS ====================
 
@@ -39,6 +46,7 @@ export const fetchProductDetails = async (productId: number) => {
  */
 export const addProduct = async (data: any) => {
   const res = await apiRequest('/products', 'POST', data);
+  throwIfError(res, 'Failed to add product');
   return res.data;
 };
 
@@ -47,6 +55,7 @@ export const addProduct = async (data: any) => {
  */
 export const updateProduct = async (productId: number, data: any) => {
   const res = await apiRequest(`/products/${productId}`, 'PUT', data);
+  throwIfError(res, 'Failed to update product');
   return res.data;
 };
 
@@ -55,6 +64,7 @@ export const updateProduct = async (productId: number, data: any) => {
  */
 export const deleteProduct = async (productId: number) => {
   const res = await apiRequest(`/products/${productId}`, 'DELETE');
+  throwIfError(res, 'Failed to delete product');
   return res.data;
 };
 

@@ -1243,9 +1243,24 @@ function OrderCard({
               </Text>
             )}
           </View>
-          <Text className="text-lg font-bold" style={{ color: colors.text }}>
-            {formatPrice(order.totalAmount)}
-          </Text>
+          <View className="items-end">
+            <Text className="text-lg font-bold" style={{ color: colors.text }}>
+              {formatPrice(order.totalAmount)}
+            </Text>
+            {order.items && order.items.length > 0 && (() => {
+              const cost = order.items!.reduce((sum, item) => {
+                const qty = parseFloat(String(item.deliveredQuantity)) || parseFloat(String(item.orderedQuantity)) || 0;
+                const ret = parseFloat(String(item.returnedQuantity)) || 0;
+                return sum + Math.max(0, qty - ret) * (parseFloat(String(item.buyingPrice)) || 0);
+              }, 0);
+              const profit = (parseFloat(String(order.subtotal)) || 0) - cost;
+              return profit !== 0 ? (
+                <Text className="text-xs font-medium" style={{ color: profit >= 0 ? colors.success : colors.error }}>
+                  P: {formatPrice(profit)}
+                </Text>
+              ) : null;
+            })()}
+          </View>
         </View>
       </View>
     </Pressable>
