@@ -116,27 +116,28 @@ export default function CollectionSheet() {
   const buildShareText = (includeCosts: boolean) => {
     if (!collectionSheet?.items?.length) return '';
     const now = new Date();
-    const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-    let text = `Collection Sheet - ${dateStr} , ${timeStr}\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    const sortedItems = [...collectionSheet.items].sort((a, b) => b.totalQuantity - a.totalQuantity);
 
-    collectionSheet.items.forEach((item, index) => {
-      text += `${index + 1}. ${item.productName}\n`;
-      text += `   Qty: ${item.totalQuantity} ${item.unit}\n`;
+    let text = `📅 Report Date: ${dateStr} , ${timeStr}\n`;
+    text += `📦 Total Orders: ${collectionSheet.totalOrders}\n`;
+    text += `📊 Total Products: ${totals.items}\n`;
+    text += `📈 Total Quantity: ${totals.quantity}\n`;
+    if (includeCosts) {
+      text += `💰 Est. Total Cost: ${formatPrice(totals.cost)}\n`;
+    }
+    text += `\nPRODUCT BREAKDOWN (High → Low)\n`;
+    text += `──────────────────\n\n`;
+
+    sortedItems.forEach((item) => {
+      text += `${item.productName} = ${item.totalQuantity}\n`;
       if (includeCosts) {
         text += `   Est. Cost: ${formatPrice(item.totalQuantity * item.avgBuyingPrice)}\n`;
       }
-      text += `\n`;
     });
 
-    text += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `Total Items: ${totals.items}\n`;
-    if (includeCosts) {
-      text += `Est. Total Cost: ${formatPrice(totals.cost)}\n`;
-    }
-    text += `Orders: ${collectionSheet.totalOrders}`;
     return text;
   };
 
