@@ -13,7 +13,9 @@
       "Bash(powershell -command \"Copy-Item ''D:\\\\Downloads\\\\AppIcons\\\\appstore.png'' ''D:\\\\Finestics\\\\assets\\\\splash.png'' -Force; Write-Host ''Done''\")",
       "Bash(npm install sharp --save-dev)",
       "Bash(node -e \"const sharp = require\\(''sharp''\\); console.log\\(''sharp ok'', sharp.versions.sharp\\)\")",
-      "Bash(npm uninstall sharp)"
+      "Bash(npm uninstall sharp)",
+      "Bash(node -e \"const sharp = require\\('sharp'\\); sharp\\('D:/Finestics/assets/icon.png'\\).metadata\\(\\).then\\(m => console.log\\(m.width, m.height, m.format\\)\\).catch\\(e => console.log\\('err:', e.message\\)\\)\")",
+      "Bash(node -e ' *)"
     ]
   }
 }

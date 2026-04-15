@@ -248,6 +248,7 @@ export interface CreateOrderItemPayload {
 }
 
 export interface UpdateOrderPayload {
+  orderDate?: string;
   deliveryDate?: string | null;
   deliveryFee?: number;
   discount?: number;
