@@ -11,12 +11,14 @@ import {
   TextInput,
 } from 'react-native';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { bulkUpdateStatus, bulkAssignVan, bulkCancel } from 'api/actions/orderActions';
 import { fetchVans } from 'api/actions/vendorActions';
 import { ORDER_STATUSES, OrderStatus } from 'types/order.types';
+import { useInvalidateStats } from 'hooks/useInvalidateStats';
 
 interface BulkActionsBarProps {
   selectedOrderIds: number[];
@@ -30,7 +32,7 @@ export default function BulkActionsBar({
   onComplete,
 }: BulkActionsBarProps) {
   const { colors } = useThemeContext();
-  const queryClient = useQueryClient();
+  const invalidateStats = useInvalidateStats();
 
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [vanModalVisible, setVanModalVisible] = useState(false);
@@ -52,12 +54,12 @@ export default function BulkActionsBar({
       Toast.success(
         `${response?.data?.updated || selectedOrderIds.length} orders updated`
       );
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      invalidateStats();
       setStatusModalVisible(false);
       onComplete();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.message || 'Failed to update orders');
+      Dialog.alert('Error', error?.message || 'Failed to update orders');
     },
   });
 
@@ -68,12 +70,12 @@ export default function BulkActionsBar({
       Toast.success(
         `${response?.data?.updated || selectedOrderIds.length} orders assigned to ${response?.data?.vanName}`
       );
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      invalidateStats();
       setVanModalVisible(false);
       onComplete();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.message || 'Failed to assign van');
+      Dialog.alert('Error', error?.message || 'Failed to assign van');
     },
   });
 
@@ -84,39 +86,39 @@ export default function BulkActionsBar({
       Toast.success(
         `${response?.data?.cancelled || selectedOrderIds.length} orders cancelled`
       );
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      invalidateStats();
       setCancelModalVisible(false);
       setCancelReason('');
       onComplete();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.message || 'Failed to cancel orders');
+      Dialog.alert('Error', error?.message || 'Failed to cancel orders');
     },
   });
 
   const handleStatusSelect = (status: OrderStatus) => {
     const actionWord = status === 'cancelled' ? 'cancel' : `mark as "${status}"`;
-    Alert.alert(
+    Dialog.confirm(
       'Update Status',
       `${actionWord.charAt(0).toUpperCase() + actionWord.slice(1)} ${selectedOrderIds.length} order(s)?`,
-      [
-        { text: 'No', style: 'cancel' },
-        {
-          text: 'Yes',
-          onPress: () => statusMutation.mutate({ status }),
-        },
-      ]
+      {
+        confirmText: 'Yes',
+        cancelText: 'No',
+        destructive: status === 'cancelled',
+        onConfirm: () => statusMutation.mutate({ status }),
+      }
     );
   };
 
   const handleVanSelect = (vanName: string) => {
-    Alert.alert('Assign Van', `Assign ${selectedOrderIds.length} order(s) to "${vanName}"?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Dialog.confirm(
+      'Assign Van',
+      `Assign ${selectedOrderIds.length} order(s) to "${vanName}"?`,
       {
-        text: 'Assign',
-        onPress: () => vanMutation.mutate({ vanName }),
-      },
-    ]);
+        confirmText: 'Assign',
+        onConfirm: () => vanMutation.mutate({ vanName }),
+      }
+    );
   };
 
   const handleBulkCancel = () => {

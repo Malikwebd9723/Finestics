@@ -1,5 +1,5 @@
 // screens/Vendor/Dashboard.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  AppState,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
@@ -14,10 +15,24 @@ import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-ic
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchDashboardStats, DashboardStats } from 'api/actions/statisticsActions';
 import { formatPrice } from 'types/order.types';
+import DatePresetSelector, {
+  DateRange,
+  defaultRange,
+} from 'components/shared/DatePresetSelector';
 
 export default function Dashboard() {
   const { colors } = useThemeContext();
   const navigation = useNavigation<any>();
+
+  const [range, setRange] = useState<DateRange>(() => defaultRange('today'));
+  const [appActive, setAppActive] = useState(AppState.currentState === 'active');
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      setAppActive(state === 'active');
+    });
+    return () => sub.remove();
+  }, []);
 
   const {
     data: statsData,
@@ -25,12 +40,16 @@ export default function Dashboard() {
     refetch,
     isRefetching,
   } = useQuery({
-    queryKey: ['dashboardStats'],
-    queryFn: fetchDashboardStats,
-    refetchInterval: 60000, // Refresh every minute
+    queryKey: ['dashboardStats', range.from, range.to],
+    queryFn: () => fetchDashboardStats({ from: range.from, to: range.to }),
+    refetchInterval: appActive ? 60000 : false,
+    refetchIntervalInBackground: false,
   });
 
   const stats: DashboardStats | null = statsData?.data || null;
+  // Prefer the custom bucket when a range is applied; fall back to today.
+  const rangeBucket = stats?.custom ?? stats?.today ?? null;
+  const rangeLabel = range.preset === 'today' ? "Today's highlights" : 'In selected range';
 
   if (isLoading) {
     return (
@@ -73,13 +92,18 @@ export default function Dashboard() {
         </Text>
       </View>
 
-      {/* Today's Highlights */}
+      {/* Date range selector */}
+      <View className="pb-2">
+        <DatePresetSelector value={range} onChange={setRange} />
+      </View>
+
+      {/* Range highlights (was "Today's highlights") */}
       <View className="px-4 py-3">
-        <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-          TODAY'S HIGHLIGHTS
+        <Text className="mb-3 text-sm font-semibold uppercase" style={{ color: colors.muted }}>
+          {rangeLabel}
         </Text>
         <View className="flex-row gap-3">
-          {/* Orders Today */}
+          {/* Orders */}
           <TouchableOpacity
             onPress={() => navigation.navigate('Orders')}
             activeOpacity={0.8}
@@ -89,12 +113,12 @@ export default function Dashboard() {
               <View className="rounded-full bg-white/20 p-2">
                 <MaterialIcons name="receipt-long" size={20} color="#fff" />
               </View>
-              <Text className="text-3xl font-bold text-white">{stats?.today.orders || 0}</Text>
+              <Text className="text-3xl font-bold text-white">{rangeBucket?.orders || 0}</Text>
             </View>
-            <Text className="text-sm text-white/80">Orders Today</Text>
+            <Text className="text-sm text-white/80">Orders</Text>
           </TouchableOpacity>
 
-          {/* Sales Today */}
+          {/* Sales */}
           <View className="flex-1 rounded-2xl p-4" style={{ backgroundColor: colors.success }}>
             <View className="mb-2 flex-row items-center justify-between">
               <View className="rounded-full bg-white/20 p-2">
@@ -102,15 +126,15 @@ export default function Dashboard() {
               </View>
             </View>
             <Text className="text-2xl font-bold text-white">
-              {formatPrice(stats?.today.sales || 0)}
+              {formatPrice(rangeBucket?.sales || 0)}
             </Text>
-            <Text className="text-sm text-white/80">Sales Today</Text>
+            <Text className="text-sm text-white/80">Sales</Text>
           </View>
         </View>
 
         {/* Second Row */}
         <View className="mt-3 flex-row gap-3">
-          {/* Collected Today */}
+          {/* Collected */}
           <View
             className="flex-1 rounded-2xl p-4"
             style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
@@ -120,14 +144,14 @@ export default function Dashboard() {
               </View>
             </View>
             <Text className="text-xl font-bold" style={{ color: colors.success }}>
-              {formatPrice(stats?.today.collected || 0)}
+              {formatPrice(rangeBucket?.collected || 0)}
             </Text>
             <Text className="text-xs" style={{ color: colors.muted }}>
-              Collected Today
+              Collected
             </Text>
           </View>
 
-          {/* Profit Today */}
+          {/* Gross Profit */}
           <View
             className="flex-1 rounded-2xl p-4"
             style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
@@ -136,11 +160,46 @@ export default function Dashboard() {
                 <MaterialIcons name="trending-up" size={18} color="#8b5cf6" />
               </View>
             </View>
-            <Text className="text-xl font-bold" style={{ color: (stats?.today.profit || 0) >= 0 ? colors.success : colors.error }}>
-              {formatPrice(stats?.today.profit || 0)}
+            <Text className="text-xl font-bold" style={{ color: (rangeBucket?.grossProfit || 0) >= 0 ? colors.success : colors.error }}>
+              {formatPrice(rangeBucket?.grossProfit || 0)}
             </Text>
             <Text className="text-xs" style={{ color: colors.muted }}>
-              Profit Today {stats?.today.margin ? `(${stats.today.margin}%)` : ''}
+              Gross Profit {rangeBucket?.grossMargin != null ? `(${rangeBucket.grossMargin}%)` : ''}
+            </Text>
+          </View>
+        </View>
+
+        {/* Net profit row */}
+        <View className="mt-3 flex-row gap-3">
+          <View
+            className="flex-1 rounded-2xl p-4"
+            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+            <View className="mb-2 flex-row items-center">
+              <View className="rounded-full p-2" style={{ backgroundColor: colors.error + '20' }}>
+                <MaterialIcons name="money-off" size={18} color={colors.error} />
+              </View>
+            </View>
+            <Text className="text-xl font-bold" style={{ color: colors.error }}>
+              {formatPrice(rangeBucket?.expenses || 0)}
+            </Text>
+            <Text className="text-xs" style={{ color: colors.muted }}>
+              Expenses
+            </Text>
+          </View>
+
+          <View
+            className="flex-1 rounded-2xl p-4"
+            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+            <View className="mb-2 flex-row items-center">
+              <View className="rounded-full p-2" style={{ backgroundColor: '#059669' + '20' }}>
+                <MaterialIcons name="savings" size={18} color="#059669" />
+              </View>
+            </View>
+            <Text className="text-xl font-bold" style={{ color: (rangeBucket?.netProfit || 0) >= 0 ? colors.success : colors.error }}>
+              {formatPrice(rangeBucket?.netProfit || 0)}
+            </Text>
+            <Text className="text-xs" style={{ color: colors.muted }}>
+              Net Profit {rangeBucket?.netMargin != null ? `(${rangeBucket.netMargin}%)` : ''}
             </Text>
           </View>
         </View>

@@ -7,6 +7,7 @@ import {
     Alert,
 } from "react-native";
 import Toast from "utils/Toast";
+import Dialog from "utils/Dialog";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeContext } from "context/ThemeProvider";
 import { captureRef } from "react-native-view-shot";
@@ -23,12 +24,12 @@ export default function InvoiceScreen() {
             try {
                 const res = await MediaLibrary.requestPermissionsAsync();
                 if (res.status !== "granted") {
-                    Alert.alert("Permission Denied", "Cannot save without gallery access.");
+                    Dialog.alert("Permission Denied", "Cannot save without gallery access.");
                     return;
                 }
             } catch (err) {
                 console.log("Media permission error:", err);
-                Alert.alert("Permission Error", "This feature requires a custom build (not Expo Go).");
+                Dialog.alert("Permission Error", "This feature requires a custom build (not Expo Go).");
             }
 
             // Capture the invoice container only

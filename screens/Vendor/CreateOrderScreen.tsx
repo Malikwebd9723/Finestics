@@ -14,6 +14,7 @@ import {
   ScrollView,
 } from 'react-native';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -44,6 +45,7 @@ import {
 } from 'types/order.types';
 import { Customer } from 'types/customer.types';
 import { Product } from 'types/product.types';
+import { useInvalidateStats } from 'hooks/useInvalidateStats';
 
 // Extended CartItem for edit mode
 interface ExtendedCartItem extends CartItem {
@@ -56,6 +58,7 @@ export default function CreateOrderScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const queryClient = useQueryClient();
+  const invalidateStats = useInvalidateStats();
 
   const orderId = route.params?.orderId || null;
   const isEditMode = !!orderId;
@@ -156,7 +159,7 @@ export default function CreateOrderScreen() {
   const createMutation = useMutation({
     mutationFn: (payload: CreateOrderPayload) => createOrder(payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      invalidateStats();
       queryClient.invalidateQueries({ queryKey: ['pendingItems'] });
       queryClient.invalidateQueries({ queryKey: ['pendingItemsCheck'] });
       Toast.success('Order created successfully!');
@@ -170,8 +173,7 @@ export default function CreateOrderScreen() {
   const updateMutation = useMutation({
     mutationFn: (payload: UpdateOrderPayload) => updateOrder(orderId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['orders', orderId] });
+      invalidateStats();
       Toast.success('Order updated successfully!');
       navigation.goBack();
     },
@@ -235,12 +237,13 @@ export default function CreateOrderScreen() {
     const item = cart.find((i) => i.productId === productId);
 
     if (isEditMode && item?.isOriginal && item?.itemId) {
-      Alert.alert('Remove Item', 'This will permanently remove this item from the order.', [
-        { text: 'Cancel', style: 'cancel' },
+      Dialog.confirm(
+        'Remove Item',
+        'This will permanently remove this item from the order.',
         {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => {
+          confirmText: 'Remove',
+          destructive: true,
+          onConfirm: () => {
             removeItemMutation.mutate(item.itemId!, {
               onSuccess: () => {
                 setCart((prev) => prev.filter((i) => i.productId !== productId));
@@ -251,8 +254,8 @@ export default function CreateOrderScreen() {
               },
             });
           },
-        },
-      ]);
+        }
+      );
     } else {
       setCart((prev) => prev.filter((item) => item.productId !== productId));
     }
@@ -291,18 +294,18 @@ export default function CreateOrderScreen() {
   // Submit
   const handleSubmit = async () => {
     if (!selectedCustomer) {
-      Alert.alert('Validation Error', 'Please select a customer');
+      Dialog.alert('Validation Error', 'Please select a customer');
       return;
     }
     if (cart.length === 0) {
-      Alert.alert('Validation Error', 'Please add at least one item');
+      Dialog.alert('Validation Error', 'Please add at least one item');
       return;
     }
 
     // Validate all items have valid quantities and prices
     const invalidItem = cart.find((item) => !item.quantity || item.quantity <= 0 || isNaN(item.sellingPrice));
     if (invalidItem) {
-      Alert.alert('Validation Error', `"${invalidItem.name}" has an invalid quantity or price`);
+      Dialog.alert('Validation Error', `"${invalidItem.name}" has an invalid quantity or price`);
       return;
     }
 
@@ -406,7 +409,11 @@ export default function CreateOrderScreen() {
 
         <FlatList
           data={cart}
-          keyExtractor={(item) => item.productId.toString()}
+          keyExtractor={(item, index) =>
+            // Use itemId for original order lines; fall back to productId+index for
+            // new/unsaved lines so two lines with the same productId don't collide.
+            item.itemId != null ? `item-${item.itemId}` : `new-${item.productId}-${index}`
+          }
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 20 }}
           ListHeaderComponent={

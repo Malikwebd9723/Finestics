@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { View, Text, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -41,7 +42,7 @@ export default function ExpensesScreen() {
       exitSelectionMode();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.message || 'Failed to delete expenses');
+      Dialog.alert('Error', error?.message || 'Failed to delete expenses');
     },
   });
 
@@ -92,17 +93,14 @@ export default function ExpensesScreen() {
   };
 
   const handleBulkDelete = () => {
-    Alert.alert(
+    Dialog.confirm(
       'Delete Expenses',
       `Are you sure you want to delete ${selectedExpenses.size} expense(s)? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => bulkDeleteMutation.mutate(Array.from(selectedExpenses)),
-        },
-      ]
+      {
+        confirmText: 'Delete',
+        destructive: true,
+        onConfirm: () => bulkDeleteMutation.mutate(Array.from(selectedExpenses)),
+      }
     );
   };
 

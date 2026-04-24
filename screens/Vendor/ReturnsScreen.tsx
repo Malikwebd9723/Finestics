@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAllReturns, expirePendingItems } from 'api/actions/returnActions';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { formatPrice, formatDate } from 'types/order.types';
 import {
   VendorReturn,
@@ -173,13 +174,14 @@ export default function ReturnsScreen() {
       <View className="flex-row px-4 pb-3">
         <TouchableOpacity
           onPress={() => {
-            Alert.alert(
+            Dialog.confirm(
               'Expire Old Items',
               'This will convert all pending replacement items older than 30 days to customer balance credit. Continue?',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Expire', onPress: () => expireMutation.mutate() },
-              ]
+              {
+                confirmText: 'Expire',
+                destructive: true,
+                onConfirm: () => expireMutation.mutate(),
+              }
             );
           }}
           disabled={expireMutation.isPending}

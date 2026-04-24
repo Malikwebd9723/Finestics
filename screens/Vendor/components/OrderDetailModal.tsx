@@ -13,6 +13,7 @@ import {
   Alert,
 } from 'react-native';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
@@ -60,10 +61,32 @@ interface OrderDetailModalProps {
 }
 
 
-const generateInvoiceHTML = (order: any, vendor: any) => {
-  const formatPrice = (price: number) => `£${Number(price).toFixed(2)}`;
+const escapeHtml = (value: unknown): string => {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
 
-  // Build a map of return info per order item
+const sanitizeFilename = (value: unknown): string =>
+  String(value ?? '')
+    .replace(/[\\/:*?"<>|\r\n]+/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 120) || 'invoice';
+
+const toNumber = (value: unknown, fallback = 0): number => {
+  const n = typeof value === 'number' ? value : parseFloat(String(value ?? ''));
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const generateInvoiceHTML = (order: any, vendor: any) => {
+  const formatPrice = (price: number) => `£${toNumber(price).toFixed(2)}`;
+
+  // Build a map of return info per order item (for the per-line "Returned" label)
   const returnInfoByItemId: Record<number, { returnedQty: number; actions: string[] }> = {};
   if (order.returns && order.returns.length > 0) {
     for (const ret of order.returns) {
@@ -71,7 +94,7 @@ const generateInvoiceHTML = (order: any, vendor: any) => {
         if (!returnInfoByItemId[ri.orderItemId]) {
           returnInfoByItemId[ri.orderItemId] = { returnedQty: 0, actions: [] };
         }
-        returnInfoByItemId[ri.orderItemId].returnedQty += parseFloat(ri.quantity) || 0;
+        returnInfoByItemId[ri.orderItemId].returnedQty += toNumber(ri.quantity);
         const label = ri.action === 'credit' ? 'Credit' : ri.action === 'refund' ? 'Refund' : 'Replace';
         if (!returnInfoByItemId[ri.orderItemId].actions.includes(label)) {
           returnInfoByItemId[ri.orderItemId].actions.push(label);
@@ -80,24 +103,43 @@ const generateInvoiceHTML = (order: any, vendor: any) => {
     }
   }
 
-  const itemsRows = order.items
-    ?.map((item: any) => {
+  // Per-line: prefer backend-computed netQuantity / netSubtotal (§3.2 fix).
+  // Fallback to the local calculation for older API responses so old builds still work.
+  const itemsRows = (order.items || [])
+    .map((item: any) => {
+      const ordered = toNumber(item.orderedQuantity);
+      const returned = toNumber(item.returnedQuantity);
+      const netQuantity =
+        item.netQuantity != null ? toNumber(item.netQuantity) : Math.max(0, ordered - returned);
+      const netSubtotal =
+        item.netSubtotal != null
+          ? toNumber(item.netSubtotal)
+          : netQuantity * toNumber(item.sellingPrice);
+
       const ri = returnInfoByItemId[item.id];
       const returnLabel = ri
         ? `<div style="font-size: 11px; margin-top: 3px;">
-            <span style="color: #f59e0b; font-weight: bold;">Returned: ${ri.returnedQty} ${item.unit}</span>
-            ${ri.actions.map((a: string) => {
-              const color = a === 'Credit' ? '#10b981' : a === 'Refund' ? '#ef4444' : '#3b82f6';
-              return `<span style="background: ${color}20; color: ${color}; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; margin-left: 4px;">${a}</span>`;
-            }).join('')}
+            <span style="color: #f59e0b; font-weight: bold;">Returned: ${escapeHtml(ri.returnedQty)} ${escapeHtml(item.unit)}</span>
+            ${ri.actions
+              .map((a: string) => {
+                const color = a === 'Credit' ? '#10b981' : a === 'Refund' ? '#ef4444' : '#3b82f6';
+                return `<span style="background: ${color}20; color: ${color}; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; margin-left: 4px;">${escapeHtml(a)}</span>`;
+              })
+              .join('')}
           </div>`
         : '';
+
+      const quantityCell =
+        returned > 0
+          ? `${escapeHtml(netQuantity)} ${escapeHtml(item.unit)} <span style="color: #9ca3af; font-size: 10px;">(of ${escapeHtml(ordered)})</span>`
+          : `${escapeHtml(ordered)} ${escapeHtml(item.unit)}`;
+
       return `
     <tr>
-      <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${item.productName}${returnLabel}</td>
-      <td style="padding: 8px; text-align: center; border-bottom: 1px solid #e5e7eb;">${item.orderedQuantity} ${item.unit}</td>
-      <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e7eb;">${formatPrice(item.sellingPrice)}</td>
-      <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e7eb;">${formatPrice(item.subtotal)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${escapeHtml(item.productName)}${returnLabel}</td>
+      <td style="padding: 8px; text-align: center; border-bottom: 1px solid #e5e7eb;">${quantityCell}</td>
+      <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e7eb;">${formatPrice(toNumber(item.sellingPrice))}</td>
+      <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e7eb;">${formatPrice(netSubtotal)}</td>
     </tr>`;
     })
     .join('');
@@ -105,11 +147,16 @@ const generateInvoiceHTML = (order: any, vendor: any) => {
   // Vendor business details
   const businessName = vendor?.businessName || 'Business Name';
   const businessPhone = vendor?.businessPhone || '';
-  const taxId = vendor?.taxId || '';
-  const businessLicense = vendor?.businessLicense || '';
   const address = vendor?.address
-    ? `${vendor.address.street || ''}${vendor.address.city ? ', ' + vendor.address.city : ''}${vendor.address.postcode ? ' ' + vendor.address.postcode : ''}`
+    ? [vendor.address.street, vendor.address.city, vendor.address.postcode]
+        .filter(Boolean)
+        .join(', ')
     : '';
+
+  const returnsValue = toNumber(order.returnsValue);
+  const discount = toNumber(order.discount);
+  const customerName = order.customer?.businessName || 'N/A';
+  const customerPhone = order.customer?.phone || 'N/A';
 
   return `
     <html>
@@ -138,29 +185,29 @@ const generateInvoiceHTML = (order: any, vendor: any) => {
       <body>
         <div class="header">
           <div class="company-info">
-            <h1>${businessName}</h1>
+            <h1>${escapeHtml(businessName)}</h1>
             <div class="company-details">
-              ${address ? `<p>${address}</p>` : ''}
-              ${businessPhone ? `<p>Tel: ${businessPhone}</p>` : ''}
+              ${address ? `<p>${escapeHtml(address)}</p>` : ''}
+              ${businessPhone ? `<p>Tel: ${escapeHtml(businessPhone)}</p>` : ''}
             </div>
           </div>
           <div style="text-align: right;">
             <div class="invoice-title">INVOICE</div>
-            <div class="invoice-desc">${order.customer?.businessName || 'N/A'}</div>
+            <div class="invoice-desc">${escapeHtml(customerName)}</div>
           </div>
         </div>
 
         <div class="invoice-meta">
         <div class="bill-to">
-        <h3>BILL TO: ${order.customer?.businessName || 'N/A'}</h3>
-        <p>Contact: ${order.customer?.phone || 'N/A'}</p>
-        ${order.deliveryAddress ? `<p>${order.deliveryAddress}</p>` : ''}
+        <h3>BILL TO: ${escapeHtml(customerName)}</h3>
+        <p>Contact: ${escapeHtml(customerPhone)}</p>
+        ${order.deliveryAddress ? `<p>${escapeHtml(order.deliveryAddress)}</p>` : ''}
         </div>
 
         <div>
-          <p><strong>Date:</strong> ${formatDate(order.orderDate)}</p>
-          <p><strong>Invoice No:</strong> ${order.orderNumber}</p>
-          <p><strong>Invoice Type:</strong> ${order.invoiceType || 'credit'}</p>
+          <p><strong>Date:</strong> ${escapeHtml(formatDate(order.orderDate))}</p>
+          <p><strong>Invoice No:</strong> ${escapeHtml(order.orderNumber)}</p>
+          <p><strong>Invoice Type:</strong> ${escapeHtml(order.invoiceType || 'credit')}</p>
         </div>
         </div>
 
@@ -181,16 +228,17 @@ const generateInvoiceHTML = (order: any, vendor: any) => {
         <div class="summary">
           <div class="summary-row">
             <span>Subtotal</span>
-            <span>${formatPrice(order.subtotal)}</span>
+            <span>${formatPrice(toNumber(order.subtotal))}</span>
           </div>
           <div class="summary-row">
             <span>Delivery Fee</span>
-            <span>${formatPrice(order.deliveryFee)}</span>
+            <span>${formatPrice(toNumber(order.deliveryFee))}</span>
           </div>
-          ${order.discount > 0 ? `<div class="summary-row"><span>Discount</span><span>-${formatPrice(order.discount)}</span></div>` : ''}
+          ${discount > 0 ? `<div class="summary-row"><span>Discount</span><span>-${formatPrice(discount)}</span></div>` : ''}
+          ${returnsValue > 0 ? `<div class="summary-row"><span>Returns / Refunds</span><span style="color: #ef4444;">-${formatPrice(returnsValue)}</span></div>` : ''}
           <div class="summary-row total">
             <span>TOTAL</span>
-            <span>${formatPrice(order.totalAmount)}</span>
+            <span>${formatPrice(toNumber(order.totalAmount))}</span>
           </div>
         </div>
 
@@ -198,25 +246,29 @@ const generateInvoiceHTML = (order: any, vendor: any) => {
           <div class="summary" style="border-top: 1px solid #e5e7eb; padding-top: 15px;">
             <div class="summary-row">
               <span>Paid Amount</span>
-              <span style="color: #10b981;">${formatPrice(order.paidAmount)}</span>
+              <span style="color: #10b981;">${formatPrice(toNumber(order.paidAmount))}</span>
             </div>
             <div class="summary-row">
               <span>Balance Due</span>
-              <span style="color: #ef4444;">${formatPrice(order.balanceAmount)}</span>
+              <span style="color: #ef4444;">${formatPrice(toNumber(order.balanceAmount))}</span>
             </div>
           </div>
         ` : ''}
 
         <div class="footer">
-          <p style="margin-top: 10px; color: #999;">Generated on ${new Date().toLocaleDateString()}</p>
+          <p style="margin-top: 10px; color: #999;">Generated on ${escapeHtml(new Date().toLocaleDateString())}</p>
         </div>
       </body>
     </html>
   `;
 };
 
-const getInvoiceFilename = (order: any) =>
-  `${order.customer?.businessName || 'N/A'}-${order.orderNumber}-${formatDate(order.orderDate).replace(/\//g, '-')}.pdf`;
+const getInvoiceFilename = (order: any) => {
+  const customer = sanitizeFilename(order.customer?.businessName || 'invoice');
+  const orderNumber = sanitizeFilename(order.orderNumber || '');
+  const date = sanitizeFilename(formatDate(order.orderDate).replace(/\//g, '-'));
+  return `${customer}-${orderNumber}-${date}.pdf`;
+};
 
 const handleGenerateAndShareInvoice = async (order: any, vendor: any) => {
   try {
@@ -229,7 +281,7 @@ const handleGenerateAndShareInvoice = async (order: any, vendor: any) => {
     await copyAsync({ from: uri, to: newUri });
     await Sharing.shareAsync(newUri, { mimeType: 'application/pdf', dialogTitle: filename });
   } catch (error) {
-    Alert.alert('Error', 'Failed to generate invoice');
+    Dialog.alert('Error', 'Failed to generate invoice');
     console.error(error);
   }
 };
@@ -281,7 +333,7 @@ export default function OrderDetailModal({
     },
     onError: (error: any) => {
       const message = error?.message || 'Failed to update status';
-      Alert.alert('Error', message);
+      Dialog.alert('Error', message);
     },
   });
 
@@ -296,7 +348,7 @@ export default function OrderDetailModal({
     },
     onError: (error: any) => {
       const message = error?.message || 'Failed to cancel order';
-      Alert.alert('Error', message);
+      Dialog.alert('Error', message);
     },
   });
 
@@ -310,7 +362,7 @@ export default function OrderDetailModal({
     },
     onError: (error: any) => {
       const message = error?.message || 'Failed to duplicate order';
-      Alert.alert('Error', message);
+      Dialog.alert('Error', message);
     },
   });
 
@@ -324,7 +376,7 @@ export default function OrderDetailModal({
     },
     onError: (error: any) => {
       const message = error?.message || 'Failed to delete order';
-      Alert.alert('Error', message);
+      Dialog.alert('Error', message);
     },
   });
 
@@ -617,41 +669,29 @@ export default function OrderDetailModal({
                       </Text>
                     </View>
 
-                    {/* Profit Section */}
-                    {order.items && order.items.length > 0 && (() => {
-                      const totalCost = order.items!.reduce((sum, item) => {
-                        const qty = parseFloat(String(item.deliveredQuantity)) || parseFloat(String(item.orderedQuantity)) || 0;
-                        const returnedQty = parseFloat(String(item.returnedQuantity)) || 0;
-                        const effectiveQty = Math.max(0, qty - returnedQty);
-                        return sum + effectiveQty * (parseFloat(String(item.buyingPrice)) || 0);
-                      }, 0);
-                      const revenue = parseFloat(String(order.subtotal)) || 0;
-                      const grossProfit = revenue - totalCost;
-                      const margin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
-
-                      return (
-                        <View className="mt-2 border-t pt-2" style={{ borderColor: colors.border }}>
-                          <View className="flex-row justify-between">
-                            <Text style={{ color: colors.muted }}>Cost</Text>
-                            <Text className="font-semibold" style={{ color: colors.text }}>
-                              {formatPrice(totalCost)}
-                            </Text>
-                          </View>
-                          <View className="flex-row justify-between mt-1">
-                            <Text style={{ color: colors.muted }}>Profit</Text>
-                            <Text className="font-bold" style={{ color: grossProfit >= 0 ? colors.success : colors.error }}>
-                              {formatPrice(grossProfit)}
-                            </Text>
-                          </View>
-                          <View className="flex-row justify-between mt-1">
-                            <Text style={{ color: colors.muted }}>Margin</Text>
-                            <Text className="font-semibold" style={{ color: grossProfit >= 0 ? colors.success : colors.error }}>
-                              {margin.toFixed(1)}%
-                            </Text>
-                          </View>
+                    {/* Profit — authoritative values from the backend */}
+                    {order.grossProfit != null && (
+                      <View className="mt-2 border-t pt-2" style={{ borderColor: colors.border }}>
+                        <View className="flex-row justify-between">
+                          <Text style={{ color: colors.muted }}>Cost</Text>
+                          <Text className="font-semibold" style={{ color: colors.text }}>
+                            {formatPrice(order.totalCost ?? 0)}
+                          </Text>
                         </View>
-                      );
-                    })()}
+                        <View className="flex-row justify-between mt-1">
+                          <Text style={{ color: colors.muted }}>Profit</Text>
+                          <Text className="font-bold" style={{ color: (order.grossProfit ?? 0) >= 0 ? colors.success : colors.error }}>
+                            {formatPrice(order.grossProfit ?? 0)}
+                          </Text>
+                        </View>
+                        <View className="flex-row justify-between mt-1">
+                          <Text style={{ color: colors.muted }}>Margin</Text>
+                          <Text className="font-semibold" style={{ color: (order.grossProfit ?? 0) >= 0 ? colors.success : colors.error }}>
+                            {(order.grossMargin ?? 0).toFixed(1)}%
+                          </Text>
+                        </View>
+                      </View>
+                    )}
                   </View>
                 </View>
 
@@ -843,7 +883,7 @@ export default function OrderDetailModal({
                   )}
 
                   {/* Edit - for non-completed, non-cancelled */}
-                  {canUpdateOrder(order.status) && !isCancelled && (
+                  {((order.capabilities?.canEdit ?? canUpdateOrder(order.status)) && !isCancelled) && (
                     <TouchableOpacity
                       onPress={() => {
                         onClose();
@@ -893,7 +933,7 @@ export default function OrderDetailModal({
                   </TouchableOpacity>
 
                   {/* Cancel button - only for non-cancelled, non-pending orders */}
-                  {canCancelOrder(order.status) && !canDeleteOrder(order.status) && (
+                  {((order.capabilities?.canCancel ?? canCancelOrder(order.status)) && !(order.capabilities?.canDelete ?? canDeleteOrder(order.status))) && (
                     <TouchableOpacity
                       onPress={() => setCancelModalVisible(true)}
                       className="flex-1 flex-row items-center justify-center rounded-xl py-3"

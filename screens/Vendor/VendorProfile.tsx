@@ -13,6 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
@@ -67,7 +68,7 @@ export default function VendorProfile() {
       setIsEditing(false);
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.response?.data?.message || 'Failed to update profile');
+      Dialog.alert('Error', error?.response?.data?.message || 'Failed to update profile');
     },
   });
 
@@ -81,7 +82,7 @@ export default function VendorProfile() {
       setShowAddVan(false);
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.response?.data?.message || 'Failed to add van');
+      Dialog.alert('Error', error?.response?.data?.message || 'Failed to add van');
     },
   });
 
@@ -93,7 +94,7 @@ export default function VendorProfile() {
       Toast.success('Van removed');
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.response?.data?.message || 'Failed to remove van');
+      Dialog.alert('Error', error?.response?.data?.message || 'Failed to remove van');
     },
   });
 
@@ -120,21 +121,18 @@ export default function VendorProfile() {
 
   const handleAddVan = () => {
     if (!newVanName.trim()) {
-      Alert.alert('Error', 'Please enter a van name');
+      Dialog.alert('Error', 'Please enter a van name');
       return;
     }
     addVanMutation.mutate(newVanName.trim());
   };
 
   const handleRemoveVan = (vanName: string) => {
-    Alert.alert('Remove Van', `Are you sure you want to remove "${vanName}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: () => removeVanMutation.mutate(vanName),
-      },
-    ]);
+    Dialog.confirm('Remove Van', `Are you sure you want to remove "${vanName}"?`, {
+      confirmText: 'Remove',
+      destructive: true,
+      onConfirm: () => removeVanMutation.mutate(vanName),
+    });
   };
 
   const handleRefresh = () => {

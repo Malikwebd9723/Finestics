@@ -13,6 +13,7 @@ import {
   TextInput,
 } from 'react-native';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -139,7 +140,7 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Failed to add product';
-      Alert.alert('Error', message);
+      Dialog.alert('Error', message);
     },
   });
 
@@ -158,7 +159,7 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Failed to update product';
-      Alert.alert('Error', message);
+      Dialog.alert('Error', message);
     },
   });
 
@@ -178,7 +179,7 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Failed to delete product';
-      Alert.alert('Error', message);
+      Dialog.alert('Error', message);
     },
   });
 

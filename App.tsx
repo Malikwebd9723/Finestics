@@ -9,6 +9,8 @@ import { StatusBar } from 'expo-status-bar';
 import { PaperProvider } from 'react-native-paper';
 import { AuthProvider } from 'context/AuthContext';
 import { SnackbarProvider } from 'context/SnackbarContext';
+import { ConfigProvider } from 'context/ConfigProvider';
+import { DialogProvider } from 'context/DialogProvider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // ✅ FIX: Move QueryClient OUTSIDE the component
@@ -36,9 +38,13 @@ function ThemedApp() {
         <QueryClientProvider client={queryClient}>
           <NavigationContainer>
             <AuthProvider>
-              <SnackbarProvider>
-                <RootNavigator />
-              </SnackbarProvider>
+              <ConfigProvider>
+                <DialogProvider>
+                  <SnackbarProvider>
+                    <RootNavigator />
+                  </SnackbarProvider>
+                </DialogProvider>
+              </ConfigProvider>
             </AuthProvider>
           </NavigationContainer>
         </QueryClientProvider>

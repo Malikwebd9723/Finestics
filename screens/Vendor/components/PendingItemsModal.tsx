@@ -17,6 +17,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchPendingItems, cancelPendingItem } from 'api/actions/returnActions';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { formatPrice, formatDate } from 'types/order.types';
 import {
   VendorPendingItem,
@@ -65,25 +66,23 @@ export default function PendingItemsModal({
     },
     onError: (error: any) => {
       setCancellingId(null);
-      Alert.alert('Error', error?.message || 'Failed to cancel item');
+      Dialog.alert('Error', error?.message || 'Failed to cancel item');
     },
   });
 
   const handleCancel = (item: VendorPendingItem) => {
-    Alert.alert(
+    Dialog.confirm(
       'Cancel Pending Item',
       `Cancel replacement for ${item.product?.name || 'this item'} (${item.quantity} ${item.product?.unit || ''})?`,
-      [
-        { text: 'No', style: 'cancel' },
-        {
-          text: 'Yes, Cancel',
-          style: 'destructive',
-          onPress: () => {
-                    setCancellingId(item.id);
-                    cancelMutation.mutate(item.id);
-                  },
+      {
+        cancelText: 'No',
+        confirmText: 'Yes, Cancel',
+        destructive: true,
+        onConfirm: () => {
+          setCancellingId(item.id);
+          cancelMutation.mutate(item.id);
         },
-      ]
+      }
     );
   };
 

@@ -12,8 +12,9 @@ import {
   Platform,
 } from 'react-native';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchOrderDetails, recordPayment } from 'api/actions/orderActions';
 import {
@@ -23,6 +24,12 @@ import {
   formatPrice,
 } from 'types/order.types';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useInvalidateStats } from 'hooks/useInvalidateStats';
+
+const toFiniteNumber = (value: unknown, fallback = 0): number => {
+  const n = typeof value === 'number' ? value : parseFloat(String(value ?? ''));
+  return Number.isFinite(n) ? n : fallback;
+};
 
 interface PaymentModalProps {
   visible: boolean;
@@ -32,7 +39,7 @@ interface PaymentModalProps {
 
 export default function PaymentModal({ visible, orderId, onClose }: PaymentModalProps) {
   const { colors } = useThemeContext();
-  const queryClient = useQueryClient();
+  const invalidateStats = useInvalidateStats();
 
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>('cash');
@@ -45,7 +52,7 @@ export default function PaymentModal({ visible, orderId, onClose }: PaymentModal
   });
 
   const order = orderData?.data;
-  const balanceAmount = order ? parseFloat(order.balanceAmount as string) : 0;
+  const balanceAmount = toFiniteNumber(order?.balanceAmount);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -59,31 +66,30 @@ export default function PaymentModal({ visible, orderId, onClose }: PaymentModal
   const paymentMutation = useMutation({
     mutationFn: () =>
       recordPayment(orderId!, {
-        amount: parseFloat(amount),
+        amount: toFiniteNumber(amount),
         paymentMethod,
       }),
     onSuccess: () => {
       Toast.success('Payment recorded successfully!');
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      invalidateStats();
       onClose();
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Failed to record payment';
-      Alert.alert('Error', message);
+      Dialog.alert('Error', message);
     },
   });
 
   const handleSubmit = () => {
-    const paymentAmount = parseFloat(amount);
+    const paymentAmount = toFiniteNumber(amount, NaN);
 
-    if (isNaN(paymentAmount) || paymentAmount <= 0) {
-      Alert.alert('Validation Error', 'Please enter a valid amount');
+    if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) {
+      Dialog.alert('Validation Error', 'Please enter a valid amount');
       return;
     }
 
     if (paymentAmount > balanceAmount) {
-      Alert.alert('Validation Error', 'Amount exceeds balance due');
+      Dialog.alert('Validation Error', 'Amount exceeds balance due');
       return;
     }
 

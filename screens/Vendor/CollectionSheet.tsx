@@ -57,8 +57,15 @@ export default function CollectionSheet() {
   const [shareMenuVisible, setShareMenuVisible] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
 
-  // Format date for API
-  const dateString = selectedDate.toISOString().split('T')[0];
+  // Format date for API — use LOCAL date, not UTC, so "today" on the device
+  // matches the day the collection sheet is for (§3.25 fix).
+  const dateString = (() => {
+    const d = selectedDate;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  })();
 
   // Fetch collection sheet
   const { data, isLoading, error, refetch, isRefetching } = useQuery<{ data: CollectionSheetData }>(
@@ -115,9 +122,20 @@ export default function CollectionSheet() {
   // Build share text
   const buildShareText = (includeCosts: boolean) => {
     if (!collectionSheet?.items?.length) return '';
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    // Display the date the report is *for*, not when it was generated — avoids
+    // the TZ mismatch where the API call filtered by one day and the share text
+    // showed another (§3.25 fix).
+    const dateStr = selectedDate.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const timeStr = new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
 
     const sortedItems = [...collectionSheet.items].sort((a, b) => b.totalQuantity - a.totalQuantity);
 

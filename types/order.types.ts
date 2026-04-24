@@ -37,6 +37,21 @@ export interface Order {
   cancellationReason: string | null;
   createdAt: string;
   updatedAt: string;
+  // Virtual (computed by backend) — return-adjusted totals and profit.
+  // These are populated by VendorOrderService.enrichOrderWithNetFields.
+  totalCost?: number;
+  returnsValue?: number;
+  grossProfit?: number;
+  grossMargin?: number;
+  capabilities?: {
+    canEdit: boolean;
+    canCancel: boolean;
+    canDelete: boolean;
+    canAdjustPayment: boolean;
+    canProcessReturn: boolean;
+    canRecordPayment: boolean;
+    reasonIfBlocked: string | null;
+  };
   // Relations
   customer?: OrderCustomer;
   items?: OrderItem[];
@@ -67,6 +82,11 @@ export interface OrderItem {
   subtotal: string | number;
   status: ItemStatus;
   notes: string | null;
+  // Virtual fields populated by backend (VendorOrderService.enrichOrderWithNetFields)
+  netQuantity?: number;
+  netSubtotal?: number;
+  lineCost?: number;
+  lineProfit?: number;
   product?: {
     id: number;
     name: string;

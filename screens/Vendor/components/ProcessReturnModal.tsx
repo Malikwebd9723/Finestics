@@ -14,11 +14,12 @@ import {
   Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchOrderDetails } from 'api/actions/orderActions';
 import { processReturn } from 'api/actions/returnActions';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { OrderDetailResponse, formatPrice } from 'types/order.types';
 import {
   ReturnAction,
@@ -27,6 +28,7 @@ import {
   ProcessReturnPayload,
 } from 'types/return.types';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useInvalidateStats } from 'hooks/useInvalidateStats';
 
 const { height } = Dimensions.get('window');
 
@@ -55,7 +57,7 @@ export default function ProcessReturnModal({
   onClose,
 }: ProcessReturnModalProps) {
   const { colors } = useThemeContext();
-  const queryClient = useQueryClient();
+  const invalidateStats = useInvalidateStats();
   const [slideAnim] = useState(new Animated.Value(height));
   const [returnItems, setReturnItems] = useState<ReturnItemSelection[]>([]);
   const [notes, setNotes] = useState('');
@@ -107,14 +109,11 @@ export default function ProcessReturnModal({
     mutationFn: (data: ProcessReturnPayload) => processReturn(orderId!, data),
     onSuccess: () => {
       Toast.success('Return processed successfully!');
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['orders', orderId] });
-      queryClient.invalidateQueries({ queryKey: ['returns'] });
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      invalidateStats();
       onClose();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.message || 'Failed to process return');
+      Dialog.alert('Error', error?.message || 'Failed to process return');
     },
   });
 
@@ -148,18 +147,18 @@ export default function ProcessReturnModal({
 
   const handleSubmit = () => {
     if (selectedItems.length === 0) {
-      Alert.alert('Error', 'Please select at least one item to return');
+      Dialog.alert('Error', 'Please select at least one item to return');
       return;
     }
 
     for (const item of selectedItems) {
       const qty = parseFloat(item.quantity);
       if (!qty || qty <= 0) {
-        Alert.alert('Error', `Quantity must be positive for ${item.productName}`);
+        Dialog.alert('Error', `Quantity must be positive for ${item.productName}`);
         return;
       }
       if (qty > item.maxQuantity) {
-        Alert.alert('Error', `Cannot return more than ${item.maxQuantity} for ${item.productName}`);
+        Dialog.alert('Error', `Cannot return more than ${item.maxQuantity} for ${item.productName}`);
         return;
       }
     }
@@ -174,13 +173,12 @@ export default function ProcessReturnModal({
       notes: notes || undefined,
     };
 
-    Alert.alert(
+    Dialog.confirm(
       'Confirm Return',
       `Process return for ${selectedItems.length} item${selectedItems.length !== 1 ? 's' : ''}?${totalRefund > 0 ? ` Total refund: ${formatPrice(totalRefund)}` : ''}${replaceCount > 0 ? ` (${replaceCount} replacement${replaceCount !== 1 ? 's' : ''})` : ''}`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Confirm', onPress: () => returnMutation.mutate(payload) },
-      ]
+      {
+        onConfirm: () => returnMutation.mutate(payload),
+      }
     );
   };
 

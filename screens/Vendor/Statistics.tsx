@@ -22,13 +22,24 @@ import {
   SalesTrendItem,
 } from 'api/actions/statisticsActions';
 import { formatPrice } from 'types/order.types';
-
-type Period = 'week' | 'month' | 'quarter' | 'year';
+import DatePresetSelector, {
+  DateRange,
+  defaultRange,
+} from 'components/shared/DatePresetSelector';
 
 export default function Statistics() {
   const { colors } = useThemeContext();
-  const [period, setPeriod] = useState<Period>('month');
+  const [range, setRange] = useState<DateRange>(() => defaultRange('thisMonth'));
   const [activeTab, setActiveTab] = useState<'overview' | 'customers' | 'products'>('overview');
+
+  // Choose a trend bucket interval based on the range span.
+  const rangeSpanDays = React.useMemo(() => {
+    const start = new Date(range.from);
+    const end = new Date(range.to);
+    return Math.max(1, Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1);
+  }, [range]);
+  const trendInterval: 'day' | 'week' | 'month' =
+    rangeSpanDays <= 31 ? 'day' : rangeSpanDays <= 120 ? 'week' : 'month';
 
   // Fetch detailed stats
   const {
@@ -37,8 +48,8 @@ export default function Statistics() {
     refetch: refetchStats,
     isRefetching: statsRefetching,
   } = useQuery({
-    queryKey: ['detailedStats', period],
-    queryFn: () => fetchDetailedStats(period),
+    queryKey: ['detailedStats', range.from, range.to],
+    queryFn: () => fetchDetailedStats({ from: range.from, to: range.to }),
   });
 
   // Fetch customer stats
@@ -48,19 +59,18 @@ export default function Statistics() {
     enabled: activeTab === 'customers',
   });
 
-  const days = period === 'week' ? 7 : period === 'month' ? 30 : period === 'quarter' ? 90 : 365;
-
   // Fetch product stats
   const { data: productData, isLoading: productLoading } = useQuery({
-    queryKey: ['productStats', period],
-    queryFn: () => fetchProductStats(days),
+    queryKey: ['productStats', range.from, range.to],
+    queryFn: () => fetchProductStats(rangeSpanDays),
     enabled: activeTab === 'products',
   });
 
-  // Fetch sales trend
+  // Fetch sales trend (backend buckets + zero-fills)
   const { data: trendData } = useQuery({
-    queryKey: ['salesTrend', period],
-    queryFn: () => fetchSalesTrend(days),
+    queryKey: ['salesTrend', range.from, range.to, trendInterval],
+    queryFn: () =>
+      fetchSalesTrend({ from: range.from, to: range.to, interval: trendInterval }),
     enabled: activeTab === 'overview',
   });
 
@@ -71,67 +81,23 @@ export default function Statistics() {
 
   const chartData = React.useMemo(() => {
     if (!salesTrend || salesTrend.length === 0) return [];
-
-    const data: { id: string; label: string; sales: number }[] = [];
-
-    if (period === 'week') {
-      const recent = salesTrend.slice(-7);
-      recent.forEach((item, idx) => {
-        data.push({
-          id: `week-${idx}`,
-          label: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
-          sales: item.sales,
-        });
-      });
-    } else if (period === 'month') {
-      const recent = salesTrend.slice(-30);
-      for (let i = 0; i < recent.length; i += 7) {
-        const chunk = recent.slice(i, i + 7);
-        const sum = chunk.reduce((acc, curr) => acc + curr.sales, 0);
-        data.push({
-          id: `month-w${i}`,
-          label: `W${Math.floor(i / 7) + 1}`,
-          sales: sum,
-        });
-      }
-    } else {
-      const daysToSlice = period === 'quarter' ? 90 : 365;
-      const recent = salesTrend.slice(-daysToSlice);
-      const groups = new Map<string, { label: string; sales: number }>();
-
-      recent.forEach((item) => {
-        const d = new Date(item.date);
-        const key = `${d.getFullYear()}-${d.getMonth()}`;
-        if (!groups.has(key)) {
-          groups.set(key, { label: d.toLocaleDateString('en-US', { month: 'short' }), sales: 0 });
-        }
-        groups.get(key)!.sales += item.sales;
-      });
-
-      Array.from(groups.values()).forEach((g, idx) => {
-        data.push({
-          id: `${period}-${idx}`,
-          label: g.label,
-          sales: g.sales,
-        });
-      });
-    }
-
-    return data;
-  }, [salesTrend, period]);
+    return salesTrend.map((item, idx) => {
+      const d = new Date(item.date + 'T12:00:00');
+      const label =
+        trendInterval === 'day'
+          ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+          : trendInterval === 'week'
+            ? `w/c ${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+            : d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      return { id: `t-${idx}`, label, sales: item.sales };
+    });
+  }, [salesTrend, trendInterval]);
 
   const isLoading =
     statsLoading ||
     (activeTab === 'customers' && customerLoading) ||
     (activeTab === 'products' && productLoading);
   const isRefetching = statsRefetching;
-
-  const periodLabels: Record<Period, string> = {
-    week: 'Week',
-    month: 'Month',
-    quarter: 'Quarter',
-    year: 'Year',
-  };
 
   if (isLoading && !stats) {
     return (
@@ -155,30 +121,9 @@ export default function Statistics() {
         </Text>
       </View>
 
-      {/* Period Selector */}
-      <View className="px-4 py-2">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View className="flex-row gap-2">
-            {(['week', 'month', 'quarter', 'year'] as Period[]).map((p) => (
-              <TouchableOpacity
-                key={p}
-                onPress={() => setPeriod(p)}
-                className="items-center justify-center rounded-full px-4"
-                style={{
-                  height: 36,
-                  backgroundColor: period === p ? colors.primary : colors.card,
-                  borderWidth: 1,
-                  borderColor: period === p ? colors.primary : colors.border,
-                }}>
-                <Text
-                  className="text-sm font-medium"
-                  style={{ color: period === p ? '#fff' : colors.text }}>
-                  {periodLabels[p]}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
+      {/* Date Range Selector */}
+      <View className="py-2">
+        <DatePresetSelector value={range} onChange={setRange} />
       </View>
 
       {/* Tab Selector */}
@@ -241,24 +186,69 @@ export default function Statistics() {
               </View>
             </View>
 
-            {/* Profit Card */}
-            {(stats.summary.grossProfit !== undefined) && (
-              <View className="mb-4 flex-row gap-3">
-                <View className="flex-1 rounded-xl p-4" style={{ backgroundColor: '#8b5cf6' }}>
-                  <Text className="text-2xl font-bold text-white">
-                    {formatPrice(stats.summary.grossProfit || 0)}
-                  </Text>
-                  <Text className="text-sm text-white/80">
-                    Gross Profit ({stats.summary.grossMargin || 0}%)
+            {/* Gross Profit + Cost */}
+            <View className="mb-4 flex-row gap-3">
+              <View className="flex-1 rounded-xl p-4" style={{ backgroundColor: '#8b5cf6' }}>
+                <Text className="text-2xl font-bold text-white">
+                  {formatPrice(stats.summary.grossProfit || 0)}
+                </Text>
+                <Text className="text-sm text-white/80">
+                  Gross Profit ({stats.summary.grossMargin ?? 0}%)
+                </Text>
+              </View>
+              <View
+                className="flex-1 rounded-xl p-4"
+                style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+                <Text className="text-xl font-bold" style={{ color: colors.error }}>
+                  {formatPrice(stats.summary.totalCost || 0)}
+                </Text>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  Cost of Goods
+                </Text>
+              </View>
+            </View>
+
+            {/* Net Profit + Expenses */}
+            <View className="mb-4 flex-row gap-3">
+              <View
+                className="flex-1 rounded-xl p-4"
+                style={{
+                  backgroundColor:
+                    (stats.summary.netProfit ?? 0) >= 0 ? '#059669' : colors.error,
+                }}>
+                <Text className="text-2xl font-bold text-white">
+                  {formatPrice(stats.summary.netProfit || 0)}
+                </Text>
+                <Text className="text-sm text-white/80">
+                  Net Profit ({stats.summary.netMargin ?? 0}%)
+                </Text>
+              </View>
+              <View
+                className="flex-1 rounded-xl p-4"
+                style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+                <Text className="text-xl font-bold" style={{ color: colors.error }}>
+                  {formatPrice(stats.summary.totalExpenses || 0)}
+                </Text>
+                <Text className="text-xs" style={{ color: colors.muted }}>
+                  Expenses
+                </Text>
+              </View>
+            </View>
+
+            {/* Returns value */}
+            {(stats.summary.returnsValue ?? 0) > 0 && (
+              <View className="mb-4 rounded-xl p-3" style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+                <View className="flex-row justify-between">
+                  <Text className="text-sm" style={{ color: colors.muted }}>Returns / Refunds in range</Text>
+                  <Text className="font-semibold" style={{ color: colors.error }}>
+                    -{formatPrice(stats.summary.returnsValue || 0)}
                   </Text>
                 </View>
-                <View
-                  className="flex-1 rounded-xl p-4"
-                  style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-                  <Text className="text-xl font-bold" style={{ color: colors.error }}>
-                    {formatPrice(stats.summary.totalCost || 0)}
+                <View className="mt-1 flex-row justify-between">
+                  <Text className="text-sm" style={{ color: colors.muted }}>Net revenue</Text>
+                  <Text className="font-semibold" style={{ color: colors.text }}>
+                    {formatPrice(stats.summary.netRevenue || 0)}
                   </Text>
-                  <Text className="text-xs" style={{ color: colors.muted }}>Cost of Goods</Text>
                 </View>
               </View>
             )}

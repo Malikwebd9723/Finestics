@@ -1,9 +1,13 @@
 // context/AuthContext.tsx
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiRequest } from 'api/clients';
+import { apiRequest, onUnauthorized } from 'api/clients';
 import { User, ProfileStatus, AuthResponseData } from 'api/actions/authActions';
+import {
+  setStoredValue,
+  getStoredValue,
+  clearStoredKeys,
+} from 'utils/secureStorage';
 
 // ==================== TYPES ====================
 
@@ -28,19 +32,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ==================== HELPERS ====================
 
-  const saveValue = async (key: string, value: string | null) => {
-    if (value === null || value === undefined) {
-      await AsyncStorage.removeItem(key);
-    } else {
-      await AsyncStorage.setItem(key, value);
-    }
-  };
-
-  const loadValue = async (key: string): Promise<string | null> => {
-    const value = await AsyncStorage.getItem(key);
-    if (!value || value === 'null' || value === 'undefined') return null;
-    return value;
-  };
+  const saveValue = setStoredValue;
+  const loadValue = getStoredValue;
 
   // ==================== FETCH USER PROFILE ====================
 
@@ -56,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return false;
     } catch (error) {
-      console.error('Failed to fetch user profile:', error);
+      if (__DEV__) console.warn('Failed to fetch user profile:', error);
       return false;
     }
   };
@@ -106,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        if (__DEV__) console.warn('Auth initialization error:', error);
         await logout();
       } finally {
         setLoading(false);
@@ -114,6 +107,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     initialize();
+  }, []);
+
+  // Force-logout if the API client raises a terminal 401 (refresh failed).
+  useEffect(() => {
+    return onUnauthorized(() => {
+      setUser(null);
+    });
   }, []);
 
   // ==================== LOGIN ====================
@@ -143,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Clear all storage
-    await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user', 'profileStatus']);
+    await clearStoredKeys(['accessToken', 'refreshToken', 'user', 'profileStatus']);
     setUser(null);
   }, []);
 

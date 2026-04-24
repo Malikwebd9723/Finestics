@@ -18,6 +18,7 @@ import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAdminProfile, updateAdminProfile } from 'api/actions/adminActions';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { useNavigation } from '@react-navigation/native';
 
 export default function AdminProfile() {
@@ -50,7 +51,7 @@ export default function AdminProfile() {
       setIsEditing(false);
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.response?.data?.message || 'Failed to update profile');
+      Dialog.alert('Error', error?.response?.data?.message || 'Failed to update profile');
     },
   });
 

@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -164,7 +165,7 @@ export default function CustomerFormModal({
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Failed to add customer';
-      Alert.alert('Error', message);
+      Dialog.alert('Error', message);
     },
   });
 
@@ -182,7 +183,7 @@ export default function CustomerFormModal({
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Failed to update customer';
-      Alert.alert('Error', message);
+      Dialog.alert('Error', message);
     },
   });
 
@@ -201,7 +202,7 @@ export default function CustomerFormModal({
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Failed to delete customer';
-      Alert.alert('Error', message);
+      Dialog.alert('Error', message);
     },
   });
 
@@ -209,10 +210,15 @@ export default function CustomerFormModal({
 
   const handleClose = () => {
     if (isDirty && !isSubmitting) {
-      Alert.alert('Discard Changes?', 'You have unsaved changes. Are you sure you want to close?', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Discard', style: 'destructive', onPress: () => onClose() },
-      ]);
+      Dialog.confirm(
+        'Discard Changes?',
+        'You have unsaved changes. Are you sure you want to close?',
+        {
+          confirmText: 'Discard',
+          destructive: true,
+          onConfirm: () => onClose(),
+        }
+      );
     } else {
       onClose();
     }

@@ -17,6 +17,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchReturnDetail, undoReturn } from 'api/actions/returnActions';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { formatPrice, formatDate } from 'types/order.types';
 import {
   VendorReturn,
@@ -54,18 +55,19 @@ export default function ReturnDetailModal({
       onClose();
     },
     onError: (error: any) => {
-      Alert.alert('Error', error?.message || 'Failed to undo return');
+      Dialog.alert('Error', error?.message || 'Failed to undo return');
     },
   });
 
   const handleUndo = () => {
-    Alert.alert(
+    Dialog.confirm(
       'Undo Return',
       'This will reverse the return: restore order totals, undo balance/payment changes, and remove any pending replacement items created by this return.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Undo Return', style: 'destructive', onPress: () => undoMutation.mutate() },
-      ]
+      {
+        confirmText: 'Undo Return',
+        destructive: true,
+        onConfirm: () => undoMutation.mutate(),
+      }
     );
   };
 

@@ -6,6 +6,7 @@ import {
     View,
 } from "react-native";
 import Toast from "utils/Toast";
+import Dialog from "utils/Dialog";
 import { useThemeContext } from "context/ThemeProvider";
 import { Button, Text, Card } from "react-native-paper";
 import * as FileSystem from "expo-file-system/legacy";
@@ -145,7 +146,7 @@ export default function TransactionHistory() {
                 await FileSystem.writeAsStringAsync(fileUri, pdfBase64, {
                     encoding: FileSystem.EncodingType.Base64,
                 });
-                Alert.alert("Downloaded", `Saved to app documents:\n\n${fileUri}`);
+                Dialog.alert("Downloaded", `Saved to app documents:\n\n${fileUri}`);
             }
         } catch (error) {
             console.error("Error generating statement:", error);

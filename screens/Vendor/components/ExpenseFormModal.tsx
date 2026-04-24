@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
@@ -153,7 +154,7 @@ export default function ExpenseFormModal({
     },
     onError: (error: any) => {
       const message = error?.response?.data?.error?.message || 'Failed to add expense';
-      Alert.alert('Error', message);
+      Dialog.alert('Error', message);
     },
   });
 
@@ -171,7 +172,7 @@ export default function ExpenseFormModal({
     },
     onError: (error: any) => {
       const message = error?.response?.data?.error?.message || 'Failed to update expense';
-      Alert.alert('Error', message);
+      Dialog.alert('Error', message);
     },
   });
 
@@ -190,7 +191,7 @@ export default function ExpenseFormModal({
     },
     onError: (error: any) => {
       const message = error?.response?.data?.error?.message || 'Failed to delete expense';
-      Alert.alert('Error', message);
+      Dialog.alert('Error', message);
     },
   });
 
