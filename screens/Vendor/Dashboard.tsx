@@ -1,24 +1,36 @@
 // screens/Vendor/Dashboard.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
   AppState,
+  TouchableOpacity,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
-import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
-import { fetchDashboardStats, DashboardStats } from 'api/actions/statisticsActions';
-import { formatPrice } from 'types/order.types';
-import DatePresetSelector, {
-  DateRange,
-  defaultRange,
-} from 'components/shared/DatePresetSelector';
+import { fetchDashboardStats, DashboardStats, fetchSalesTrend } from 'api/actions/statisticsActions';
+import { fetchAllOrders } from 'api/actions/orderActions';
+import { formatPrice, getPaymentStatusLabel, Order } from 'types/order.types';
+import SegmentedDateFilter from 'components/shared/SegmentedDateFilter';
+import { DateRange, defaultRange } from 'components/shared/DatePresetSelector';
+import { typo, radius } from 'constants/design';
+import { HeroMetric, StatCell, TrendCard, AttentionRow, ListRow } from 'components/ui';
+
+const initialsOf = (s?: string) =>
+  (s || '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase() || 'OR';
+
+const fmtDate = (d: string) =>
+  new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
 export default function Dashboard() {
   const { colors } = useThemeContext();
@@ -28,11 +40,18 @@ export default function Dashboard() {
   const [appActive, setAppActive] = useState(AppState.currentState === 'active');
 
   useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => {
-      setAppActive(state === 'active');
-    });
+    const sub = AppState.addEventListener('change', (state) => setAppActive(state === 'active'));
     return () => sub.remove();
   }, []);
+
+  const spanDays = useMemo(() => {
+    const start = new Date(range.from);
+    const end = new Date(range.to);
+    return Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1);
+  }, [range]);
+  const useLast7 = spanDays <= 1;
+  const trendInterval: 'day' | 'week' | 'month' =
+    spanDays <= 31 ? 'day' : spanDays <= 120 ? 'week' : 'month';
 
   const {
     data: statsData,
@@ -46,19 +65,45 @@ export default function Dashboard() {
     refetchIntervalInBackground: false,
   });
 
-  const stats: DashboardStats | null = statsData?.data || null;
-  // Prefer the custom bucket when a range is applied; fall back to today.
-  const rangeBucket = stats?.custom ?? stats?.today ?? null;
-  const rangeLabel = range.preset === 'today' ? "Today's highlights" : 'In selected range';
+  const { data: trendData } = useQuery({
+    queryKey: ['dashboardTrend', useLast7 ? 'last7' : range.from, range.to, trendInterval],
+    queryFn: () =>
+      useLast7
+        ? fetchSalesTrend({ days: 7, interval: 'day' })
+        : fetchSalesTrend({ from: range.from, to: range.to, interval: trendInterval }),
+  });
 
-  if (isLoading) {
+  const { data: ordersData } = useQuery({
+    queryKey: ['dashboardRecentOrders'],
+    queryFn: () => fetchAllOrders({ limit: 5, sortBy: 'createdAt', sortOrder: 'DESC' }),
+  });
+
+  const stats: DashboardStats | null = statsData?.data || null;
+  const bucket = stats?.custom ?? stats?.today ?? null;
+  const recent: Order[] = ordersData?.data || [];
+
+  const trendPoints = trendData?.data || [];
+  const series = useMemo(() => trendPoints.map((d) => d.sales), [trendPoints]);
+  const trendLabels = useMemo(() => trendPoints.map((d) => fmtDate(d.date)), [trendPoints]);
+  const seriesSum = useMemo(() => series.reduce((a, b) => a + b, 0), [series]);
+  const delta =
+    series.length > 1 && series[0] !== 0
+      ? { pct: ((series[series.length - 1] - series[0]) / Math.abs(series[0])) * 100 }
+      : null;
+
+  const pending = stats?.pendingOrders || 0;
+  const outstanding = stats?.outstandingBalance || 0;
+  const trendTitle = useLast7 ? 'Sales · last 7 days' : 'Sales · selected range';
+  const margin = bucket?.netMargin != null ? `${bucket.netMargin}% margin` : undefined;
+
+  if (isLoading && !stats) {
     return (
       <View
         className="flex-1 items-center justify-center"
         style={{ backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text className="mt-4" style={{ color: colors.muted }}>
-          Loading dashboard...
+          Loading dashboard…
         </Text>
       </View>
     );
@@ -68,7 +113,7 @@ export default function Dashboard() {
     <ScrollView
       className="flex-1"
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={{ paddingBottom: 100 }}
+      contentContainerStyle={{ paddingBottom: 120 }}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
@@ -78,445 +123,135 @@ export default function Dashboard() {
           tintColor={colors.primary}
         />
       }>
-      {/* Header */}
-      <View className="px-4 pb-2 pt-4">
-        <Text className="text-2xl font-bold" style={{ color: colors.text }}>
-          Dashboard
-        </Text>
-        <Text className="text-sm" style={{ color: colors.muted }}>
-          {new Date().toLocaleDateString('en-US', {
-            weekday: 'long',
-            month: 'long',
-            day: 'numeric',
-          })}
-        </Text>
+      {/* Date range */}
+      <View className="pt-3">
+        <SegmentedDateFilter value={range} onChange={setRange} />
       </View>
 
-      {/* Date range selector */}
-      <View className="pb-2">
-        <DatePresetSelector value={range} onChange={setRange} />
+      {/* Net profit — hero card */}
+      <View className="px-4 pt-5">
+        <HeroMetric
+          variant="card"
+          label="Net profit"
+          value={formatPrice(bucket?.netProfit || 0)}
+          sublabel={margin}
+          onPress={() => navigation.navigate('Statistics')}
+          footer={
+            <View className="flex-row justify-between">
+              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '500' }}>
+                Gross {formatPrice(bucket?.grossProfit || 0)}
+              </Text>
+              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '500' }}>
+                Expenses {formatPrice(bucket?.expenses || 0)}
+              </Text>
+            </View>
+          }
+        />
       </View>
 
-      {/* Range highlights (was "Today's highlights") */}
-      <View className="px-4 py-3">
-        <Text className="mb-3 text-sm font-semibold uppercase" style={{ color: colors.muted }}>
-          {rangeLabel}
-        </Text>
+      {/* KPIs — 2×2 cards */}
+      <View className="px-4 pt-4">
         <View className="flex-row gap-3">
-          {/* Orders */}
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Orders')}
-            activeOpacity={0.8}
-            className="flex-1 rounded-2xl p-4"
-            style={{ backgroundColor: colors.primary }}>
-            <View className="mb-2 flex-row items-center justify-between">
-              <View className="rounded-full bg-white/20 p-2">
-                <MaterialIcons name="receipt-long" size={20} color="#fff" />
-              </View>
-              <Text className="text-3xl font-bold text-white">{rangeBucket?.orders || 0}</Text>
-            </View>
-            <Text className="text-sm text-white/80">Orders</Text>
-          </TouchableOpacity>
-
-          {/* Sales */}
-          <View className="flex-1 rounded-2xl p-4" style={{ backgroundColor: colors.success }}>
-            <View className="mb-2 flex-row items-center justify-between">
-              <View className="rounded-full bg-white/20 p-2">
-                <MaterialIcons name="attach-money" size={20} color="#fff" />
-              </View>
-            </View>
-            <Text className="text-2xl font-bold text-white">
-              {formatPrice(rangeBucket?.sales || 0)}
-            </Text>
-            <Text className="text-sm text-white/80">Sales</Text>
+          <View className="flex-1">
+            <StatCell boxed icon="cash-multiple" label="Sales" value={formatPrice(bucket?.sales || 0)} />
+          </View>
+          <View className="flex-1">
+            <StatCell
+              boxed
+              icon="cash-check"
+              label="Collected"
+              value={formatPrice(bucket?.collected || 0)}
+              tone="success"
+            />
           </View>
         </View>
-
-        {/* Second Row */}
         <View className="mt-3 flex-row gap-3">
-          {/* Collected */}
-          <View
-            className="flex-1 rounded-2xl p-4"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <View className="mb-2 flex-row items-center">
-              <View className="rounded-full p-2" style={{ backgroundColor: colors.success + '20' }}>
-                <MaterialIcons name="account-balance-wallet" size={18} color={colors.success} />
-              </View>
-            </View>
-            <Text className="text-xl font-bold" style={{ color: colors.success }}>
-              {formatPrice(rangeBucket?.collected || 0)}
-            </Text>
-            <Text className="text-xs" style={{ color: colors.muted }}>
-              Collected
-            </Text>
+          <View className="flex-1">
+            <StatCell boxed icon="receipt" label="Orders" value={String(bucket?.orders || 0)} />
           </View>
-
-          {/* Gross Profit */}
-          <View
-            className="flex-1 rounded-2xl p-4"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <View className="mb-2 flex-row items-center">
-              <View className="rounded-full p-2" style={{ backgroundColor: '#8b5cf620' }}>
-                <MaterialIcons name="trending-up" size={18} color="#8b5cf6" />
-              </View>
-            </View>
-            <Text className="text-xl font-bold" style={{ color: (rangeBucket?.grossProfit || 0) >= 0 ? colors.success : colors.error }}>
-              {formatPrice(rangeBucket?.grossProfit || 0)}
-            </Text>
-            <Text className="text-xs" style={{ color: colors.muted }}>
-              Gross Profit {rangeBucket?.grossMargin != null ? `(${rangeBucket.grossMargin}%)` : ''}
-            </Text>
-          </View>
-        </View>
-
-        {/* Net profit row */}
-        <View className="mt-3 flex-row gap-3">
-          <View
-            className="flex-1 rounded-2xl p-4"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <View className="mb-2 flex-row items-center">
-              <View className="rounded-full p-2" style={{ backgroundColor: colors.error + '20' }}>
-                <MaterialIcons name="money-off" size={18} color={colors.error} />
-              </View>
-            </View>
-            <Text className="text-xl font-bold" style={{ color: colors.error }}>
-              {formatPrice(rangeBucket?.expenses || 0)}
-            </Text>
-            <Text className="text-xs" style={{ color: colors.muted }}>
-              Expenses
-            </Text>
-          </View>
-
-          <View
-            className="flex-1 rounded-2xl p-4"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <View className="mb-2 flex-row items-center">
-              <View className="rounded-full p-2" style={{ backgroundColor: '#059669' + '20' }}>
-                <MaterialIcons name="savings" size={18} color="#059669" />
-              </View>
-            </View>
-            <Text className="text-xl font-bold" style={{ color: (rangeBucket?.netProfit || 0) >= 0 ? colors.success : colors.error }}>
-              {formatPrice(rangeBucket?.netProfit || 0)}
-            </Text>
-            <Text className="text-xs" style={{ color: colors.muted }}>
-              Net Profit {rangeBucket?.netMargin != null ? `(${rangeBucket.netMargin}%)` : ''}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Quick Actions */}
-      <View className="px-4 py-3">
-        <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-          QUICK ACTIONS
-        </Text>
-        <View className="flex-row gap-3">
-          <TouchableOpacity
-            onPress={() => navigation.navigate('CreateOrderScreen')}
-            className="flex-1 items-center rounded-xl p-4"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <View
-              className="mb-2 rounded-full p-3"
-              style={{ backgroundColor: colors.primary + '15' }}>
-              <Ionicons name="add-circle" size={24} color={colors.primary} />
-            </View>
-            <Text className="text-sm font-medium" style={{ color: colors.text }}>
-              New Order
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => navigation.navigate('CollectionSheet')}
-            className="flex-1 items-center rounded-xl p-4"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <View className="mb-2 rounded-full p-3" style={{ backgroundColor: '#8b5cf6' + '15' }}>
-              <MaterialIcons name="shopping-basket" size={24} color="#8b5cf6" />
-            </View>
-            <Text className="text-sm font-medium" style={{ color: colors.text }}>
-              Collection
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Customers')}
-            className="flex-1 items-center rounded-xl p-4"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <View className="mb-2 rounded-full p-3" style={{ backgroundColor: '#f59e0b' + '15' }}>
-              <Ionicons name="people" size={24} color="#f59e0b" />
-            </View>
-            <Text className="text-sm font-medium" style={{ color: colors.text }}>
-              Customers
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Attention Required */}
-      <View className="px-4 py-3">
-        <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-          ATTENTION REQUIRED
-        </Text>
-        <View className="gap-3">
-          {/* Pending Orders */}
-          {(stats?.pendingOrders || 0) > 0 && (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Orders', { statusFilter: 'pending' })}
-              className="flex-row items-center rounded-xl p-4"
-              style={{
-                backgroundColor: '#f59e0b' + '15',
-                borderWidth: 1,
-                borderColor: '#f59e0b' + '30',
-              }}>
-              <View className="mr-3 rounded-full p-2" style={{ backgroundColor: '#f59e0b' + '20' }}>
-                <MaterialIcons name="pending-actions" size={20} color="#f59e0b" />
-              </View>
-              <View className="flex-1">
-                <Text className="font-semibold" style={{ color: colors.text }}>
-                  {stats?.pendingOrders} Pending Orders
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Need confirmation or action
-                </Text>
-              </View>
-              <MaterialIcons name="chevron-right" size={24} color={colors.muted} />
-            </TouchableOpacity>
-          )}
-
-          {/* Outstanding Balance */}
-          {(stats?.outstandingBalance || 0) > 0 && (
-            <TouchableOpacity
+          <View className="flex-1">
+            <StatCell
+              boxed
+              icon="cash-clock"
+              label="Outstanding"
+              value={formatPrice(outstanding)}
+              tone="error"
               onPress={() => navigation.navigate('Orders', { paymentFilter: 'unpaid' })}
-              className="flex-row items-center rounded-xl p-4"
-              style={{
-                backgroundColor: colors.error + '10',
-                borderWidth: 1,
-                borderColor: colors.error + '30',
-              }}>
-              <View
-                className="mr-3 rounded-full p-2"
-                style={{ backgroundColor: colors.error + '20' }}>
-                <MaterialCommunityIcons name="cash-clock" size={20} color={colors.error} />
-              </View>
-              <View className="flex-1">
-                <Text className="font-semibold" style={{ color: colors.text }}>
-                  {formatPrice(stats?.outstandingBalance || 0)} Outstanding
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Payments pending collection
-                </Text>
-              </View>
-              <MaterialIcons name="chevron-right" size={24} color={colors.muted} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-{/* Completed Orders */}
-<View className="px-4 py-3">
-  <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-    COMPLETED ORDERS
-  </Text>
-  <View
-    className="rounded-xl p-4"
-    style={{
-      backgroundColor: colors.success + '10',
-      borderWidth: 1,
-      borderColor: colors.success + '30',
-    }}>
-    <TouchableOpacity onPress={() => navigation.navigate('Orders', { statusFilter: 'completed' })} className="flex-row items-center justify-between">
-      <View className="flex-1">
-        <View className="flex-row items-center mb-2">
-          <View
-            className="rounded-full p-2 mr-3"
-            style={{ backgroundColor: colors.success + '20' }}>
-            <MaterialIcons name="check-circle" size={20} color={colors.success} />
-          </View>
-          <View>
-            <Text className="text-2xl font-bold" style={{ color: colors.success }}>
-              {stats?.ordersByStatus.completed || 0}
-            </Text>
-            <Text className="text-xs" style={{ color: colors.muted }}>
-              Orders completed today
-            </Text>
-          </View>
-        </View>
-      </View>
-      <View>
-        <MaterialIcons name="chevron-right" size={24} color={colors.muted} />
-      </View>
-    </TouchableOpacity>
-  </View>
-</View>
-
-      {/* Period Summary */}
-      <View className="px-4 py-3">
-        <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-          PERIOD SUMMARY
-        </Text>
-        <View
-          className="rounded-2xl p-4"
-          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-          {/* This Week */}
-          <View className="mb-4">
-            <Text className="mb-2 text-xs font-semibold" style={{ color: colors.muted }}>
-              THIS WEEK
-            </Text>
-            <View className="flex-row gap-4">
-              <View className="flex-1">
-                <Text className="text-lg font-bold" style={{ color: colors.text }}>
-                  {stats?.week.orders || 0}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Orders
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-lg font-bold" style={{ color: colors.primary }}>
-                  {formatPrice(stats?.week.sales || 0)}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Sales
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-lg font-bold" style={{ color: colors.success }}>
-                  {formatPrice(stats?.week.collected || 0)}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Collected
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-lg font-bold" style={{ color: (stats?.week.profit || 0) >= 0 ? '#8b5cf6' : colors.error }}>
-                  {formatPrice(stats?.week.profit || 0)}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Profit
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Divider */}
-          <View className="mb-4 h-px" style={{ backgroundColor: colors.border }} />
-
-          {/* This Month */}
-          <View>
-            <Text className="mb-2 text-xs font-semibold" style={{ color: colors.muted }}>
-              THIS MONTH
-            </Text>
-            <View className="flex-row gap-4">
-              <View className="flex-1">
-                <Text className="text-lg font-bold" style={{ color: colors.text }}>
-                  {stats?.month.orders || 0}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Orders
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-lg font-bold" style={{ color: colors.primary }}>
-                  {formatPrice(stats?.month.sales || 0)}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Sales
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-lg font-bold" style={{ color: colors.success }}>
-                  {formatPrice(stats?.month.collected || 0)}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Collected
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-lg font-bold" style={{ color: (stats?.month.profit || 0) >= 0 ? '#8b5cf6' : colors.error }}>
-                  {formatPrice(stats?.month.profit || 0)}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Profit
-                </Text>
-              </View>
-            </View>
+            />
           </View>
         </View>
       </View>
 
-      {/* Order Status Overview */}
-      <View className="px-4 py-3">
-        <View className="mb-3 flex-row items-center justify-between">
-          <Text className="text-sm font-semibold" style={{ color: colors.muted }}>
-            ORDER STATUS
-          </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Statistics')}>
-            <Text className="text-sm font-medium" style={{ color: colors.primary }}>
-              See More
+      {/* Needs attention */}
+      {pending > 0 && (
+        <View className="px-4 pt-4">
+          <AttentionRow
+            icon="clock-alert-outline"
+            title={`${pending} pending ${pending === 1 ? 'order' : 'orders'}`}
+            subtitle="Confirm or action these"
+            tone="info"
+            onPress={() => navigation.navigate('Orders', { statusFilter: 'pending' })}
+          />
+        </View>
+      )}
+
+      {/* Sales trend */}
+      <View className="px-4 pt-4">
+        <TrendCard
+          variant="card"
+          title={trendTitle}
+          value={formatPrice(seriesSum)}
+          delta={delta}
+          data={series}
+          labels={trendLabels}
+          onPress={() => navigation.navigate('Statistics')}
+        />
+      </View>
+
+      {/* Recent orders */}
+      <View className="px-4 pt-4">
+        <View className="mb-2 flex-row items-center justify-between">
+          <Text style={[typo.eyebrow, { color: colors.muted }]}>RECENT ORDERS</Text>
+          <TouchableOpacity hitSlop={8} onPress={() => navigation.navigate('Orders')}>
+            <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
+              See all
             </Text>
           </TouchableOpacity>
         </View>
         <View
-          className="rounded-2xl p-4"
-          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-          <View className="flex-row flex-wrap gap-3">
-            {[
-              { key: 'pending', label: 'Pending', color: '#f59e0b' },
-              { key: 'confirmed', label: 'Confirmed', color: '#3b82f6' },
-              { key: 'collected', label: 'Collected', color: '#8b5cf6' },
-              { key: 'delivered', label: 'Delivered', color: '#10b981' },
-              { key: 'completed', label: 'Completed', color: '#059669' },
-              { key: 'cancelled', label: 'Cancelled', color: '#ef4444' },
-            ].map((status) => (
-              <TouchableOpacity
-                key={status.key}
-                onPress={() => navigation.navigate('Orders', { statusFilter: status.key })}
-                className="flex-row items-center rounded-full px-3 py-2"
-                style={{ backgroundColor: status.color + '15' }}>
-                <View
-                  className="mr-2 h-2 w-2 rounded-full"
-                  style={{ backgroundColor: status.color }}
-                />
-                <Text className="text-sm font-medium" style={{ color: status.color }}>
-                  {status.label}: {stats?.ordersByStatus?.[status.key] || 0}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      </View>
-
-      {/* Customer Overview */}
-      <View className="px-4 py-3">
-        <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-          CUSTOMERS
-        </Text>
-        <View className="flex-row gap-3">
-          <View
-            className="flex-1 rounded-xl p-4"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <View className="mb-2 flex-row items-center">
-              <Ionicons name="people" size={18} color={colors.primary} />
-              <Text className="ml-2 text-xs" style={{ color: colors.muted }}>
-                Total
-              </Text>
-            </View>
-            <Text className="text-xl font-bold" style={{ color: colors.text }}>
-              {stats?.customers.total || 0}
+          className="px-4"
+          style={{
+            backgroundColor: colors.card,
+            borderRadius: radius.card,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}>
+          {recent.length === 0 ? (
+            <Text className="py-6 text-center text-sm" style={{ color: colors.muted }}>
+              No orders yet
             </Text>
-          </View>
-          <View
-            className="flex-1 rounded-xl p-4"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <View className="mb-2 flex-row items-center">
-              <Ionicons name="trending-up" size={18} color={colors.success} />
-              <Text className="ml-2 text-xs" style={{ color: colors.muted }}>
-                Active (30d)
-              </Text>
-            </View>
-            <Text className="text-xl font-bold" style={{ color: colors.success }}>
-              {stats?.customers.active || 0}
-            </Text>
-          </View>
+          ) : (
+            recent.slice(0, 5).map((o, i) => (
+              <ListRow
+                key={o.id}
+                leading={initialsOf(o.customer?.businessName)}
+                title={o.customer?.businessName || `Order ${o.orderNumber}`}
+                subtitle={`${o.orderNumber} · ${fmtDate(o.orderDate)}`}
+                amount={formatPrice(Number(o.totalAmount) || 0)}
+                badge={{
+                  label: getPaymentStatusLabel(o.paymentStatus),
+                  tone:
+                    o.paymentStatus === 'paid'
+                      ? 'success'
+                      : o.paymentStatus === 'unpaid'
+                        ? 'error'
+                        : 'default',
+                }}
+                divider={i > 0}
+                onPress={() => navigation.navigate('Orders')}
+              />
+            ))
+          )}
         </View>
       </View>
     </ScrollView>

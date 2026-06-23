@@ -6,6 +6,7 @@ import { Pressable, View, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from '../context/ThemeProvider';
+import { fonts } from '../constants/design';
 import { useNavigation } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -72,19 +73,32 @@ export default function TabNavigator() {
     fetchNavigationItems();
   }, []);
 
-  // Header configuration
+  // Header configuration — clean flat bar: hamburger · title · notification bell
   const renderHeader = (title: string) => ({
     headerTitleAlign: 'left' as const,
-    headerStyle: { backgroundColor: colors.card },
-    headerTitleStyle: { color: colors.text, fontWeight: 'bold' as const, fontSize: 18 },
+    headerStyle: {
+      backgroundColor: colors.card,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      elevation: 0,
+      shadowOpacity: 0,
+    },
+    headerTitleStyle: { color: colors.text, fontFamily: fonts.bold, fontSize: 18 },
     headerLeft: () => (
       <View style={{ marginLeft: 15 }}>
-        <Pressable onPress={() => navigation.openDrawer()}>
+        <Pressable hitSlop={8} onPress={() => navigation.openDrawer()}>
           <Feather name="menu" size={24} color={colors.text} />
         </Pressable>
       </View>
     ),
     headerTitle: title,
+    headerRight: () => (
+      <View style={{ marginRight: 15 }}>
+        <Pressable hitSlop={8} onPress={() => navigation.navigate('Notifications')}>
+          <MaterialCommunityIcons name="bell-outline" size={22} color={colors.text} />
+        </Pressable>
+      </View>
+    ),
   });
 
   if (loading || navigationItems.length === 0) {

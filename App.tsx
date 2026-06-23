@@ -12,6 +12,14 @@ import { SnackbarProvider } from 'context/SnackbarContext';
 import { ConfigProvider } from 'context/ConfigProvider';
 import { DialogProvider } from 'context/DialogProvider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  useFonts,
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  PlusJakartaSans_800ExtraBold,
+} from '@expo-google-fonts/plus-jakarta-sans';
 
 // ✅ FIX: Move QueryClient OUTSIDE the component
 // This prevents creating a new client on every render
@@ -54,6 +62,18 @@ function ThemedApp() {
 }
 
 export default function App() {
+  const [fontsLoaded, fontError] = useFonts({
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
+  });
+
+  // Render once fonts are ready, or proceed with system fallback on error so the
+  // app never hangs on a blank screen if the font assets can't load.
+  if (!fontsLoaded && !fontError) return null;
+
   return (
     <SafeAreaProvider>
       <ThemeProvider>

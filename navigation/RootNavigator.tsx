@@ -26,6 +26,7 @@ import CreateOrderScreen from 'screens/Vendor/CreateOrderScreen';
 import CollectionSheet from 'screens/Vendor/CollectionSheet';
 import CustomerOrdersScreen from 'screens/Vendor/CustomerOrdersScreen';
 import VanOrdersScreen from 'screens/Vendor/VanOrdersScreen';
+import NotificationsScreen from 'screens/NotificationsScreen';
 
 // ==================== TYPE DEFINITIONS ====================
 
@@ -46,6 +47,7 @@ export type RootStackParamList = {
   CollectionSheet: undefined;
   CustomerOrdersScreen: { customerId: number };
   VanOrdersScreen: { vanName: string };
+  Notifications: undefined;
 };
 
 export type OnboardingStackParamList = {
@@ -215,6 +217,7 @@ export default function RootNavigator() {
         <Stack.Screen name="CollectionSheet" component={CollectionSheet} />
         <Stack.Screen name="CustomerOrdersScreen" component={CustomerOrdersScreen} />
         <Stack.Screen name="VanOrdersScreen" component={VanOrdersScreen} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} />
       </Stack.Navigator>
     );
   }
