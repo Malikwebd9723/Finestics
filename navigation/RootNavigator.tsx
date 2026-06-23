@@ -115,6 +115,14 @@ export default function RootNavigator() {
           return;
         }
 
+        // Customers are self-serve: no onboarding, no approval. Straight to Main.
+        if (user.role === 'customer') {
+          setTargetRoute('Main');
+          setTargetParams(undefined);
+          setInitializing(false);
+          return;
+        }
+
         // Profile is active -> Main app
         if (profileStatus === 'active') {
           setTargetRoute('Main');

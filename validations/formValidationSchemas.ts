@@ -45,6 +45,40 @@ export const signupSchema = yup.object().shape({
     .required('Please confirm your password'),
 });
 
+// Customer self-serve signup: name + email + phone + password. No business info.
+export const customerSignupSchema = yup.object().shape({
+  firstName: yup
+    .string()
+    .min(2, 'First name must be at least 2 characters')
+    .max(50, 'First name must not exceed 50 characters')
+    .required('First name is required'),
+  lastName: yup
+    .string()
+    .min(2, 'Last name must be at least 2 characters')
+    .max(50, 'Last name must not exceed 50 characters')
+    .required('Last name is required'),
+  email: yup.string().email('Please enter a valid email').required('Email is required'),
+  phone: yup
+    .string()
+    .matches(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/, {
+      message: 'Please enter a valid phone number',
+      excludeEmptyString: true,
+    })
+    .nullable(),
+  password: yup
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .matches(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      'Password must contain uppercase, lowercase, and number'
+    )
+    .required('Password is required'),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref('password')], 'Passwords must match')
+    .required('Please confirm your password'),
+});
+
 // ==================== ONBOARDING SCHEMAS ====================
 
 export const businessInfoSchema = yup.object().shape({
@@ -96,6 +130,7 @@ export const businessAddressSchema = yup.object().shape({
 
 export type LoginFormData = yup.InferType<typeof loginSchema>;
 export type SignupFormData = yup.InferType<typeof signupSchema>;
+export type CustomerSignupFormData = yup.InferType<typeof customerSignupSchema>;
 export type BusinessInfoFormData = yup.InferType<typeof businessInfoSchema>;
 export type BusinessAddressFormData = yup.InferType<typeof businessAddressSchema>;
 export type CategoryFormData = yup.InferType<typeof categorySchema>;

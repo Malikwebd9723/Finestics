@@ -38,6 +38,8 @@ export interface SignupRequest {
   lastName: string;
   email: string;
   password: string;
+  phone?: string | null;
+  role?: 'vendor' | 'customer';
 }
 
 export interface AuthResponseData {
@@ -68,7 +70,8 @@ export const loginUser = async (data: LoginRequest) => {
 };
 
 /**
- * Signup new user (vendor)
+ * Signup new user. Pass role: 'customer' for self-serve customer accounts
+ * (activated immediately, no onboarding). Defaults to vendor server-side.
  */
 export const signupUser = async (data: SignupRequest) => {
   const response = await apiRequest('/auth/signup', 'POST', data);

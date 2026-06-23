@@ -21,8 +21,13 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useThemeContext } from 'context/ThemeProvider';
 import { useAuth } from 'context/AuthContext';
 import { signupUser } from 'api/actions/authActions';
-import { signupSchema, SignupFormData } from 'validations/formValidationSchemas';
+import {
+  customerSignupSchema,
+  CustomerSignupFormData,
+} from 'validations/formValidationSchemas';
 import Toast from 'utils/Toast';
+
+type SignupRole = 'customer' | 'vendor';
 
 export default function SignupScreen() {
   const navigation = useNavigation<any>();
@@ -30,28 +35,33 @@ export default function SignupScreen() {
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [role, setRole] = useState<SignupRole>('customer');
 
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SignupFormData>({
-    resolver: yupResolver(signupSchema),
+  } = useForm<CustomerSignupFormData>({
+    // Cast avoids the yup<->RHF nullable-field resolver typing mismatch.
+    resolver: yupResolver(customerSignupSchema) as any,
     defaultValues: {
       firstName: '',
       lastName: '',
       email: '',
+      phone: '',
       password: '',
       confirmPassword: '',
     },
   });
 
-  const onSubmit = async (formData: SignupFormData) => {
+  const onSubmit = async (formData: CustomerSignupFormData) => {
     const response = await signupUser({
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
+      phone: formData.phone || null,
       password: formData.password,
+      role,
     });
 
     if (!response.success) {
@@ -61,7 +71,8 @@ export default function SignupScreen() {
 
     Toast.success('Account created successfully!');
 
-    // Store tokens and navigate to onboarding
+    // Store tokens. RootNavigator routes customers straight to the app and
+    // vendors into onboarding.
     await login(response.data.data);
   };
 
@@ -103,6 +114,59 @@ export default function SignupScreen() {
             </Text>
             <Text style={{ fontSize: 15, color: colors.placeholder, textAlign: 'center' }}>
               Sign up to start managing your business
+            </Text>
+          </View>
+
+          {/* Role Toggle */}
+          <View style={{ marginBottom: 20 }}>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '600',
+                color: colors.text,
+                marginBottom: 8,
+                marginLeft: 4,
+              }}>
+              I am a
+            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                backgroundColor: colors.card,
+                borderRadius: 12,
+                padding: 4,
+                borderWidth: 1,
+                borderColor: colors.border || '#eee',
+              }}>
+              {(['customer', 'vendor'] as SignupRole[]).map((r) => {
+                const selected = role === r;
+                return (
+                  <Pressable
+                    key={r}
+                    onPress={() => setRole(r)}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 12,
+                      borderRadius: 9,
+                      alignItems: 'center',
+                      backgroundColor: selected ? colors.primary : 'transparent',
+                    }}>
+                    <Text
+                      style={{
+                        color: selected ? '#fff' : colors.text,
+                        fontWeight: '600',
+                        fontSize: 15,
+                      }}>
+                      {r === 'customer' ? 'Customer' : 'Vendor'}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={{ color: colors.placeholder, fontSize: 12, marginTop: 6, marginLeft: 4 }}>
+              {role === 'customer'
+                ? 'Browse vendors and place your own orders.'
+                : 'Sell products and manage your customers.'}
             </Text>
           </View>
 
@@ -264,6 +328,58 @@ export default function SignupScreen() {
               {errors.email && (
                 <Text style={{ color: '#EF4444', fontSize: 13, marginTop: 6, marginLeft: 4 }}>
                   {errors.email.message}
+                </Text>
+              )}
+            </View>
+
+            {/* Phone Field */}
+            <View>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: '600',
+                  color: colors.text,
+                  marginBottom: 8,
+                  marginLeft: 4,
+                }}>
+                Phone {role === 'customer' ? '(optional)' : ''}
+              </Text>
+              <Controller
+                control={control}
+                name="phone"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: colors.card,
+                      borderRadius: 12,
+                      paddingHorizontal: 14,
+                      borderWidth: 1,
+                      borderColor: errors.phone ? '#EF4444' : colors.border || '#eee',
+                    }}>
+                    <Ionicons name="call-outline" size={20} color={colors.placeholder} />
+                    <TextInput
+                      placeholder="Enter your phone number"
+                      placeholderTextColor={colors.placeholder}
+                      style={{
+                        flex: 1,
+                        paddingVertical: 14,
+                        paddingHorizontal: 12,
+                        fontSize: 16,
+                        color: colors.text,
+                      }}
+                      value={value ?? ''}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+                )}
+              />
+              {errors.phone && (
+                <Text style={{ color: '#EF4444', fontSize: 13, marginTop: 6, marginLeft: 4 }}>
+                  {errors.phone.message}
                 </Text>
               )}
             </View>

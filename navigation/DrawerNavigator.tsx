@@ -21,6 +21,13 @@ import AdminProfile from '../screens/Admin/AdminProfile';
 import Vendors from '../screens/Admin/Vendors';
 import Users from '../screens/Admin/Users';
 
+// Customer Screens (detail screens pushed from tabs)
+import VendorDetailScreen from '../screens/Customer/VendorDetailScreen';
+import ProductCatalogScreen from '../screens/Customer/ProductCatalogScreen';
+
+// Vendor connection management
+import ConnectionRequestsScreen from '../screens/Vendor/ConnectionRequestsScreen';
+
 const Drawer = createDrawerNavigator();
 
 // Custom Drawer Content
@@ -308,6 +315,42 @@ export default function DrawerNavigator() {
         options={{
           headerShown: true,
           headerTitle: 'Users',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Customer: Vendor detail (pushed from Marketplace / My Vendors) */}
+      <Drawer.Screen
+        name="VendorDetailScreen"
+        component={VendorDetailScreen}
+        options={{
+          headerShown: true,
+          headerTitle: 'Vendor',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Customer: Vendor product catalog */}
+      <Drawer.Screen
+        name="ProductCatalogScreen"
+        component={ProductCatalogScreen}
+        options={{
+          headerShown: true,
+          headerTitle: 'Catalog',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Vendor: Connection requests from self-serve customers */}
+      <Drawer.Screen
+        name="ConnectionRequestsScreen"
+        component={ConnectionRequestsScreen}
+        options={{
+          headerShown: true,
+          headerTitle: 'Connection Requests',
           headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.text,
         }}

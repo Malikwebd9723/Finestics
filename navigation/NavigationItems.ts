@@ -91,13 +91,29 @@ export const navigationItems: NavigationItem[] = [
     location: 'both',
   },
 
-  // ==================== CUSTOMER TABS ====================
+  // ==================== CUSTOMER ITEMS ====================
   {
-    label: 'Dashboard',
-    screen: 'CustomersDashboard',
-    icon: 'view-dashboard',
+    label: 'Marketplace',
+    screen: 'MarketplaceScreen',
+    icon: 'storefront',
     roles: ['customer'],
     location: 'both',
+  },
+  {
+    label: 'My Vendors',
+    screen: 'MyVendorsScreen',
+    icon: 'account-group',
+    roles: ['customer'],
+    location: 'both',
+  },
+
+  // ==================== VENDOR: CONNECTION REQUESTS (drawer) ====================
+  {
+    label: 'Connection Requests',
+    screen: 'ConnectionRequestsScreen',
+    icon: 'account-clock',
+    roles: ['vendor'],
+    location: 'drawer',
   },
 ];
 
