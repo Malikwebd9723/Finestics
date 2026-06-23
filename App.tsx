@@ -11,6 +11,7 @@ import { AuthProvider } from 'context/AuthContext';
 import { SnackbarProvider } from 'context/SnackbarContext';
 import { ConfigProvider } from 'context/ConfigProvider';
 import { DialogProvider } from 'context/DialogProvider';
+import { CartProvider } from 'context/CartContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   useFonts,
@@ -49,7 +50,9 @@ function ThemedApp() {
               <ConfigProvider>
                 <DialogProvider>
                   <SnackbarProvider>
-                    <RootNavigator />
+                    <CartProvider>
+                      <RootNavigator />
+                    </CartProvider>
                   </SnackbarProvider>
                 </DialogProvider>
               </ConfigProvider>

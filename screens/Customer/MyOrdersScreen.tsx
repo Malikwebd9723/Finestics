@@ -1,0 +1,140 @@
+// screens/Customer/MyOrdersScreen.tsx
+import React, { useState } from 'react';
+import { View, Text, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { useQuery } from '@tanstack/react-query';
+
+import { useThemeContext } from 'context/ThemeProvider';
+import { getOrders, type OrderStatus } from 'api/actions/customerOrderActions';
+import { formatPrice } from './components/ProductCard';
+import OrderStatusBadge from './components/OrderStatusBadge';
+
+const FILTERS: { key: 'all' | 'active' | 'delivered' | 'cancelled'; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'active', label: 'Active' },
+  { key: 'delivered', label: 'Delivered' },
+  { key: 'cancelled', label: 'Cancelled' },
+];
+
+const ACTIVE_STATUSES: OrderStatus[] = [
+  'pending',
+  'confirmed',
+  'processing',
+  'ready_for_delivery',
+  'dispatched',
+];
+
+export default function MyOrdersScreen() {
+  const { colors } = useThemeContext();
+  const navigation = useNavigation<any>();
+  const [filter, setFilter] = useState<'all' | 'active' | 'delivered' | 'cancelled'>('all');
+
+  const { data, isLoading, refetch, isRefetching } = useQuery({
+    queryKey: ['customer-orders'],
+    queryFn: () => getOrders(),
+    refetchInterval: 30000, // poll while viewing
+  });
+
+  const all = data?.items ?? [];
+  const orders = all.filter((o) => {
+    if (filter === 'all') return true;
+    if (filter === 'active') return ACTIVE_STATUSES.includes(o.status);
+    if (filter === 'delivered') return o.status === 'delivered';
+    if (filter === 'cancelled') return o.status === 'cancelled' || o.status === 'refunded';
+    return true;
+  });
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Filter chips */}
+      <View style={{ flexDirection: 'row', gap: 8, padding: 16, paddingBottom: 8 }}>
+        {FILTERS.map((f) => {
+          const selected = filter === f.key;
+          return (
+            <Pressable
+              key={f.key}
+              onPress={() => setFilter(f.key)}
+              style={{
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                borderRadius: 999,
+                backgroundColor: selected ? colors.primary : colors.card,
+                borderWidth: 1,
+                borderColor: selected ? colors.primary : colors.border,
+              }}>
+              <Text style={{ color: selected ? '#fff' : colors.text, fontWeight: '600', fontSize: 13 }}>
+                {f.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {isLoading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={orders}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={({ item }) => (
+            <Pressable
+              onPress={() =>
+                navigation.navigate('CustomerOrderDetailScreen', { orderId: item.id })
+              }
+              style={{
+                backgroundColor: colors.card,
+                borderRadius: 14,
+                padding: 14,
+                marginHorizontal: 16,
+                marginBottom: 12,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>
+                  {item.vendor?.businessName || 'Order'}
+                </Text>
+                <OrderStatusBadge status={item.status} />
+              </View>
+              <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>
+                {item.orderNumber}
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: 8,
+                }}>
+                <Text style={{ color: colors.muted, fontSize: 13 }}>
+                  {item.itemCount ?? 0} item{(item.itemCount ?? 0) === 1 ? '' : 's'}
+                </Text>
+                <Text style={{ color: colors.text, fontWeight: '700' }}>
+                  {formatPrice(item.totalAmount)}
+                </Text>
+              </View>
+            </Pressable>
+          )}
+          ListEmptyComponent={
+            <View style={{ alignItems: 'center', paddingTop: 80, paddingHorizontal: 32 }}>
+              <MaterialCommunityIcons name="receipt" size={56} color={colors.muted} />
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', marginTop: 16 }}>
+                No orders yet
+              </Text>
+              <Text style={{ color: colors.muted, fontSize: 13, marginTop: 6, textAlign: 'center' }}>
+                Orders you place will appear here.
+              </Text>
+            </View>
+          }
+          contentContainerStyle={{ paddingTop: 8, paddingBottom: 24, flexGrow: 1 }}
+          refreshControl={
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+          }
+        />
+      )}
+    </View>
+  );
+}

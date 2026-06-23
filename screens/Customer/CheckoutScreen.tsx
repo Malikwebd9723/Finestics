@@ -1,0 +1,443 @@
+// screens/Customer/CheckoutScreen.tsx
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  TextInput,
+  ActivityIndicator,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+import { useThemeContext } from 'context/ThemeProvider';
+import { useCart } from 'context/CartContext';
+import Toast from 'utils/Toast';
+import {
+  getAddresses,
+  createAddress,
+  createOrder,
+  type CustomerAddress,
+} from 'api/actions/customerOrderActions';
+import { formatPrice } from './components/ProductCard';
+
+type PaymentMethod = 'cash' | 'credit';
+
+export default function CheckoutScreen() {
+  const { colors } = useThemeContext();
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const vendorId: number = route.params?.vendorId;
+  const vendorName: string = route.params?.vendorName || 'Vendor';
+  const queryClient = useQueryClient();
+
+  const { getCart, getTotal, clearCart } = useCart();
+  const items = getCart(vendorId);
+  const total = getTotal(vendorId);
+
+  const [addressId, setAddressId] = useState<number | null>(null);
+  const [payment, setPayment] = useState<PaymentMethod>('cash');
+  const [notes, setNotes] = useState('');
+  const [creditError, setCreditError] = useState<any>(null);
+  const [addOpen, setAddOpen] = useState(false);
+
+  const { data: addresses } = useQuery({
+    queryKey: ['customer-addresses'],
+    queryFn: getAddresses,
+  });
+
+  // Default to the primary address once loaded.
+  useEffect(() => {
+    if (addresses && addresses.length && addressId === null) {
+      const primary = addresses.find((a) => a.isPrimary) || addresses[0];
+      setAddressId(primary.id);
+    }
+  }, [addresses]);
+
+  const placeMutation = useMutation({
+    mutationFn: () =>
+      createOrder({
+        vendorId,
+        paymentMethod: payment,
+        deliveryAddressId: addressId,
+        notes: notes.trim() || null,
+        items: items.map((l) => ({ productId: l.productId, quantity: l.quantity })),
+      }),
+    onSuccess: (order) => {
+      clearCart(vendorId);
+      queryClient.invalidateQueries({ queryKey: ['customer-orders'] });
+      Toast.success('Order placed successfully');
+      navigation.navigate('CustomerOrderDetailScreen', { orderId: order.id });
+    },
+    onError: (e: any) => {
+      if (e?.code === 'CREDIT_LIMIT_EXCEEDED') {
+        setCreditError(e.details || {});
+      } else {
+        Toast.error(e?.message || 'Failed to place order');
+      }
+    },
+  });
+
+  const selectedAddress = addresses?.find((a) => a.id === addressId) || null;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+        {/* Order summary */}
+        <Section title="Order Summary" colors={colors}>
+          {items.map((l) => (
+            <View
+              key={l.productId}
+              style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+              <Text style={{ color: colors.text, flex: 1 }} numberOfLines={1}>
+                {l.quantity} × {l.name}
+              </Text>
+              <Text style={{ color: colors.text, fontWeight: '600' }}>
+                {formatPrice(Number(l.sellingPrice) * l.quantity)}
+              </Text>
+            </View>
+          ))}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              marginTop: 8,
+              paddingTop: 8,
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+            }}>
+            <Text style={{ color: colors.text, fontWeight: '700' }}>Total</Text>
+            <Text style={{ color: colors.text, fontWeight: '700' }}>{formatPrice(total)}</Text>
+          </View>
+        </Section>
+
+        {/* Delivery address */}
+        <Section title="Delivery Address" colors={colors}>
+          {addresses && addresses.length > 0 ? (
+            addresses.map((a) => (
+              <AddressOption
+                key={a.id}
+                address={a}
+                selected={a.id === addressId}
+                onSelect={() => setAddressId(a.id)}
+                colors={colors}
+              />
+            ))
+          ) : (
+            <Text style={{ color: colors.muted, marginBottom: 8 }}>
+              No saved address. You can add one (optional).
+            </Text>
+          )}
+          <Pressable
+            onPress={() => setAddOpen(true)}
+            style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+            <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
+            <Text style={{ color: colors.primary, fontWeight: '600', marginLeft: 6 }}>
+              Add new address
+            </Text>
+          </Pressable>
+        </Section>
+
+        {/* Payment method */}
+        <Section title="Payment Method" colors={colors}>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {(['cash', 'credit'] as PaymentMethod[]).map((m) => {
+              const selected = payment === m;
+              return (
+                <Pressable
+                  key={m}
+                  onPress={() => {
+                    setPayment(m);
+                    setCreditError(null);
+                  }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: selected ? colors.primary : colors.border,
+                    backgroundColor: selected ? colors.primary + '12' : colors.card,
+                  }}>
+                  <MaterialCommunityIcons
+                    name={m === 'cash' ? 'cash' : 'credit-card-outline'}
+                    size={22}
+                    color={selected ? colors.primary : colors.muted}
+                  />
+                  <Text
+                    style={{
+                      color: selected ? colors.primary : colors.text,
+                      fontWeight: '600',
+                      marginTop: 4,
+                    }}>
+                    {m === 'cash' ? 'Cash on delivery' : 'On credit'}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </Section>
+
+        {/* Credit-limit warning */}
+        {creditError && (
+          <View
+            style={{
+              backgroundColor: '#FEF2F2',
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: '#FECACA',
+              padding: 14,
+              marginTop: 4,
+              marginBottom: 4,
+            }}>
+            <Text style={{ color: '#991B1B', fontWeight: '700', marginBottom: 4 }}>
+              Over your credit limit
+            </Text>
+            <Text style={{ color: '#991B1B', fontSize: 13 }}>
+              Limit {formatPrice(creditError.creditLimit)} · Outstanding{' '}
+              {formatPrice(creditError.currentBalance)} · This order{' '}
+              {formatPrice(creditError.orderTotal)}.
+            </Text>
+            <Text style={{ color: '#991B1B', fontSize: 13, marginTop: 4 }}>
+              Switch to Cash on delivery to place this order.
+            </Text>
+          </View>
+        )}
+
+        {/* Notes */}
+        <Section title="Notes (optional)" colors={colors}>
+          <TextInput
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="Any instructions for the vendor"
+            placeholderTextColor={colors.placeholder}
+            multiline
+            style={{
+              backgroundColor: colors.card,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: colors.border,
+              padding: 12,
+              color: colors.text,
+              height: 70,
+              textAlignVertical: 'top',
+            }}
+          />
+        </Section>
+      </ScrollView>
+
+      {/* Place order */}
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: colors.card,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          padding: 16,
+          paddingBottom: 28,
+        }}>
+        <Pressable
+          disabled={placeMutation.isPending || items.length === 0}
+          onPress={() => {
+            setCreditError(null);
+            placeMutation.mutate();
+          }}
+          style={{
+            backgroundColor: colors.primary,
+            borderRadius: 12,
+            paddingVertical: 15,
+            alignItems: 'center',
+            opacity: placeMutation.isPending ? 0.7 : 1,
+          }}>
+          {placeMutation.isPending ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
+              Place Order · {formatPrice(total)}
+            </Text>
+          )}
+        </Pressable>
+      </View>
+
+      <AddAddressModal
+        visible={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSaved={(a) => {
+          setAddressId(a.id);
+          setAddOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['customer-addresses'] });
+        }}
+      />
+    </View>
+  );
+}
+
+// ==================== SUBCOMPONENTS ====================
+
+function Section({ title, colors, children }: any) {
+  return (
+    <View style={{ marginBottom: 20 }}>
+      <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', marginBottom: 10 }}>
+        {title}
+      </Text>
+      <View
+        style={{
+          backgroundColor: colors.card,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: colors.border,
+          padding: 14,
+        }}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+function AddressOption({ address, selected, onSelect, colors }: any) {
+  return (
+    <Pressable
+      onPress={onSelect}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        paddingVertical: 8,
+      }}>
+      <MaterialCommunityIcons
+        name={selected ? 'radiobox-marked' : 'radiobox-blank'}
+        size={20}
+        color={selected ? colors.primary : colors.muted}
+        style={{ marginTop: 2 }}
+      />
+      <View style={{ flex: 1, marginLeft: 10 }}>
+        {!!address.label && (
+          <Text style={{ color: colors.text, fontWeight: '600' }}>{address.label}</Text>
+        )}
+        <Text style={{ color: colors.text }}>
+          {[address.street, address.city, address.postalCode].filter(Boolean).join(', ')}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
+function AddAddressModal({
+  visible,
+  onClose,
+  onSaved,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onSaved: (a: CustomerAddress) => void;
+}) {
+  const { colors } = useThemeContext();
+  const [street, setStreet] = useState('');
+  const [city, setCity] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [label, setLabel] = useState('');
+
+  const mutation = useMutation({
+    mutationFn: () => createAddress({ street, city, postalCode, label, type: 'delivery' }),
+    onSuccess: (a) => {
+      setStreet('');
+      setCity('');
+      setPostalCode('');
+      setLabel('');
+      onSaved(a);
+    },
+    onError: (e: any) => Toast.error(e?.message || 'Failed to save address'),
+  });
+
+  const input = {
+    backgroundColor: colors.background,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 12,
+    color: colors.text,
+    marginTop: 10,
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000080' }}>
+        <View
+          style={{
+            backgroundColor: colors.card,
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            padding: 16,
+            paddingBottom: 28,
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 6,
+            }}>
+            <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700' }}>New Address</Text>
+            <Pressable onPress={onClose} hitSlop={10}>
+              <Ionicons name="close" size={24} color={colors.muted} />
+            </Pressable>
+          </View>
+          <TextInput
+            value={label}
+            onChangeText={setLabel}
+            placeholder="Label (e.g. Home, Shop)"
+            placeholderTextColor={colors.placeholder}
+            style={input}
+          />
+          <TextInput
+            value={street}
+            onChangeText={setStreet}
+            placeholder="Street address"
+            placeholderTextColor={colors.placeholder}
+            style={input}
+          />
+          <TextInput
+            value={city}
+            onChangeText={setCity}
+            placeholder="City"
+            placeholderTextColor={colors.placeholder}
+            style={input}
+          />
+          <TextInput
+            value={postalCode}
+            onChangeText={setPostalCode}
+            placeholder="Postal code"
+            placeholderTextColor={colors.placeholder}
+            style={input}
+          />
+          <Pressable
+            disabled={mutation.isPending || !street.trim() || !city.trim()}
+            onPress={() => mutation.mutate()}
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: 12,
+              paddingVertical: 14,
+              alignItems: 'center',
+              marginTop: 16,
+              opacity: mutation.isPending || !street.trim() || !city.trim() ? 0.6 : 1,
+            }}>
+            {mutation.isPending ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Save Address</Text>
+            )}
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}

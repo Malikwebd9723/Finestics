@@ -29,6 +29,7 @@ import Statistics from '../screens/Vendor/Statistics';
 import CustomersDashboard from '../screens/Customers/CustomersDashboard';
 import MarketplaceScreen from '../screens/Customer/MarketplaceScreen';
 import MyVendorsScreen from '../screens/Customer/MyVendorsScreen';
+import MyOrdersScreen from '../screens/Customer/MyOrdersScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -51,6 +52,7 @@ const screenComponents: Record<string, React.ComponentType<any>> = {
   CustomersDashboard,
   MarketplaceScreen,
   MyVendorsScreen,
+  MyOrdersScreen,
 };
 
 // Icon renderer

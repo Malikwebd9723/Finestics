@@ -24,9 +24,14 @@ import Users from '../screens/Admin/Users';
 // Customer Screens (detail screens pushed from tabs)
 import VendorDetailScreen from '../screens/Customer/VendorDetailScreen';
 import ProductCatalogScreen from '../screens/Customer/ProductCatalogScreen';
+import CartScreen from '../screens/Customer/CartScreen';
+import CheckoutScreen from '../screens/Customer/CheckoutScreen';
+import CustomerOrderDetailScreen from '../screens/Customer/OrderDetailScreen';
 
-// Vendor connection management
+// Vendor connection + order management
 import ConnectionRequestsScreen from '../screens/Vendor/ConnectionRequestsScreen';
+import IncomingOrdersScreen from '../screens/Vendor/IncomingOrdersScreen';
+import VendorOrderDetailScreen from '../screens/Vendor/VendorOrderDetailScreen';
 
 const Drawer = createDrawerNavigator();
 
@@ -351,6 +356,66 @@ export default function DrawerNavigator() {
         options={{
           headerShown: true,
           headerTitle: 'Connection Requests',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Customer: Cart */}
+      <Drawer.Screen
+        name="CartScreen"
+        component={CartScreen}
+        options={{
+          headerShown: true,
+          headerTitle: 'Cart',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Customer: Checkout */}
+      <Drawer.Screen
+        name="CheckoutScreen"
+        component={CheckoutScreen}
+        options={{
+          headerShown: true,
+          headerTitle: 'Checkout',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Customer: Order detail */}
+      <Drawer.Screen
+        name="CustomerOrderDetailScreen"
+        component={CustomerOrderDetailScreen}
+        options={{
+          headerShown: true,
+          headerTitle: 'Order',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Vendor: Incoming customer orders */}
+      <Drawer.Screen
+        name="IncomingOrdersScreen"
+        component={IncomingOrdersScreen}
+        options={{
+          headerShown: true,
+          headerTitle: 'Incoming Orders',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Vendor: Customer order detail */}
+      <Drawer.Screen
+        name="VendorOrderDetailScreen"
+        component={VendorOrderDetailScreen}
+        options={{
+          headerShown: true,
+          headerTitle: 'Order',
           headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.text,
         }}

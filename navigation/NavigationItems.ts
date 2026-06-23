@@ -106,12 +106,26 @@ export const navigationItems: NavigationItem[] = [
     roles: ['customer'],
     location: 'both',
   },
+  {
+    label: 'Orders',
+    screen: 'MyOrdersScreen',
+    icon: 'receipt',
+    roles: ['customer'],
+    location: 'both',
+  },
 
-  // ==================== VENDOR: CONNECTION REQUESTS (drawer) ====================
+  // ==================== VENDOR: CUSTOMER-FACING (drawer) ====================
   {
     label: 'Connection Requests',
     screen: 'ConnectionRequestsScreen',
     icon: 'account-clock',
+    roles: ['vendor'],
+    location: 'drawer',
+  },
+  {
+    label: 'Incoming Orders',
+    screen: 'IncomingOrdersScreen',
+    icon: 'cart-arrow-down',
     roles: ['vendor'],
     location: 'drawer',
   },
