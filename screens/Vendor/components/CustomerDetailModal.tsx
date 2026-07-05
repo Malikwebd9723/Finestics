@@ -273,6 +273,35 @@ export default function CustomerDetailModal({
                   />
                 </SectionCard>
 
+                {/* Linked self-serve app account (customer signed up themselves) */}
+                {(customer as any).customerUser && (
+                  <SectionCard title="Linked App Account" icon="smartphone" colors={colors}>
+                    <InfoRow
+                      icon="person"
+                      label="App User"
+                      value={`${(customer as any).customerUser.firstName} ${(customer as any).customerUser.lastName}`.trim()}
+                      colors={colors}
+                    />
+                    {(customer as any).customerUser.email && (
+                      <InfoRow
+                        icon="email"
+                        label="Login Email"
+                        value={(customer as any).customerUser.email}
+                        colors={colors}
+                      />
+                    )}
+                    <InfoRow
+                      icon="link"
+                      label="Connection"
+                      value={
+                        ((customer as any).connectionStatus || 'active').charAt(0).toUpperCase() +
+                        ((customer as any).connectionStatus || 'active').slice(1)
+                      }
+                      colors={colors}
+                    />
+                  </SectionCard>
+                )}
+
                 {/* Financial Information */}
                 <SectionCard
                   title="Financial Information"

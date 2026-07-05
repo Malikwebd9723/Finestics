@@ -1,5 +1,5 @@
 // screens/Customer/OrderDetailScreen.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -11,6 +11,7 @@ import { getOrder, cancelOrder } from 'api/actions/customerOrderActions';
 import { getOrderStatusMeta, TIMELINE_STEPS } from 'utils/orderStatus';
 import { formatPrice } from './components/ProductCard';
 import OrderStatusBadge from './components/OrderStatusBadge';
+import InvoiceModal from './components/InvoiceModal';
 
 export default function OrderDetailScreen() {
   const { colors } = useThemeContext();
@@ -18,6 +19,7 @@ export default function OrderDetailScreen() {
   const route = useRoute<any>();
   const orderId: number = route.params?.orderId;
   const queryClient = useQueryClient();
+  const [invoiceOpen, setInvoiceOpen] = useState(false);
 
   const { data: order, isLoading, isError, error } = useQuery({
     queryKey: ['customer-order', orderId],
@@ -120,18 +122,18 @@ export default function OrderDetailScreen() {
         ) : (
           <View
             style={{
-              backgroundColor: '#FEF2F2',
+              backgroundColor: colors.error + '12',
               borderRadius: 14,
               padding: 16,
               marginTop: 16,
               borderWidth: 1,
-              borderColor: '#FECACA',
+              borderColor: colors.error + '55',
             }}>
-            <Text style={{ color: '#991B1B', fontWeight: '700' }}>
+            <Text style={{ color: colors.error, fontWeight: '700' }}>
               {order.status === 'refunded' ? 'Order refunded' : 'Order cancelled'}
             </Text>
             {!!order.cancellationReason && (
-              <Text style={{ color: '#991B1B', fontSize: 13, marginTop: 4 }}>
+              <Text style={{ color: colors.error, fontSize: 13, marginTop: 4 }}>
                 {order.cancellationReason}
               </Text>
             )}
@@ -205,6 +207,26 @@ export default function OrderDetailScreen() {
           </View>
         )}
 
+        {/* Invoice */}
+        {!isCancelled && (
+          <Pressable
+            onPress={() => setInvoiceOpen(true)}
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: 12,
+              paddingVertical: 14,
+              alignItems: 'center',
+              marginTop: 20,
+              flexDirection: 'row',
+              justifyContent: 'center',
+            }}>
+            <MaterialCommunityIcons name="file-document-outline" size={18} color={colors.white} />
+            <Text style={{ color: colors.white, fontWeight: '700', marginLeft: 8 }}>
+              View Invoice
+            </Text>
+          </Pressable>
+        )}
+
         {/* Cancel */}
         {canCancel && (
           <Pressable
@@ -214,7 +236,7 @@ export default function OrderDetailScreen() {
               borderRadius: 12,
               paddingVertical: 14,
               alignItems: 'center',
-              marginTop: 20,
+              marginTop: 12,
               borderWidth: 1,
               borderColor: colors.error,
               opacity: cancelMutation.isPending ? 0.6 : 1,
@@ -227,6 +249,8 @@ export default function OrderDetailScreen() {
           </Pressable>
         )}
       </ScrollView>
+
+      <InvoiceModal visible={invoiceOpen} order={order} onClose={() => setInvoiceOpen(false)} />
     </View>
   );
 }

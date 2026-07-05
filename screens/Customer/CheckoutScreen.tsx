@@ -7,24 +7,17 @@ import {
   Pressable,
   TextInput,
   ActivityIndicator,
-  Modal,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
-import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
 import { useCart } from 'context/CartContext';
 import Toast from 'utils/Toast';
-import {
-  getAddresses,
-  createAddress,
-  createOrder,
-  type CustomerAddress,
-} from 'api/actions/customerOrderActions';
+import { getAddresses, createOrder } from 'api/actions/customerOrderActions';
 import { formatPrice } from './components/ProductCard';
+import AddAddressModal from './components/AddAddressModal';
 
 type PaymentMethod = 'cash' | 'credit';
 
@@ -136,7 +129,7 @@ export default function CheckoutScreen() {
           <Pressable
             onPress={() => setAddOpen(true)}
             style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
-            <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
+            <MaterialCommunityIcons name="plus-circle-outline" size={20} color={colors.primary} />
             <Text style={{ color: colors.primary, fontWeight: '600', marginLeft: 6 }}>
               Add new address
             </Text>
@@ -183,27 +176,27 @@ export default function CheckoutScreen() {
           </View>
         </Section>
 
-        {/* Credit-limit warning */}
+        {/* Credit-limit warning (error tone: this is a money/limit breach) */}
         {creditError && (
           <View
             style={{
-              backgroundColor: '#FEF2F2',
+              backgroundColor: colors.error + '12',
               borderRadius: 12,
               borderWidth: 1,
-              borderColor: '#FECACA',
+              borderColor: colors.error + '55',
               padding: 14,
               marginTop: 4,
               marginBottom: 4,
             }}>
-            <Text style={{ color: '#991B1B', fontWeight: '700', marginBottom: 4 }}>
+            <Text style={{ color: colors.error, fontWeight: '700', marginBottom: 4 }}>
               Over your credit limit
             </Text>
-            <Text style={{ color: '#991B1B', fontSize: 13 }}>
+            <Text style={{ color: colors.error, fontSize: 13 }}>
               Limit {formatPrice(creditError.creditLimit)} · Outstanding{' '}
               {formatPrice(creditError.currentBalance)} · This order{' '}
               {formatPrice(creditError.orderTotal)}.
             </Text>
-            <Text style={{ color: '#991B1B', fontSize: 13, marginTop: 4 }}>
+            <Text style={{ color: colors.error, fontSize: 13, marginTop: 4 }}>
               Switch to Cash on delivery to place this order.
             </Text>
           </View>
@@ -329,115 +322,3 @@ function AddressOption({ address, selected, onSelect, colors }: any) {
   );
 }
 
-function AddAddressModal({
-  visible,
-  onClose,
-  onSaved,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  onSaved: (a: CustomerAddress) => void;
-}) {
-  const { colors } = useThemeContext();
-  const [street, setStreet] = useState('');
-  const [city, setCity] = useState('');
-  const [postalCode, setPostalCode] = useState('');
-  const [label, setLabel] = useState('');
-
-  const mutation = useMutation({
-    mutationFn: () => createAddress({ street, city, postalCode, label, type: 'delivery' }),
-    onSuccess: (a) => {
-      setStreet('');
-      setCity('');
-      setPostalCode('');
-      setLabel('');
-      onSaved(a);
-    },
-    onError: (e: any) => Toast.error(e?.message || 'Failed to save address'),
-  });
-
-  const input = {
-    backgroundColor: colors.background,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 12,
-    color: colors.text,
-    marginTop: 10,
-  };
-
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000080' }}>
-        <View
-          style={{
-            backgroundColor: colors.card,
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            padding: 16,
-            paddingBottom: 28,
-          }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 6,
-            }}>
-            <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700' }}>New Address</Text>
-            <Pressable onPress={onClose} hitSlop={10}>
-              <Ionicons name="close" size={24} color={colors.muted} />
-            </Pressable>
-          </View>
-          <TextInput
-            value={label}
-            onChangeText={setLabel}
-            placeholder="Label (e.g. Home, Shop)"
-            placeholderTextColor={colors.placeholder}
-            style={input}
-          />
-          <TextInput
-            value={street}
-            onChangeText={setStreet}
-            placeholder="Street address"
-            placeholderTextColor={colors.placeholder}
-            style={input}
-          />
-          <TextInput
-            value={city}
-            onChangeText={setCity}
-            placeholder="City"
-            placeholderTextColor={colors.placeholder}
-            style={input}
-          />
-          <TextInput
-            value={postalCode}
-            onChangeText={setPostalCode}
-            placeholder="Postal code"
-            placeholderTextColor={colors.placeholder}
-            style={input}
-          />
-          <Pressable
-            disabled={mutation.isPending || !street.trim() || !city.trim()}
-            onPress={() => mutation.mutate()}
-            style={{
-              backgroundColor: colors.primary,
-              borderRadius: 12,
-              paddingVertical: 14,
-              alignItems: 'center',
-              marginTop: 16,
-              opacity: mutation.isPending || !street.trim() || !city.trim() ? 0.6 : 1,
-            }}>
-            {mutation.isPending ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Save Address</Text>
-            )}
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
-  );
-}

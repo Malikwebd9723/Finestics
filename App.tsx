@@ -12,6 +12,8 @@ import { SnackbarProvider } from 'context/SnackbarContext';
 import { ConfigProvider } from 'context/ConfigProvider';
 import { DialogProvider } from 'context/DialogProvider';
 import { CartProvider } from 'context/CartContext';
+import { NotificationProvider } from 'context/NotificationContext';
+import { navigationRef, flushPendingNavigation } from 'navigation/navigationRef';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   useFonts,
@@ -45,13 +47,15 @@ function ThemedApp() {
 
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <QueryClientProvider client={queryClient}>
-          <NavigationContainer>
+          <NavigationContainer ref={navigationRef} onReady={flushPendingNavigation}>
             <AuthProvider>
               <ConfigProvider>
                 <DialogProvider>
                   <SnackbarProvider>
                     <CartProvider>
-                      <RootNavigator />
+                      <NotificationProvider>
+                        <RootNavigator />
+                      </NotificationProvider>
                     </CartProvider>
                   </SnackbarProvider>
                 </DialogProvider>

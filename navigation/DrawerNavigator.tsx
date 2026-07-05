@@ -5,7 +5,12 @@ import { useThemeContext } from '../context/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
+
+import { useCart } from '../context/CartContext';
+import { useNotifications } from '../context/NotificationContext';
+import { getNotifications } from 'api/actions/notificationActions';
 
 // Import your TabNavigator
 import TabNavigator from './TabNavigator';
@@ -33,15 +38,33 @@ import ConnectionRequestsScreen from '../screens/Vendor/ConnectionRequestsScreen
 import IncomingOrdersScreen from '../screens/Vendor/IncomingOrdersScreen';
 import VendorOrderDetailScreen from '../screens/Vendor/VendorOrderDetailScreen';
 
+// Customer account screens
+import MyProfileScreen from '../screens/Customer/MyProfileScreen';
+import AddressesScreen from '../screens/Customer/AddressesScreen';
+
 const Drawer = createDrawerNavigator();
 
 // Custom Drawer Content
 function CustomDrawerContent(props: any) {
   const { colors, theme, setTheme } = useThemeContext();
   const { user, logout } = useAuth();
+  const { clearAll: clearCarts } = useCart();
+  const { unregisterCurrentToken } = useNotifications();
+
+  // Real unread count for the Notifications badge.
+  const { data: notificationData } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: getNotifications,
+    enabled: !!user,
+    refetchInterval: 60000,
+  });
+  const unreadCount = notificationData?.unreadCount ?? 0;
 
   const handleLogout = async () => {
     try {
+      // Stop push to this device + drop local carts before wiping storage.
+      await unregisterCurrentToken();
+      clearCarts();
       await AsyncStorage.clear(); // Clear all stored data
       logout?.();
       props.navigation.closeDrawer();
@@ -117,7 +140,7 @@ function CustomDrawerContent(props: any) {
                 onPress={() => navigateTo('VendorProfile')}
                 style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
                 activeOpacity={0.7}>
-                <Ionicons name="business-outline" size={22} color={colors.text} />
+                <MaterialCommunityIcons name="office-building-outline" size={22} color={colors.text} />
                 <Text style={[styles.menuItemText, { color: colors.text }]}>Business Profile</Text>
               </TouchableOpacity>
             </>
@@ -133,14 +156,14 @@ function CustomDrawerContent(props: any) {
                 onPress={() => navigateTo('Vendors')}
                 style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
                 activeOpacity={0.7}>
-                <Ionicons name="storefront-outline" size={22} color={colors.text} />
+                <MaterialCommunityIcons name="storefront-outline" size={22} color={colors.text} />
                 <Text style={[styles.menuItemText, { color: colors.text }]}>Vendors</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => navigateTo('Users')}
                 style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
                 activeOpacity={0.7}>
-                <Ionicons name="people-outline" size={22} color={colors.text} />
+                <MaterialCommunityIcons name="account-group-outline" size={22} color={colors.text} />
                 <Text style={[styles.menuItemText, { color: colors.text }]}>Users</Text>
               </TouchableOpacity>
             </>
@@ -158,8 +181,8 @@ function CustomDrawerContent(props: any) {
             }}
             style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
             activeOpacity={0.7}>
-            <Ionicons
-              name={theme === 'dark' ? 'sunny-outline' : 'moon-outline'}
+            <MaterialCommunityIcons
+              name={theme === 'dark' ? 'white-balance-sunny' : 'moon-waning-crescent'}
               size={22}
               color={colors.text}
             />
@@ -172,26 +195,31 @@ function CustomDrawerContent(props: any) {
           <TouchableOpacity
             onPress={() => {
               props.navigation.closeDrawer();
-              // Navigate to notifications if you have a screen
+              props.navigation.navigate('Notifications');
             }}
             style={[styles.menuItem, { backgroundColor: colors.background + '50' }]}
             activeOpacity={0.7}>
             <View>
-              <Ionicons name="notifications-outline" size={22} color={colors.text} />
-              <View
-                style={{
-                  position: 'absolute',
-                  top: -4,
-                  right: -4,
-                  backgroundColor: colors.primary,
-                  borderRadius: 8,
-                  width: 16,
-                  height: 16,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <Text style={{ color: 'white', fontSize: 9, fontWeight: 'bold' }}>3</Text>
-              </View>
+              <MaterialCommunityIcons name="bell-outline" size={22} color={colors.text} />
+              {unreadCount > 0 && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -6,
+                    backgroundColor: colors.primary,
+                    borderRadius: 8,
+                    minWidth: 16,
+                    height: 16,
+                    paddingHorizontal: 3,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <Text style={{ color: colors.white, fontSize: 9, fontWeight: 'bold' }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              )}
             </View>
             <Text style={[styles.menuItemText, { color: colors.text }]}>Notifications</Text>
           </TouchableOpacity>
@@ -199,16 +227,18 @@ function CustomDrawerContent(props: any) {
           {/* Logout */}
           <TouchableOpacity
             onPress={handleLogout}
-            style={[styles.menuItem, { backgroundColor: '#ef444410' }]}
+            style={[styles.menuItem, { backgroundColor: colors.error + '10' }]}
             activeOpacity={0.7}>
-            <Ionicons name="log-out-outline" size={22} color="#ef4444" />
-            <Text style={[styles.menuItemText, { color: '#ef4444', fontWeight: '600' }]}>Logout</Text>
+            <MaterialCommunityIcons name="logout" size={22} color={colors.error} />
+            <Text style={[styles.menuItemText, { color: colors.error, fontWeight: '600' }]}>
+              Logout
+            </Text>
           </TouchableOpacity>
         </View>
 
         {/* Footer */}
         <View style={[styles.footer, { borderTopColor: colors.border }]}>
-          <Text style={[styles.footerText, { color: colors.textSecondary }]}>Version 1.4.0</Text>
+          <Text style={[styles.footerText, { color: colors.muted }]}>Version 1.5.0</Text>
         </View>
       </ScrollView>
     </DrawerContentScrollView>
@@ -416,6 +446,30 @@ export default function DrawerNavigator() {
         options={{
           headerShown: true,
           headerTitle: 'Order',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Customer: Profile */}
+      <Drawer.Screen
+        name="MyProfileScreen"
+        component={MyProfileScreen}
+        options={{
+          headerShown: true,
+          headerTitle: 'My Profile',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Customer: Addresses */}
+      <Drawer.Screen
+        name="AddressesScreen"
+        component={AddressesScreen}
+        options={{
+          headerShown: true,
+          headerTitle: 'Addresses',
           headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.text,
         }}

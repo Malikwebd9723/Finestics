@@ -113,6 +113,20 @@ export const navigationItems: NavigationItem[] = [
     roles: ['customer'],
     location: 'both',
   },
+  {
+    label: 'My Profile',
+    screen: 'MyProfileScreen',
+    icon: 'account-circle-outline',
+    roles: ['customer'],
+    location: 'drawer',
+  },
+  {
+    label: 'Addresses',
+    screen: 'AddressesScreen',
+    icon: 'map-marker-outline',
+    roles: ['customer'],
+    location: 'drawer',
+  },
 
   // ==================== VENDOR: CUSTOMER-FACING (drawer) ====================
   {
