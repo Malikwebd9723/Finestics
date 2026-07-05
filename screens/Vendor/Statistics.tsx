@@ -4,12 +4,12 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
-import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import {
   fetchDetailedStats,
@@ -22,26 +22,65 @@ import {
   SalesTrendItem,
 } from 'api/actions/statisticsActions';
 import { formatPrice } from 'types/order.types';
-import DatePresetSelector, {
-  DateRange,
-  defaultRange,
-} from 'components/shared/DatePresetSelector';
+import SegmentedDateFilter from 'components/shared/SegmentedDateFilter';
+import { DateRange, defaultRange } from 'components/shared/DatePresetSelector';
+import { typo, radius } from 'constants/design';
+import { Section, StatCell, ListRow, BarChart, LineChart, DonutChart, RankBars } from 'components/ui';
+
+type Tab = 'overview' | 'customers' | 'products';
+
+const TABS: { key: Tab; label: string; icon: keyof typeof MaterialCommunityIcons.glyphMap }[] = [
+  { key: 'overview', label: 'Overview', icon: 'chart-box-outline' },
+  { key: 'customers', label: 'Customers', icon: 'account-group-outline' },
+  { key: 'products', label: 'Products', icon: 'package-variant-closed' },
+];
+
+const STATUSES: { key: string; label: string; short: string }[] = [
+  { key: 'pending', label: 'Pending', short: 'Pend' },
+  { key: 'confirmed', label: 'Confirmed', short: 'Conf' },
+  { key: 'collected', label: 'Collected', short: 'Coll' },
+  { key: 'delivered', label: 'Delivered', short: 'Deliv' },
+  { key: 'completed', label: 'Completed', short: 'Comp' },
+  { key: 'cancelled', label: 'Cancelled', short: 'Canc' },
+];
+
+const fmtLabel = (date: string) =>
+  new Date(date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+const shiftDate = (s: string, days: number) => {
+  const d = new Date(s + 'T12:00:00');
+  d.setDate(d.getDate() + days);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const da = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${da}`;
+};
+// Equal-length window ending the day before the current range.
+const previousRange = (from: string, span: number) => ({
+  from: shiftDate(from, -span),
+  to: shiftDate(from, -1),
+});
 
 export default function Statistics() {
   const { colors } = useThemeContext();
   const [range, setRange] = useState<DateRange>(() => defaultRange('thisMonth'));
-  const [activeTab, setActiveTab] = useState<'overview' | 'customers' | 'products'>('overview');
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
 
-  // Choose a trend bucket interval based on the range span.
+  const cardStyle = {
+    backgroundColor: colors.card,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  } as const;
+
   const rangeSpanDays = React.useMemo(() => {
     const start = new Date(range.from);
     const end = new Date(range.to);
-    return Math.max(1, Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1);
+    return Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1);
   }, [range]);
   const trendInterval: 'day' | 'week' | 'month' =
     rangeSpanDays <= 31 ? 'day' : rangeSpanDays <= 120 ? 'week' : 'month';
 
-  // Fetch detailed stats
   const {
     data: statsData,
     isLoading: statsLoading,
@@ -52,25 +91,31 @@ export default function Statistics() {
     queryFn: () => fetchDetailedStats({ from: range.from, to: range.to }),
   });
 
-  // Fetch customer stats
   const { data: customerData, isLoading: customerLoading } = useQuery({
     queryKey: ['customerStats'],
     queryFn: fetchCustomerStats,
     enabled: activeTab === 'customers',
   });
 
-  // Fetch product stats
   const { data: productData, isLoading: productLoading } = useQuery({
     queryKey: ['productStats', range.from, range.to],
     queryFn: () => fetchProductStats(rangeSpanDays),
     enabled: activeTab === 'products',
   });
 
-  // Fetch sales trend (backend buckets + zero-fills)
   const { data: trendData } = useQuery({
     queryKey: ['salesTrend', range.from, range.to, trendInterval],
-    queryFn: () =>
-      fetchSalesTrend({ from: range.from, to: range.to, interval: trendInterval }),
+    queryFn: () => fetchSalesTrend({ from: range.from, to: range.to, interval: trendInterval }),
+    enabled: activeTab === 'overview',
+  });
+
+  const prev = React.useMemo(
+    () => previousRange(range.from, rangeSpanDays),
+    [range.from, rangeSpanDays]
+  );
+  const { data: prevStatsData } = useQuery({
+    queryKey: ['detailedStatsPrev', prev.from, prev.to],
+    queryFn: () => fetchDetailedStats({ from: prev.from, to: prev.to }),
     enabled: activeTab === 'overview',
   });
 
@@ -79,734 +124,513 @@ export default function Statistics() {
   const productStats: ProductStats | null = productData?.data || null;
   const salesTrend: SalesTrendItem[] = trendData?.data || [];
 
-  const chartData = React.useMemo(() => {
-    if (!salesTrend || salesTrend.length === 0) return [];
-    return salesTrend.map((item, idx) => {
-      const d = new Date(item.date + 'T12:00:00');
-      const label =
-        trendInterval === 'day'
-          ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-          : trendInterval === 'week'
-            ? `w/c ${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
-            : d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-      return { id: `t-${idx}`, label, sales: item.sales };
-    });
-  }, [salesTrend, trendInterval]);
+  const trendLabels = salesTrend.map((d) => fmtLabel(d.date));
+  const salesByDay = salesTrend.map((d) => ({ label: fmtLabel(d.date), value: d.sales }));
+  const salesSeries = salesTrend.map((d) => d.sales);
+  const collectedSeries = salesTrend.map((d) => d.collected);
+  const aovSeries = salesTrend.map((d) => (d.orders > 0 ? Math.round(d.sales / d.orders) : 0));
+
+  const prevSummary = prevStatsData?.data?.summary;
+  const salesPeriodDelta =
+    (prevSummary?.totalSales ?? 0) > 0
+      ? {
+          pct:
+            (((stats?.summary.totalSales ?? 0) - prevSummary!.totalSales) /
+              prevSummary!.totalSales) *
+            100,
+        }
+      : null;
+  const netPeriodDelta =
+    (prevSummary?.netProfit ?? 0) > 0
+      ? {
+          pct:
+            (((stats?.summary.netProfit ?? 0) - prevSummary!.netProfit) / prevSummary!.netProfit) *
+            100,
+        }
+      : null;
 
   const isLoading =
-    statsLoading ||
-    (activeTab === 'customers' && customerLoading) ||
-    (activeTab === 'products' && productLoading);
-  const isRefetching = statsRefetching;
+    (activeTab === 'overview' && statsLoading && !stats) ||
+    (activeTab === 'customers' && customerLoading && !customerStats) ||
+    (activeTab === 'products' && productLoading && !productStats);
 
-  if (isLoading && !stats) {
+  // --- small local pieces ---
+  const Divider = () => <View className="my-1 h-px" style={{ backgroundColor: colors.border }} />;
+
+  const Stmt = ({
+    label,
+    value,
+    negative,
+    strong,
+    big,
+    tone,
+  }: {
+    label: string;
+    value: string;
+    negative?: boolean;
+    strong?: boolean;
+    big?: boolean;
+    tone?: 'default' | 'success' | 'error';
+  }) => {
+    const color =
+      tone === 'success' ? colors.success : tone === 'error' ? colors.error : colors.text;
+    const emph = strong || big;
     return (
-      <View
-        className="flex-1 items-center justify-center"
-        style={{ backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text className="mt-4" style={{ color: colors.muted }}>
-          Loading statistics...
+      <View className="flex-row items-center justify-between" style={{ paddingVertical: 7 }}>
+        <Text
+          style={{
+            color: emph ? colors.text : colors.muted,
+            fontSize: emph ? 15 : 14,
+            fontWeight: emph ? '700' : '500',
+          }}>
+          {label}
+        </Text>
+        <Text style={[typo.num, { color, fontSize: big ? 22 : strong ? 18 : 15 }]}>
+          {negative ? '− ' : ''}
+          {value}
         </Text>
       </View>
     );
-  }
+  };
+
+  const DeltaChip = ({ pct }: { pct: number }) => {
+    const up = pct >= 0;
+    const c = up ? colors.success : colors.error;
+    return (
+      <View
+        className="flex-row items-center rounded-full px-2 py-1"
+        style={{ backgroundColor: c + '14' }}>
+        <Text style={{ color: c, fontSize: 12, fontVariant: ['tabular-nums'] }}>
+          {up ? '▲' : '▼'} {Math.abs(pct).toFixed(0)}%
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      {/* Header */}
-      <View className="px-4 pb-2 pt-4">
-        <Text className="text-2xl font-bold" style={{ color: colors.text }}>
-          Statistics
-        </Text>
+      {/* Date range */}
+      <View className="pt-3">
+        <SegmentedDateFilter value={range} onChange={setRange} />
       </View>
 
-      {/* Date Range Selector */}
-      <View className="py-2">
-        <DatePresetSelector value={range} onChange={setRange} />
-      </View>
-
-      {/* Tab Selector */}
-      <View className="flex-row border-b px-4" style={{ borderColor: colors.border }}>
-        {[
-          { key: 'overview', label: 'Overview', icon: 'bar-chart' },
-          { key: 'customers', label: 'Customers', icon: 'people' },
-          { key: 'products', label: 'Products', icon: 'cube' },
-        ].map((tab) => (
-          <TouchableOpacity
-            key={tab.key}
-            onPress={() => setActiveTab(tab.key as any)}
-            className="mr-4 flex-row items-center pb-3 pt-2"
-            style={{
-              borderBottomWidth: 2,
-              borderBottomColor: activeTab === tab.key ? colors.primary : 'transparent',
-            }}>
-            <Ionicons
-              name={tab.icon as any}
-              size={16}
-              color={activeTab === tab.key ? colors.primary : colors.muted}
-            />
-            <Text
-              className="ml-1.5 text-sm font-medium"
-              style={{ color: activeTab === tab.key ? colors.primary : colors.muted }}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetchStats}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }>
-        {/* Overview Tab */}
-        {activeTab === 'overview' && stats && (
-          <View className="px-4 py-4">
-            {/* Summary Cards */}
-            <View className="mb-4 flex-row gap-3">
-              <View className="flex-1 rounded-xl p-4" style={{ backgroundColor: colors.primary }}>
-                <Text className="text-2xl font-bold text-white">
-                  {formatPrice(stats.summary.totalSales)}
-                </Text>
-                <Text className="text-sm text-white/80">Total Sales</Text>
-              </View>
-              <View className="flex-1 rounded-xl p-4" style={{ backgroundColor: colors.success }}>
-                <Text className="text-2xl font-bold text-white">
-                  {formatPrice(stats.summary.totalCollected)}
-                </Text>
-                <Text className="text-sm text-white/80">Collected</Text>
-              </View>
-            </View>
-
-            {/* Gross Profit + Cost */}
-            <View className="mb-4 flex-row gap-3">
-              <View className="flex-1 rounded-xl p-4" style={{ backgroundColor: '#8b5cf6' }}>
-                <Text className="text-2xl font-bold text-white">
-                  {formatPrice(stats.summary.grossProfit || 0)}
-                </Text>
-                <Text className="text-sm text-white/80">
-                  Gross Profit ({stats.summary.grossMargin ?? 0}%)
-                </Text>
-              </View>
-              <View
-                className="flex-1 rounded-xl p-4"
-                style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-                <Text className="text-xl font-bold" style={{ color: colors.error }}>
-                  {formatPrice(stats.summary.totalCost || 0)}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Cost of Goods
-                </Text>
-              </View>
-            </View>
-
-            {/* Net Profit + Expenses */}
-            <View className="mb-4 flex-row gap-3">
-              <View
-                className="flex-1 rounded-xl p-4"
-                style={{
-                  backgroundColor:
-                    (stats.summary.netProfit ?? 0) >= 0 ? '#059669' : colors.error,
-                }}>
-                <Text className="text-2xl font-bold text-white">
-                  {formatPrice(stats.summary.netProfit || 0)}
-                </Text>
-                <Text className="text-sm text-white/80">
-                  Net Profit ({stats.summary.netMargin ?? 0}%)
-                </Text>
-              </View>
-              <View
-                className="flex-1 rounded-xl p-4"
-                style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-                <Text className="text-xl font-bold" style={{ color: colors.error }}>
-                  {formatPrice(stats.summary.totalExpenses || 0)}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Expenses
-                </Text>
-              </View>
-            </View>
-
-            {/* Returns value */}
-            {(stats.summary.returnsValue ?? 0) > 0 && (
-              <View className="mb-4 rounded-xl p-3" style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-                <View className="flex-row justify-between">
-                  <Text className="text-sm" style={{ color: colors.muted }}>Returns / Refunds in range</Text>
-                  <Text className="font-semibold" style={{ color: colors.error }}>
-                    -{formatPrice(stats.summary.returnsValue || 0)}
-                  </Text>
-                </View>
-                <View className="mt-1 flex-row justify-between">
-                  <Text className="text-sm" style={{ color: colors.muted }}>Net revenue</Text>
-                  <Text className="font-semibold" style={{ color: colors.text }}>
-                    {formatPrice(stats.summary.netRevenue || 0)}
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            <View className="mb-4 flex-row gap-3">
-              <View
-                className="flex-1 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Text className="text-xl font-bold" style={{ color: colors.text }}>
-                  {stats.summary.totalOrders}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Total Orders
-                </Text>
-              </View>
-              <View
-                className="flex-1 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Text className="text-xl font-bold" style={{ color: colors.error }}>
-                  {formatPrice(stats.summary.totalOutstanding)}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Outstanding
-                </Text>
-              </View>
-              <View
-                className="flex-1 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Text className="text-xl font-bold" style={{ color: colors.primary }}>
-                  {formatPrice(stats.summary.avgOrderValue)}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Avg Order
-                </Text>
-              </View>
-            </View>
-
-            {/* Daily Trend Mini Chart */}
-            {chartData.length > 0 && (
-              <View
-                className="mb-4 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Text className="mb-3 text-sm font-semibold uppercase" style={{ color: colors.muted }}>
-                  SALES TREND
-                </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <View className="flex-row items-end justify-between" style={{ height: 80, minWidth: '100%' }}>
-                    {chartData.map((item) => {
-                      const maxSales = Math.max(...chartData.map((d) => d.sales), 1);
-                      const height = (item.sales / maxSales) * 60 + 10;
-                      return (
-                        <View key={item.id} className="items-center px-2" style={{ minWidth: 40, flex: 1 }}>
-                          <View
-                            className="w-6 rounded-t"
-                            style={{ height, backgroundColor: colors.primary }}
-                          />
-                          <Text className="mt-1 text-xs" style={{ color: colors.muted }} numberOfLines={1}>
-                            {item.label}
-                          </Text>
-                        </View>
-                      );
-                    })}
-                  </View>
-                </ScrollView>
-              </View>
-            )}
-
-            {/* Order Status Breakdown */}
-            <View
-              className="mb-4 rounded-xl p-4"
-              style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-              <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-                ORDER STATUS
+      {/* Tabs — equal-width, centered */}
+      <View className="mt-3 flex-row border-b" style={{ borderColor: colors.border }}>
+        {TABS.map((t) => {
+          const active = activeTab === t.key;
+          return (
+            <TouchableOpacity
+              key={t.key}
+              onPress={() => setActiveTab(t.key)}
+              className="flex-1 flex-row items-center justify-center pb-3 pt-1"
+              style={{ borderBottomWidth: 2, borderBottomColor: active ? colors.primary : 'transparent' }}>
+              <MaterialCommunityIcons
+                name={t.icon}
+                size={16}
+                color={active ? colors.primary : colors.muted}
+              />
+              <Text
+                className="ml-1.5 text-sm font-semibold"
+                style={{ color: active ? colors.text : colors.muted }}>
+                {t.label}
               </Text>
-              <View className="gap-2">
-                {[
-                  { key: 'pending', label: 'Pending', color: '#f59e0b' },
-                  { key: 'confirmed', label: 'Confirmed', color: '#3b82f6' },
-                  { key: 'collected', label: 'Collected', color: '#8b5cf6' },
-                  { key: 'delivered', label: 'Delivered', color: '#10b981' },
-                  { key: 'completed', label: 'Completed', color: '#059669' },
-                  { key: 'cancelled', label: 'Cancelled', color: '#ef4444' },
-                ].map((status) => {
-                  const count = stats.ordersByStatus[status.key] || 0;
-                  const total = stats.summary.totalOrders + (stats.ordersByStatus.cancelled || 0);
-                  const percentage = total > 0 ? (count / total) * 100 : 0;
-                  return (
-                    <View key={status.key} className="flex-row items-center">
-                      <View className="w-20">
-                        <Text className="text-sm" style={{ color: colors.text }}>
-                          {status.label}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text className="mt-4" style={{ color: colors.muted }}>
+            Loading statistics…
+          </Text>
+        </View>
+      ) : (
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ paddingBottom: 110 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={statsRefetching}
+              onRefresh={refetchStats}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }>
+          {/* ==================== OVERVIEW ==================== */}
+          {activeTab === 'overview' && stats && (
+            <>
+              <Section first title="Sales">
+                <View className="p-4" style={cardStyle}>
+                  <View className="mb-3 flex-row items-end justify-between">
+                    <Text style={[typo.stat, { color: colors.text, fontSize: 22 }]}>
+                      {formatPrice(stats.summary.totalSales)}
+                    </Text>
+                    {salesPeriodDelta ? <DeltaChip pct={salesPeriodDelta.pct} /> : null}
+                  </View>
+                  <BarChart data={salesByDay} showValues={false} labelMode="sparse" />
+                  {salesPeriodDelta ? (
+                    <Text className="mt-2 text-xs" style={{ color: colors.muted }}>
+                      vs previous period
+                    </Text>
+                  ) : null}
+                </View>
+              </Section>
+
+              <Section title="Collection trend">
+                <View className="p-4" style={cardStyle}>
+                  <LineChart
+                    series={[
+                      { label: 'Sales', data: salesSeries, color: colors.primary },
+                      { label: 'Collected', data: collectedSeries, color: colors.success },
+                    ]}
+                    labels={trendLabels}
+                  />
+                </View>
+              </Section>
+
+              <Section title="Avg order value">
+                <View className="p-4" style={cardStyle}>
+                  <LineChart
+                    series={[{ label: 'AOV', data: aovSeries, color: colors.primary }]}
+                    labels={trendLabels}
+                    showLegend={false}
+                  />
+                </View>
+              </Section>
+
+              <Section title="Profit & loss">
+                <View className="p-4" style={cardStyle}>
+                  <Stmt label="Sales" value={formatPrice(stats.summary.totalSales)} />
+                  <Stmt
+                    label="Cost of goods"
+                    value={formatPrice(stats.summary.totalCost || 0)}
+                    negative
+                    tone="error"
+                  />
+                  <Divider />
+                  <Stmt
+                    label={`Gross profit · ${stats.summary.grossMargin ?? 0}%`}
+                    value={formatPrice(stats.summary.grossProfit || 0)}
+                    strong
+                  />
+                  <Stmt
+                    label="Expenses"
+                    value={formatPrice(stats.summary.totalExpenses || 0)}
+                    negative
+                    tone="error"
+                  />
+                  {(stats.summary.returnsValue ?? 0) > 0 && (
+                    <Stmt
+                      label="Returns / refunds"
+                      value={formatPrice(stats.summary.returnsValue || 0)}
+                      negative
+                      tone="error"
+                    />
+                  )}
+                  <Divider />
+                  <Stmt
+                    label={`Net profit · ${stats.summary.netMargin ?? 0}%`}
+                    value={formatPrice(stats.summary.netProfit || 0)}
+                    big
+                    tone={(stats.summary.netProfit ?? 0) >= 0 ? 'success' : 'error'}
+                  />
+                  {netPeriodDelta ? (
+                    <Text
+                      className="mt-1 text-right text-xs"
+                      style={{
+                        color: netPeriodDelta.pct >= 0 ? colors.success : colors.error,
+                        fontWeight: '600',
+                      }}>
+                      {netPeriodDelta.pct >= 0 ? '▲' : '▼'} {Math.abs(netPeriodDelta.pct).toFixed(0)}%
+                      vs previous period
+                    </Text>
+                  ) : null}
+                </View>
+              </Section>
+
+              <Section title="Orders">
+                <View className="flex-row gap-3">
+                  <View className="flex-1">
+                    <StatCell boxed icon="receipt" label="Orders" value={String(stats.summary.totalOrders)} />
+                  </View>
+                  <View className="flex-1">
+                    <StatCell
+                      boxed
+                      icon="chart-line"
+                      label="Avg order"
+                      value={formatPrice(stats.summary.avgOrderValue || 0)}
+                    />
+                  </View>
+                </View>
+              </Section>
+
+              <Section title="Order status">
+                <View className="p-4" style={cardStyle}>
+                  <BarChart
+                    data={STATUSES.map((s) => ({
+                      label: s.short,
+                      value: stats.ordersByStatus[s.key] || 0,
+                    }))}
+                  />
+                </View>
+              </Section>
+
+              <Section title="Payments">
+                <View className="flex-row items-center p-4" style={cardStyle}>
+                  <DonutChart
+                    size={132}
+                    segments={[
+                      { label: 'Paid', value: stats.ordersByPayment.paid || 0, color: colors.success },
+                      { label: 'Partial', value: stats.ordersByPayment.partial || 0, color: colors.muted },
+                      { label: 'Unpaid', value: stats.ordersByPayment.unpaid || 0, color: colors.error },
+                    ]}
+                    centerTop={String(
+                      (stats.ordersByPayment.paid || 0) +
+                        (stats.ordersByPayment.partial || 0) +
+                        (stats.ordersByPayment.unpaid || 0)
+                    )}
+                    centerBottom="orders"
+                  />
+                  <View className="ml-5 flex-1">
+                    {[
+                      { label: 'Paid', value: stats.ordersByPayment.paid || 0, color: colors.success },
+                      { label: 'Partial', value: stats.ordersByPayment.partial || 0, color: colors.muted },
+                      { label: 'Unpaid', value: stats.ordersByPayment.unpaid || 0, color: colors.error },
+                    ].map((seg) => (
+                      <View
+                        key={seg.label}
+                        className="flex-row items-center"
+                        style={{ paddingVertical: 5 }}>
+                        <View
+                          className="mr-2 h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: seg.color }}
+                        />
+                        <Text className="flex-1 text-sm" style={{ color: colors.text }}>
+                          {seg.label}
+                        </Text>
+                        <Text style={[typo.num, { color: colors.text, fontSize: 15 }]}>
+                          {seg.value}
                         </Text>
                       </View>
-                      <View
-                        className="mx-3 h-2 flex-1 overflow-hidden rounded-full"
-                        style={{ backgroundColor: colors.border }}>
-                        <View
-                          className="h-full rounded-full"
-                          style={{ width: `${percentage}%`, backgroundColor: status.color }}
-                        />
-                      </View>
-                      <Text
-                        className="w-8 text-right text-sm font-medium"
-                        style={{ color: colors.text }}>
-                        {count}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Payment Status */}
-            <View
-              className="mb-4 rounded-xl p-4"
-              style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-              <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-                PAYMENT STATUS
-              </Text>
-              <View className="flex-row gap-3">
-                {[
-                  { key: 'paid', label: 'Paid', color: colors.success },
-                  { key: 'partial', label: 'Partial', color: '#f59e0b' },
-                  { key: 'unpaid', label: 'Unpaid', color: colors.error },
-                ].map((status) => (
-                  <View
-                    key={status.key}
-                    className="flex-1 items-center rounded-lg p-3"
-                    style={{ backgroundColor: status.color + '15' }}>
-                    <Text className="text-xl font-bold" style={{ color: status.color }}>
-                      {stats.ordersByPayment[status.key] || 0}
-                    </Text>
-                    <Text className="text-xs" style={{ color: status.color }}>
-                      {status.label}
-                    </Text>
+                    ))}
                   </View>
-                ))}
-              </View>
-            </View>
-
-            {/* Top Customers */}
-            {stats.topCustomers.length > 0 && (
-              <View
-                className="mb-4 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-                  TOP CUSTOMERS
-                </Text>
-                {stats.topCustomers.slice(0, 5).map((customer, idx) => (
-                  <View
-                    key={customer.id}
-                    className={`flex-row items-center py-2`}
-                    style={{ borderColor: colors.border }}>
-                    <View
-                      className="mr-3 h-8 w-8 items-center justify-center rounded-full"
-                      style={{ backgroundColor: colors.primary + '20' }}>
-                      <Text className="text-xs font-bold" style={{ color: colors.primary }}>
-                        #{idx + 1}
-                      </Text>
-                    </View>
-                    <View className="flex-1">
-                      <Text className="font-medium" style={{ color: colors.text }}>
-                        {customer.businessName}
-                      </Text>
-                      <Text className="text-xs" style={{ color: colors.muted }}>
-                        {customer.orderCount} orders
-                      </Text>
-                    </View>
-                    <Text className="font-bold" style={{ color: colors.primary }}>
-                      {formatPrice(customer.totalSpent)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Top Products */}
-            {stats.topProducts.length > 0 && (
-              <View
-                className="mb-4 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-                  TOP PRODUCTS
-                </Text>
-                {stats.topProducts.slice(0, 5).map((product, idx) => (
-                  <View
-                    key={product.id}
-                    className={`flex-row items-center py-2`}
-                    style={{ borderColor: colors.border }}>
-                    <View
-                      className="mr-3 h-8 w-8 items-center justify-center rounded-full"
-                      style={{ backgroundColor: colors.success + '20' }}>
-                      <Text className="text-xs font-bold" style={{ color: colors.success }}>
-                        #{idx + 1}
-                      </Text>
-                    </View>
-                    <View className="flex-1">
-                      <Text className="font-medium" style={{ color: colors.text }}>
-                        {product.name}
-                      </Text>
-                      <Text className="text-xs" style={{ color: colors.muted }}>
-                        {product.totalQuantity} {product.unit}
-                      </Text>
-                    </View>
-                    <Text className="font-bold" style={{ color: colors.success }}>
-                      {formatPrice(product.totalRevenue)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Van Performance */}
-            {stats.vanPerformance.length > 0 && (
-              <View
-                className="mb-4 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-                  VAN PERFORMANCE
-                </Text>
-                {stats.vanPerformance.map((van, idx) => (
-                  <View
-                    key={van.vanName}
-                    className={`flex-row items-center py-2`}
-                    style={{ borderColor: colors.border }}>
-                    <View
-                      className="mr-3 rounded-full p-2"
-                      style={{ backgroundColor: colors.primary + '15' }}>
-                      <MaterialIcons name="local-shipping" size={16} color={colors.primary} />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="font-medium" style={{ color: colors.text }}>
-                        {van.vanName}
-                      </Text>
-                      <Text className="text-xs" style={{ color: colors.muted }}>
-                        {van.orders} orders
-                      </Text>
-                    </View>
-                    <Text className="font-bold" style={{ color: colors.text }}>
-                      {formatPrice(van.sales)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Payment Methods */}
-            {stats.paymentMethods.length > 0 && (
-              <View
-                className="rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-                  PAYMENT METHODS
-                </Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {stats.paymentMethods.map((pm) => (
-                    <View
-                      key={pm.method}
-                      className="rounded-lg px-3 py-2"
-                      style={{ backgroundColor: colors.background }}>
-                      <Text className="text-xs capitalize" style={{ color: colors.muted }}>
-                        {pm.method?.replace('_', ' ')}
-                      </Text>
-                      <Text className="font-bold" style={{ color: colors.text }}>
-                        {formatPrice(pm.amount)}
-                      </Text>
-                      <Text className="text-xs" style={{ color: colors.muted }}>
-                        {pm.count} payments
-                      </Text>
-                    </View>
-                  ))}
                 </View>
-              </View>
-            )}
-          </View>
-        )}
+              </Section>
 
-        {/* Customers Tab */}
-        {activeTab === 'customers' && customerStats && (
-          <View className="px-4 py-4">
-            {/* Customer Overview Cards */}
-            <View className="mb-4 flex-row gap-3">
-              <View
-                className="flex-1 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Ionicons name="people" size={24} color={colors.primary} />
-                <Text className="mt-2 text-2xl font-bold" style={{ color: colors.text }}>
-                  {customerStats.total}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Total Customers
-                </Text>
-              </View>
-              <View
-                className="flex-1 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <MaterialIcons name="person-add" size={24} color={colors.success} />
-                <Text className="mt-2 text-2xl font-bold" style={{ color: colors.success }}>
-                  {customerStats.newThisMonth}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  New This Month
-                </Text>
-              </View>
-            </View>
-
-            <View className="mb-4 flex-row gap-3">
-              <View
-                className="flex-1 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.error + '10',
-                  borderWidth: 1,
-                  borderColor: colors.error + '30',
-                }}>
-                <MaterialCommunityIcons name="account-clock" size={24} color={colors.error} />
-                <Text className="mt-2 text-2xl font-bold" style={{ color: colors.error }}>
-                  {customerStats.withBalance}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  With Balance Due
-                </Text>
-              </View>
-              <View
-                className="flex-1 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.error + '10',
-                  borderWidth: 1,
-                  borderColor: colors.error + '30',
-                }}>
-                <MaterialCommunityIcons name="cash-clock" size={24} color={colors.error} />
-                <Text className="mt-2 text-xl font-bold" style={{ color: colors.error }}>
-                  {formatPrice(customerStats.totalOutstanding)}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Total Outstanding
-                </Text>
-              </View>
-            </View>
-
-            {/* Top Debtors */}
-            {customerStats.topDebtors.length > 0 && (
-              <View
-                className="rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-                  TOP OUTSTANDING BALANCES
-                </Text>
-                {customerStats.topDebtors.map((customer, idx) => (
-                  <View
-                    key={customer.id}
-                    className={`flex-row items-center py-3 ${idx > 0 ? 'border-t' : ''}`}
-                    style={{ borderColor: colors.border }}>
-                    <View
-                      className="mr-3 h-10 w-10 items-center justify-center rounded-full"
-                      style={{ backgroundColor: colors.error + '15' }}>
-                      <Text className="text-sm font-bold" style={{ color: colors.error }}>
-                        {idx + 1}
-                      </Text>
-                    </View>
-                    <View className="flex-1">
-                      <Text className="font-semibold" style={{ color: colors.text }}>
-                        {customer.businessName}
-                      </Text>
-                      <Text className="text-xs" style={{ color: colors.muted }}>
-                        {customer.contactPerson} • {customer.phone}
-                      </Text>
-                    </View>
-                    <Text className="text-lg font-bold" style={{ color: colors.error }}>
-                      {formatPrice(customer.currentBalance)}
-                    </Text>
+              {stats.topCustomers.length > 0 && (
+                <Section title="Top customers">
+                  <View className="px-4" style={cardStyle}>
+                    {stats.topCustomers.slice(0, 5).map((c, i) => (
+                      <ListRow
+                        key={c.id}
+                        leading={String(i + 1)}
+                        title={c.businessName}
+                        subtitle={`${c.orderCount} orders`}
+                        amount={formatPrice(c.totalSpent)}
+                        divider={i > 0}
+                      />
+                    ))}
                   </View>
-                ))}
-              </View>
-            )}
-          </View>
-        )}
+                </Section>
+              )}
 
-        {/* Products Tab */}
-        {activeTab === 'products' && productStats && (
-          <View className="px-4 py-4">
-            {/* Product Overview Cards */}
-            <View className="mb-4 flex-row gap-3">
-              <View
-                className="flex-1 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Ionicons name="cube" size={24} color={colors.primary} />
-                <Text className="mt-2 text-2xl font-bold" style={{ color: colors.text }}>
-                  {productStats.totalProducts}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Total Products
-                </Text>
-              </View>
-              <View
-                className="flex-1 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <MaterialIcons name="trending-up" size={24} color={colors.success} />
-                <Text className="mt-2 text-2xl font-bold" style={{ color: colors.success }}>
-                  {productStats.uniqueProductsSold}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Products Sold
-                </Text>
-              </View>
-            </View>
-
-            <View className="mb-4 flex-row gap-3">
-              <View
-                className="flex-1 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.success + '10',
-                  borderWidth: 1,
-                  borderColor: colors.success + '30',
-                }}>
-                <Text className="text-xl font-bold" style={{ color: colors.success }}>
-                  {formatPrice(productStats.totalRevenue)}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Total Revenue
-                </Text>
-              </View>
-              <View
-                className="flex-1 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.primary + '10',
-                  borderWidth: 1,
-                  borderColor: colors.primary + '30',
-                }}>
-                <Text className="text-xl font-bold" style={{ color: colors.primary }}>
-                  {productStats.totalQuantitySold}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Units Sold
-                </Text>
-              </View>
-            </View>
-
-            {/* Best Sellers */}
-            {productStats.bestSellers.length > 0 && (
-              <View
-                className="mb-4 rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-                  BEST SELLERS
-                </Text>
-                {productStats.bestSellers.map((product, idx) => (
-                  <View
-                    key={product.id}
-                    className={`flex-row items-center py-2 ${idx > 0 ? 'border-t' : ''}`}
-                    style={{ borderColor: colors.border }}>
-                    <View
-                      className="mr-3 h-8 w-8 items-center justify-center rounded-full"
-                      style={{ backgroundColor: colors.success + '20' }}>
-                      <Text className="text-xs font-bold" style={{ color: colors.success }}>
-                        #{idx + 1}
-                      </Text>
-                    </View>
-                    <View className="flex-1">
-                      <Text className="font-medium" style={{ color: colors.text }}>
-                        {product.name}
-                      </Text>
-                      <Text className="text-xs" style={{ color: colors.muted }}>
-                        {product.quantity} {product.unit} • {formatPrice(product.revenue)}
-                      </Text>
-                    </View>
+              {stats.topProducts.length > 0 && (
+                <Section title="Top products by revenue">
+                  <View className="p-4" style={cardStyle}>
+                    <RankBars
+                      items={stats.topProducts.slice(0, 5).map((p) => ({
+                        id: p.id,
+                        label: p.name,
+                        value: p.totalRevenue,
+                      }))}
+                      formatValue={formatPrice}
+                    />
                   </View>
-                ))}
-              </View>
-            )}
+                </Section>
+              )}
 
-            {/* Slow Movers */}
-            {productStats.slowMovers.length > 0 && (
-              <View
-                className="rounded-xl p-4"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-                  NOT SOLD RECENTLY
-                </Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {productStats.slowMovers.map((product) => (
-                    <View
-                      key={product.id}
-                      className="rounded-lg px-3 py-2"
-                      style={{ backgroundColor: colors.background }}>
-                      <Text className="text-sm font-medium" style={{ color: colors.text }}>
-                        {product.name}
-                      </Text>
-                      <Text className="text-xs" style={{ color: colors.muted }}>
-                        {formatPrice(product.sellingPrice)}/{product.unit}
-                      </Text>
-                    </View>
-                  ))}
+              {stats.vanPerformance.length > 0 && (
+                <Section title="Vans">
+                  <View className="px-4" style={cardStyle}>
+                    {stats.vanPerformance.map((v, i) => (
+                      <ListRow
+                        key={v.vanName}
+                        icon="truck-outline"
+                        title={v.vanName}
+                        subtitle={`${v.orders} orders`}
+                        amount={formatPrice(v.sales)}
+                        divider={i > 0}
+                      />
+                    ))}
+                  </View>
+                </Section>
+              )}
+
+              {stats.paymentMethods.length > 0 && (
+                <Section title="Payment methods">
+                  <View className="px-4" style={cardStyle}>
+                    {stats.paymentMethods.map((pm, i) => (
+                      <ListRow
+                        key={pm.method}
+                        icon="cash"
+                        title={(pm.method || '').replace('_', ' ')}
+                        subtitle={`${pm.count} payments`}
+                        amount={formatPrice(pm.amount)}
+                        divider={i > 0}
+                      />
+                    ))}
+                  </View>
+                </Section>
+              )}
+            </>
+          )}
+
+          {/* ==================== CUSTOMERS ==================== */}
+          {activeTab === 'customers' && customerStats && (
+            <>
+              <Section first title="Customers">
+                <View className="flex-row gap-3">
+                  <View className="flex-1">
+                    <StatCell
+                      boxed
+                      icon="account-group"
+                      label="Total"
+                      value={String(customerStats.total)}
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <StatCell
+                      boxed
+                      icon="account-plus"
+                      label="New this month"
+                      value={String(customerStats.newThisMonth)}
+                      tone="success"
+                    />
+                  </View>
                 </View>
-              </View>
-            )}
-          </View>
-        )}
-      </ScrollView>
+                <View className="mt-3 flex-row gap-3">
+                  <View className="flex-1">
+                    <StatCell
+                      boxed
+                      icon="account-alert"
+                      label="With balance"
+                      value={String(customerStats.withBalance)}
+                      tone="error"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <StatCell
+                      boxed
+                      icon="cash-clock"
+                      label="Outstanding"
+                      value={formatPrice(customerStats.totalOutstanding || 0)}
+                      tone="error"
+                    />
+                  </View>
+                </View>
+              </Section>
+
+              {customerStats.topDebtors.length > 0 && (
+                <Section title="Top outstanding balances">
+                  <View className="px-4" style={cardStyle}>
+                    {customerStats.topDebtors.map((c, i) => (
+                      <ListRow
+                        key={c.id}
+                        leading={String(i + 1)}
+                        title={c.businessName}
+                        subtitle={`${c.contactPerson} · ${c.phone}`}
+                        amount={formatPrice(Number(c.currentBalance) || 0)}
+                        amountTone="error"
+                        divider={i > 0}
+                      />
+                    ))}
+                  </View>
+                </Section>
+              )}
+            </>
+          )}
+
+          {/* ==================== PRODUCTS ==================== */}
+          {activeTab === 'products' && productStats && (
+            <>
+              <Section first title="Products">
+                <View className="flex-row gap-3">
+                  <View className="flex-1">
+                    <StatCell
+                      boxed
+                      icon="package-variant"
+                      label="Total products"
+                      value={String(productStats.totalProducts)}
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <StatCell
+                      boxed
+                      icon="trending-up"
+                      label="Products sold"
+                      value={String(productStats.uniqueProductsSold)}
+                      tone="success"
+                    />
+                  </View>
+                </View>
+                <View className="mt-3 flex-row gap-3">
+                  <View className="flex-1">
+                    <StatCell
+                      boxed
+                      icon="cash"
+                      label="Revenue"
+                      value={formatPrice(productStats.totalRevenue || 0)}
+                      tone="success"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <StatCell
+                      boxed
+                      icon="counter"
+                      label="Units sold"
+                      value={String(productStats.totalQuantitySold)}
+                    />
+                  </View>
+                </View>
+              </Section>
+
+              {productStats.bestSellers.length > 0 && (
+                <Section title="Best sellers by revenue">
+                  <View className="p-4" style={cardStyle}>
+                    <RankBars
+                      items={productStats.bestSellers.slice(0, 6).map((p) => ({
+                        id: p.id,
+                        label: p.name,
+                        value: p.revenue,
+                      }))}
+                      formatValue={formatPrice}
+                    />
+                  </View>
+                </Section>
+              )}
+
+              {productStats.slowMovers.length > 0 && (
+                <Section title="Not sold recently">
+                  <View className="px-4" style={cardStyle}>
+                    {productStats.slowMovers.map((p, i) => (
+                      <ListRow
+                        key={p.id}
+                        icon="package-variant-closed"
+                        title={p.name}
+                        subtitle={`${formatPrice(p.sellingPrice)} / ${p.unit}`}
+                        divider={i > 0}
+                      />
+                    ))}
+                  </View>
+                </Section>
+              )}
+            </>
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }

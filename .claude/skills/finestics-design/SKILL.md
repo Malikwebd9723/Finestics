@@ -21,7 +21,9 @@ Import from `components/ui`. Reach for these before writing a bespoke card:
 | `StatInline` | a row of 2–3 label/value pairs (replaces grids of tinted cards) |
 | `AttentionRow` | one actionable item; tinted only when it's a real alert |
 | `ActionBar` | slim quick-action row, one primary |
-| `Sparkline` | a one-series trend line (no axes/gridlines) |
+| `TrendCard` / `AreaChart` / `Sparkline` | line/area trend (no axes/gridlines) |
+| `BarChart` | vertical bar chart (e.g. order status) |
+| `DonutChart` | pie/donut for proportions (e.g. payment status) |
 
 Tokens live in `constants/design.ts` (`typo`, `fonts`, `radius`). Colors come from
 `useThemeContext().colors` — never redefine them.

@@ -61,7 +61,7 @@ export default function TrendCard({
       <View className="flex-row items-end justify-between">
         <View>
           <Text style={[typo.eyebrow, { color: colors.muted }]}>{title.toUpperCase()}</Text>
-          <Text className="mt-1" style={[typo.stat, { color: colors.text, fontSize: 23 }]}>
+          <Text className="mt-1" style={[typo.stat, { color: colors.text, fontSize: 22 }]}>
             {value}
           </Text>
         </View>

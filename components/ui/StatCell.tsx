@@ -53,7 +53,7 @@ export default function StatCell({
           style={{ marginBottom: 8 }}
         />
       ) : null}
-      <Text style={[typo.stat, { color: valueColor, fontSize: 21 }]} numberOfLines={1}>
+      <Text style={[typo.stat, { color: valueColor, fontSize: 20 }]} numberOfLines={1}>
         {value}
       </Text>
       <Text className="mt-1 text-[13px] font-medium" style={{ color: colors.muted }}>

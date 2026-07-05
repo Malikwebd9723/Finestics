@@ -11,6 +11,8 @@ interface ListRowProps {
   title: string;
   subtitle?: string;
   amount?: string;
+  /** color the amount (money in = success, money out / overdue = error) */
+  amountTone?: 'default' | 'success' | 'error';
   badge?: { label: string; tone?: 'default' | 'success' | 'error' };
   divider?: boolean;
   onPress?: () => void;
@@ -23,6 +25,7 @@ export default function ListRow({
   title,
   subtitle,
   amount,
+  amountTone = 'default',
   badge,
   divider,
   onPress,
@@ -34,6 +37,8 @@ export default function ListRow({
       : badge?.tone === 'error'
         ? colors.error
         : colors.muted;
+  const amountColor =
+    amountTone === 'success' ? colors.success : amountTone === 'error' ? colors.error : colors.text;
 
   return (
     <TouchableOpacity
@@ -66,7 +71,7 @@ export default function ListRow({
 
       <View className="ml-2 items-end">
         {amount ? (
-          <Text style={[typo.num, { color: colors.text, fontSize: 15 }]}>{amount}</Text>
+          <Text style={[typo.num, { color: amountColor, fontSize: 15 }]}>{amount}</Text>
         ) : null}
         {badge ? (
           <Text className="mt-0.5 text-xs font-medium" style={{ color: badgeColor }}>

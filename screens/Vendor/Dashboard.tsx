@@ -18,7 +18,7 @@ import { formatPrice, getPaymentStatusLabel, Order } from 'types/order.types';
 import SegmentedDateFilter from 'components/shared/SegmentedDateFilter';
 import { DateRange, defaultRange } from 'components/shared/DatePresetSelector';
 import { typo, radius } from 'constants/design';
-import { HeroMetric, StatCell, TrendCard, AttentionRow, ListRow } from 'components/ui';
+import { HeroMetric, StatCell, TrendCard, AttentionRow, ListRow, DonutChart } from 'components/ui';
 
 const initialsOf = (s?: string) =>
   (s || '')
@@ -31,6 +31,20 @@ const initialsOf = (s?: string) =>
 
 const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+const shiftDate = (s: string, days: number) => {
+  const d = new Date(s + 'T12:00:00');
+  d.setDate(d.getDate() + days);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const da = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${da}`;
+};
+// Equal-length window ending the day before the current range.
+const previousRange = (from: string, span: number) => ({
+  from: shiftDate(from, -span),
+  to: shiftDate(from, -1),
+});
 
 export default function Dashboard() {
   const { colors } = useThemeContext();
@@ -78,9 +92,27 @@ export default function Dashboard() {
     queryFn: () => fetchAllOrders({ limit: 5, sortBy: 'createdAt', sortOrder: 'DESC' }),
   });
 
+  const prev = useMemo(() => previousRange(range.from, spanDays), [range.from, spanDays]);
+  const { data: prevStatsData } = useQuery({
+    queryKey: ['dashboardStatsPrev', prev.from, prev.to],
+    queryFn: () => fetchDashboardStats({ from: prev.from, to: prev.to }),
+  });
+
   const stats: DashboardStats | null = statsData?.data || null;
   const bucket = stats?.custom ?? stats?.today ?? null;
   const recent: Order[] = ordersData?.data || [];
+
+  const prevBucket = prevStatsData?.data?.custom ?? prevStatsData?.data?.today ?? null;
+  const prevNet = prevBucket?.netProfit ?? 0;
+  const netDelta =
+    prevNet > 0 ? { pct: (((bucket?.netProfit ?? 0) - prevNet) / prevNet) * 100 } : null;
+
+  const cardStyle = {
+    backgroundColor: colors.card,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  } as const;
 
   const trendPoints = trendData?.data || [];
   const series = useMemo(() => trendPoints.map((d) => d.sales), [trendPoints]);
@@ -137,13 +169,27 @@ export default function Dashboard() {
           sublabel={margin}
           onPress={() => navigation.navigate('Statistics')}
           footer={
-            <View className="flex-row justify-between">
-              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '500' }}>
-                Gross {formatPrice(bucket?.grossProfit || 0)}
-              </Text>
-              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '500' }}>
-                Expenses {formatPrice(bucket?.expenses || 0)}
-              </Text>
+            <View>
+              <View className="flex-row justify-between">
+                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '500' }}>
+                  Gross {formatPrice(bucket?.grossProfit || 0)}
+                </Text>
+                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '500' }}>
+                  Expenses {formatPrice(bucket?.expenses || 0)}
+                </Text>
+              </View>
+              {netDelta ? (
+                <Text
+                  style={{
+                    color: netDelta.pct >= 0 ? colors.success : colors.error,
+                    fontSize: 12,
+                    fontWeight: '600',
+                    marginTop: 8,
+                  }}>
+                  {netDelta.pct >= 0 ? '▲' : '▼'} {Math.abs(netDelta.pct).toFixed(0)}% vs previous
+                  period
+                </Text>
+              ) : null}
             </View>
           }
         />
@@ -181,6 +227,57 @@ export default function Dashboard() {
           </View>
         </View>
       </View>
+
+      {/* Cash collection */}
+      {bucket && (bucket.sales || 0) > 0 && (
+        <View className="px-4 pt-4">
+          <Text className="mb-2" style={[typo.eyebrow, { color: colors.muted }]}>
+            CASH COLLECTION
+          </Text>
+          <View className="flex-row items-center p-4" style={cardStyle}>
+            <DonutChart
+              size={118}
+              thickness={20}
+              segments={[
+                { label: 'Collected', value: bucket.collected || 0, color: colors.success },
+                {
+                  label: 'Remaining',
+                  value: Math.max(0, (bucket.sales || 0) - (bucket.collected || 0)),
+                  color: colors.muted,
+                },
+              ]}
+              centerTop={`${Math.round(((bucket.collected || 0) / (bucket.sales || 1)) * 100)}%`}
+              centerBottom="collected"
+            />
+            <View className="ml-5 flex-1">
+              <View className="flex-row items-center" style={{ paddingVertical: 5 }}>
+                <View
+                  className="mr-2 h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: colors.success }}
+                />
+                <Text className="flex-1 text-sm" style={{ color: colors.text }}>
+                  Collected
+                </Text>
+                <Text style={[typo.num, { color: colors.success, fontSize: 15 }]}>
+                  {formatPrice(bucket.collected || 0)}
+                </Text>
+              </View>
+              <View className="flex-row items-center" style={{ paddingVertical: 5 }}>
+                <View
+                  className="mr-2 h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: colors.muted }}
+                />
+                <Text className="flex-1 text-sm" style={{ color: colors.text }}>
+                  Remaining
+                </Text>
+                <Text style={[typo.num, { color: colors.text, fontSize: 15 }]}>
+                  {formatPrice(Math.max(0, (bucket.sales || 0) - (bucket.collected || 0)))}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* Needs attention */}
       {pending > 0 && (
