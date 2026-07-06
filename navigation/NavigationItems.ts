@@ -107,6 +107,13 @@ export const navigationItems: NavigationItem[] = [
     location: 'both',
   },
   {
+    label: 'Cart',
+    screen: 'CartsScreen',
+    icon: 'cart-outline',
+    roles: ['customer'],
+    location: 'tab',
+  },
+  {
     label: 'Orders',
     screen: 'MyOrdersScreen',
     icon: 'receipt',

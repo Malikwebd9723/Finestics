@@ -32,7 +32,7 @@ export default function ProductCatalogScreen() {
     return () => clearTimeout(t);
   }, [search]);
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const { data, isLoading, isError, error, refetch, isRefetching } = useQuery({
     queryKey: ['vendor-products', vendorId, debounced],
     queryFn: () => getVendorProducts(vendorId, { search: debounced || undefined, limit: 100 }),
     enabled: !!vendorId,
@@ -55,6 +55,17 @@ export default function ProductCatalogScreen() {
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
+      ) : isError ? (
+        // Catalog is connection-gated (403 NOT_CONNECTED lands here).
+        <View style={{ flex: 1, alignItems: 'center', paddingTop: 80, paddingHorizontal: 32 }}>
+          <MaterialCommunityIcons name="lock-outline" size={56} color={colors.muted} />
+          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', marginTop: 16 }}>
+            Catalog unavailable
+          </Text>
+          <Text style={{ color: colors.muted, fontSize: 13, marginTop: 6, textAlign: 'center' }}>
+            {(error as Error)?.message || 'Connect with this vendor to browse their catalog.'}
+          </Text>
+        </View>
       ) : (
         <FlatList
           data={products}
@@ -70,7 +81,7 @@ export default function ProductCatalogScreen() {
                     productId: item.id,
                     name: item.name,
                     unit: item.unit,
-                    sellingPrice: String(item.sellingPrice),
+                    sellingPrice: String(item.sellingPrice ?? 0),
                   })
                 }
                 onIncrement={() => setQty(vendorId, item.id, qty + 1)}

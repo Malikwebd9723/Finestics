@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
-import { getVendorOrders } from 'api/actions/vendorOrderInboxActions';
+import { StatInline } from 'components/ui';
+import { getVendorOrders, getVendorOrderStats } from 'api/actions/vendorOrderInboxActions';
 import type { OrderStatus } from 'api/actions/customerOrderActions';
 import { formatPrice } from '../Customer/components/ProductCard';
 import OrderStatusBadge from '../Customer/components/OrderStatusBadge';
@@ -23,12 +24,21 @@ const FILTERS: { key: 'all' | OrderStatus; label: string }[] = [
 export default function IncomingOrdersScreen() {
   const { colors } = useThemeContext();
   const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
   const [filter, setFilter] = useState<'all' | OrderStatus>('all');
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['vendor-customer-orders'],
     queryFn: () => getVendorOrders(),
-    refetchInterval: 30000,
+    refetchInterval: isFocused ? 30000 : false,
+  });
+
+  // App-order aggregates — the vendor's window into customer-placed revenue
+  // until these numbers are fused into the main Dashboard.
+  const { data: stats } = useQuery({
+    queryKey: ['vendor-customer-order-stats'],
+    queryFn: getVendorOrderStats,
+    refetchInterval: isFocused ? 60000 : false,
   });
 
   const all = data?.items ?? [];
@@ -38,6 +48,22 @@ export default function IncomingOrdersScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <FlatList
         ListHeaderComponent={
+          <View>
+            {stats && (
+              <View style={{ paddingHorizontal: 16, paddingTop: 14 }}>
+                <StatInline
+                  items={[
+                    { label: 'App orders', value: String(stats.totalOrders) },
+                    { label: 'Delivered revenue', value: formatPrice(stats.revenue), tone: 'success' },
+                    {
+                      label: 'Outstanding credit',
+                      value: formatPrice(stats.outstandingCredit),
+                      tone: stats.outstandingCredit > 0 ? 'error' : 'default',
+                    },
+                  ]}
+                />
+              </View>
+            )}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 16, paddingBottom: 4 }}>
             {FILTERS.map((f) => {
               const selected = filter === f.key;
@@ -59,6 +85,7 @@ export default function IncomingOrdersScreen() {
                 </Pressable>
               );
             })}
+          </View>
           </View>
         }
         data={orders}

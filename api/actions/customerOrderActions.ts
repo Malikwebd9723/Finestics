@@ -87,6 +87,8 @@ export interface CreateOrderPayload {
   requestedDeliveryDate?: string | null;
   requestedDeliveryTime?: string | null;
   notes?: string | null;
+  /** Total shown to the customer; server rejects with PRICES_CHANGED on drift. */
+  expectedTotal?: number;
 }
 
 // ==================== ORDERS ====================

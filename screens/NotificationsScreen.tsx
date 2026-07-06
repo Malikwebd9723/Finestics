@@ -8,7 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
@@ -48,12 +48,13 @@ export default function NotificationsScreen() {
   const { colors } = useThemeContext();
   const { user } = useAuth();
   const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
   const queryClient = useQueryClient();
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['notifications'],
     queryFn: getNotifications,
-    refetchInterval: 30000,
+    refetchInterval: isFocused ? 30000 : false,
   });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['notifications'] });

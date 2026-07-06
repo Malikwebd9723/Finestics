@@ -29,14 +29,16 @@ export default function CheckoutScreen() {
   const vendorName: string = route.params?.vendorName || 'Vendor';
   const queryClient = useQueryClient();
 
-  const { getCart, getTotal, clearCart } = useCart();
+  const { getCart, getTotal, clearCart, updatePrices } = useCart();
   const items = getCart(vendorId);
   const total = getTotal(vendorId);
 
   const [addressId, setAddressId] = useState<number | null>(null);
   const [payment, setPayment] = useState<PaymentMethod>('cash');
   const [notes, setNotes] = useState('');
+  const [deliveryDate, setDeliveryDate] = useState<string | null>(null);
   const [creditError, setCreditError] = useState<any>(null);
+  const [pricesChanged, setPricesChanged] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
 
   const { data: addresses } = useQuery({
@@ -58,7 +60,9 @@ export default function CheckoutScreen() {
         vendorId,
         paymentMethod: payment,
         deliveryAddressId: addressId,
+        requestedDeliveryDate: deliveryDate,
         notes: notes.trim() || null,
+        expectedTotal: Math.round(total * 100) / 100,
         items: items.map((l) => ({ productId: l.productId, quantity: l.quantity })),
       }),
     onSuccess: (order) => {
@@ -70,6 +74,11 @@ export default function CheckoutScreen() {
     onError: (e: any) => {
       if (e?.code === 'CREDIT_LIMIT_EXCEEDED') {
         setCreditError(e.details || {});
+      } else if (e?.code === 'PRICES_CHANGED') {
+        // Refresh cart lines with the vendor's current prices; the summary and
+        // total re-render and the customer confirms the new amount explicitly.
+        if (e.details?.items) updatePrices(vendorId, e.details.items);
+        setPricesChanged(true);
       } else {
         Toast.error(e?.message || 'Failed to place order');
       }
@@ -136,6 +145,41 @@ export default function CheckoutScreen() {
           </Pressable>
         </Section>
 
+        {/* Delivery day (optional quick-select; no native picker dependency) */}
+        <Section title="Delivery Day (optional)" colors={colors}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {[
+              { label: 'No preference', offset: null },
+              { label: 'Tomorrow', offset: 1 },
+              { label: 'In 2 days', offset: 2 },
+              { label: 'In 3 days', offset: 3 },
+            ].map((opt) => {
+              const value =
+                opt.offset === null
+                  ? null
+                  : new Date(Date.now() + opt.offset * 864e5).toISOString().slice(0, 10);
+              const selected = deliveryDate === value;
+              return (
+                <Pressable
+                  key={opt.label}
+                  onPress={() => setDeliveryDate(value)}
+                  style={{
+                    paddingHorizontal: 14,
+                    paddingVertical: 9,
+                    borderRadius: 999,
+                    backgroundColor: selected ? colors.primary : colors.background,
+                    borderWidth: 1,
+                    borderColor: selected ? colors.primary : colors.border,
+                  }}>
+                  <Text style={{ color: selected ? colors.white : colors.text, fontSize: 13 }}>
+                    {opt.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </Section>
+
         {/* Payment method */}
         <Section title="Payment Method" colors={colors}>
           <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -175,6 +219,28 @@ export default function CheckoutScreen() {
             })}
           </View>
         </Section>
+
+        {/* Price-drift notice: totals above already reflect the fresh prices */}
+        {pricesChanged && (
+          <View
+            style={{
+              backgroundColor: colors.primary + '10',
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: colors.primary + '44',
+              padding: 14,
+              marginTop: 4,
+              marginBottom: 4,
+            }}>
+            <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 4 }}>
+              Prices were updated
+            </Text>
+            <Text style={{ color: colors.text, fontSize: 13 }}>
+              The vendor changed some prices since you added these items. The totals above are
+              refreshed — review and place the order again to confirm.
+            </Text>
+          </View>
+        )}
 
         {/* Credit-limit warning (error tone: this is a money/limit breach) */}
         {creditError && (
@@ -241,6 +307,7 @@ export default function CheckoutScreen() {
           disabled={placeMutation.isPending || items.length === 0}
           onPress={() => {
             setCreditError(null);
+            setPricesChanged(false);
             placeMutation.mutate();
           }}
           style={{

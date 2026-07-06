@@ -4,15 +4,11 @@ import { View, Text, Image, Pressable } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import type { MarketplaceProduct } from 'api/actions/marketplaceActions';
+import { formatPrice } from 'utils/currency';
 
-// Currency symbol for displayed prices. Adjust to match the business locale.
-export const CURRENCY = '£';
-
-export const formatPrice = (value: string | number | null | undefined) => {
-  const n = Number(value ?? 0);
-  if (Number.isNaN(n)) return `${CURRENCY}0`;
-  return `${CURRENCY}${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-};
+// Re-exported so existing `import { formatPrice } from './components/ProductCard'`
+// callsites keep working; the implementation (and symbol) live in utils/currency.
+export { formatPrice };
 
 interface Props {
   product: MarketplaceProduct;
@@ -70,10 +66,17 @@ export default function ProductCard({
         <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
           {product.name}
         </Text>
-        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', marginTop: 2 }}>
-          {formatPrice(product.sellingPrice)}
-          <Text style={{ color: colors.muted, fontWeight: '400' }}> / {product.unit}</Text>
-        </Text>
+        {product.sellingPrice != null ? (
+          <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', marginTop: 2 }}>
+            {formatPrice(product.sellingPrice)}
+            <Text style={{ color: colors.muted, fontWeight: '400' }}> / {product.unit}</Text>
+          </Text>
+        ) : (
+          // Marketplace preview before connecting — prices are connection-gated.
+          <Text style={{ color: colors.muted, fontSize: 13, marginTop: 2 }}>
+            per {product.unit} · price after connecting
+          </Text>
+        )}
       </View>
 
       {/* Cart control */}

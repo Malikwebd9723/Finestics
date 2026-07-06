@@ -11,6 +11,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useCart } from '../context/CartContext';
 import { useNotifications } from '../context/NotificationContext';
 import { getNotifications } from 'api/actions/notificationActions';
+import { getConnectionRequests } from 'api/actions/connectionActions';
+import { getVendorOrders } from 'api/actions/vendorOrderInboxActions';
 
 // Import your TabNavigator
 import TabNavigator from './TabNavigator';
@@ -51,6 +53,9 @@ function CustomDrawerContent(props: any) {
   const { clearAll: clearCarts } = useCart();
   const { unregisterCurrentToken } = useNotifications();
 
+  const isVendor = user?.role === 'vendor';
+  const isAdmin = user?.role === 'admin';
+
   // Real unread count for the Notifications badge.
   const { data: notificationData } = useQuery({
     queryKey: ['notifications'],
@@ -60,13 +65,35 @@ function CustomDrawerContent(props: any) {
   });
   const unreadCount = notificationData?.unreadCount ?? 0;
 
+  // Vendor menu badges: pending connection requests + new app orders.
+  const { data: pendingRequests } = useQuery({
+    queryKey: ['vendor-connection-requests'],
+    queryFn: () => getConnectionRequests('pending'),
+    enabled: isVendor,
+    refetchInterval: 60000,
+  });
+  const { data: pendingOrders } = useQuery({
+    queryKey: ['vendor-customer-orders', 'pending-badge'],
+    queryFn: () => getVendorOrders('pending'),
+    enabled: isVendor,
+    refetchInterval: 60000,
+  });
+
+  const menuBadges = isVendor
+    ? {
+        ConnectionRequestsScreen: pendingRequests?.length || 0,
+        IncomingOrdersScreen: pendingOrders?.pagination?.totalItems ?? pendingOrders?.items.length ?? 0,
+      }
+    : undefined;
+
   const handleLogout = async () => {
     try {
-      // Stop push to this device + drop local carts before wiping storage.
+      // Order matters: kill this device's push token and the server session
+      // while the auth token still exists, THEN wipe local storage.
       await unregisterCurrentToken();
       clearCarts();
-      await AsyncStorage.clear(); // Clear all stored data
-      logout?.();
+      await logout?.();
+      await AsyncStorage.clear(); // Clear remaining local data (theme prefs stay default)
       props.navigation.closeDrawer();
     } catch (error) {
       console.error('Logout error:', error);
@@ -77,9 +104,6 @@ function CustomDrawerContent(props: any) {
     props.navigation.closeDrawer();
     props.navigation.navigate(screenName);
   };
-
-  const isVendor = user?.role === 'vendor';
-  const isAdmin = user?.role === 'admin';
 
   return (
     <DrawerContentScrollView
@@ -128,6 +152,7 @@ function CustomDrawerContent(props: any) {
           <NavigationList
             navigation={props.navigation}
             closeDrawer={() => props.navigation.closeDrawer()}
+            badges={menuBadges}
           />
 
           {/* Vendor-specific menu items */}

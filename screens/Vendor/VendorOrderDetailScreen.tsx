@@ -9,6 +9,7 @@ import Toast from 'utils/Toast';
 import {
   getVendorOrder,
   updateVendorOrderStatus,
+  recordOrderPayment,
   type VendorOrderStatusAction,
 } from 'api/actions/vendorOrderInboxActions';
 import type { OrderStatus } from 'api/actions/customerOrderActions';
@@ -38,14 +39,28 @@ export default function VendorOrderDetailScreen() {
     enabled: !!orderId,
   });
 
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['vendor-customer-order', orderId] });
+    queryClient.invalidateQueries({ queryKey: ['vendor-customer-orders'] });
+    queryClient.invalidateQueries({ queryKey: ['vendor-customer-order-stats'] });
+  };
+
   const mutation = useMutation({
     mutationFn: (status: VendorOrderStatusAction) => updateVendorOrderStatus(orderId, status),
     onSuccess: () => {
       Toast.success('Order updated');
-      queryClient.invalidateQueries({ queryKey: ['vendor-customer-order', orderId] });
-      queryClient.invalidateQueries({ queryKey: ['vendor-customer-orders'] });
+      invalidate();
     },
     onError: (e: any) => Toast.error(e?.message || 'Failed to update'),
+  });
+
+  const paymentMutation = useMutation({
+    mutationFn: () => recordOrderPayment(orderId),
+    onSuccess: () => {
+      Toast.success('Payment recorded');
+      invalidate();
+    },
+    onError: (e: any) => Toast.error(e?.message || 'Failed to record payment'),
   });
 
   if (isLoading || !order) {
@@ -60,6 +75,9 @@ export default function VendorOrderDetailScreen() {
   const customerName = customer ? `${customer.firstName} ${customer.lastName}`.trim() : 'Customer';
   const next = NEXT_ACTION[order.status as OrderStatus];
   const canCancel = CAN_CANCEL.includes(order.status as OrderStatus);
+  const canRecordPayment =
+    order.paymentStatus === 'pending' &&
+    !['cancelled', 'refunded'].includes(order.status as string);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -161,6 +179,28 @@ export default function VendorOrderDetailScreen() {
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{next.label}</Text>
+            )}
+          </Pressable>
+        )}
+
+        {/* Money-in action: settles credit against the customer's balance */}
+        {canRecordPayment && (
+          <Pressable
+            disabled={paymentMutation.isPending}
+            onPress={() => paymentMutation.mutate()}
+            style={{
+              borderRadius: 12,
+              paddingVertical: 14,
+              alignItems: 'center',
+              marginTop: 12,
+              borderWidth: 1,
+              borderColor: colors.success,
+              opacity: paymentMutation.isPending ? 0.6 : 1,
+            }}>
+            {paymentMutation.isPending ? (
+              <ActivityIndicator color={colors.success} />
+            ) : (
+              <Text style={{ color: colors.success, fontWeight: '700' }}>Mark as Paid</Text>
             )}
           </Pressable>
         )}

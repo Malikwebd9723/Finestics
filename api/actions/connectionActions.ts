@@ -26,6 +26,14 @@ export interface ConnectionRequest {
   contactPerson: string | null;
   phone: string | null;
   email: string | null;
+  creditLimit?: string | null;
+  currentBalance?: string | null;
+  /**
+   * True when this request landed on a customer record the vendor created
+   * earlier (matched by phone/email). Signup contact details are unverified —
+   * the vendor should confirm the requester's identity before approving.
+   */
+  matchedExistingRecord?: boolean;
   customerUser?: {
     id: number;
     firstName: string;

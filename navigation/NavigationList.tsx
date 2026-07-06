@@ -8,9 +8,11 @@ import { getDrawerNavigationItems, NavigationItem } from './NavigationItems';
 interface NavigationListProps {
   navigation: any;
   closeDrawer?: () => void;
+  /** Optional count pills keyed by screen name (e.g. pending requests). */
+  badges?: Record<string, number | undefined>;
 }
 
-export default function NavigationList({ navigation, closeDrawer }: NavigationListProps) {
+export default function NavigationList({ navigation, closeDrawer, badges }: NavigationListProps) {
   const { colors } = useThemeContext();
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,9 +70,32 @@ export default function NavigationList({ navigation, closeDrawer }: NavigationLi
           }}
           activeOpacity={0.7}>
           {renderIcon(item.icon, colors.text)}
-          <Text style={{ color: colors.text, marginLeft: 16, fontSize: 15, fontWeight: '500' }}>
+          <Text
+            style={{
+              color: colors.text,
+              marginLeft: 16,
+              fontSize: 15,
+              fontWeight: '500',
+              flex: 1,
+            }}>
             {item.label}
           </Text>
+          {!!badges?.[item.screen] && (
+            <View
+              style={{
+                backgroundColor: colors.primary,
+                borderRadius: 999,
+                minWidth: 20,
+                height: 20,
+                paddingHorizontal: 6,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Text style={{ color: colors.white, fontSize: 11, fontWeight: '700' }}>
+                {badges[item.screen]! > 99 ? '99+' : badges[item.screen]}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       ))}
     </View>

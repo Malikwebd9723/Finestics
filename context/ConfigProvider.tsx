@@ -1,6 +1,7 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchConfig, AppConfig } from 'api/actions/configActions';
+import { setCurrencySymbol } from 'utils/currency';
 import {
   ORDER_STATUSES,
   PAYMENT_METHODS,
@@ -56,6 +57,12 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     retry: 1,
   });
   const config = data?.data ?? FALLBACK_CONFIG;
+
+  // Keep the module-level money formatter in sync with the server's currency.
+  useEffect(() => {
+    setCurrencySymbol(config.currency?.symbol);
+  }, [config.currency?.symbol]);
+
   return <ConfigContext.Provider value={config}>{children}</ConfigContext.Provider>;
 }
 

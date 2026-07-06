@@ -11,8 +11,9 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
+import { formatPrice } from 'utils/currency';
 import type {
   ConnectionRequest,
   ApproveConnectionPayload,
@@ -48,12 +49,17 @@ export default function ApproveConnectionModal({
   const [businessType, setBusinessType] = useState('');
   const [notes, setNotes] = useState('');
 
-  // Prefill from the request whenever it changes.
+  // Prefill from the request whenever it changes (matched records carry the
+  // vendor's previously-set credit terms).
   useEffect(() => {
     if (request) {
       setBusinessName(request.businessName || customerName || '');
       setContactPerson(request.contactPerson || customerName || '');
-      setCreditLimit('');
+      setCreditLimit(
+        request.creditLimit && Number(request.creditLimit) > 0
+          ? String(Number(request.creditLimit))
+          : ''
+      );
       setPaymentTerms('Cash');
       setBusinessType('');
       setNotes('');
@@ -116,11 +122,43 @@ export default function ApproveConnectionModal({
               Approve Connection
             </Text>
             <Pressable onPress={onClose} hitSlop={10}>
-              <Ionicons name="close" size={24} color={colors.muted} />
+              <MaterialCommunityIcons name="close" size={24} color={colors.muted} />
             </Pressable>
           </View>
 
           <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
+            {/* Identity caution: request matched a pre-existing customer record by
+                unverified phone/email — approving grants that record's credit. */}
+            {request?.matchedExistingRecord && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  backgroundColor: colors.gray,
+                  borderRadius: 10,
+                  padding: 12,
+                  marginBottom: 4,
+                }}>
+                <MaterialCommunityIcons
+                  name="alert-circle-outline"
+                  size={20}
+                  color={colors.error}
+                  style={{ marginTop: 1 }}
+                />
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13 }}>
+                    Matched to your existing customer record
+                  </Text>
+                  <Text style={{ color: colors.muted, fontSize: 12, marginTop: 3 }}>
+                    This signup used the phone/email on a record you created
+                    {request?.creditLimit != null
+                      ? ` (credit limit ${formatPrice(request.creditLimit)}, balance ${formatPrice(request.currentBalance)})`
+                      : ''}
+                    . Contact details are not verified — confirm this is really your customer
+                    before approving.
+                  </Text>
+                </View>
+              </View>
+            )}
             {!!customerName && (
               <View
                 style={{
@@ -173,6 +211,9 @@ export default function ApproveConnectionModal({
               keyboardType="numeric"
               style={inputStyle}
             />
+            <Text style={{ color: colors.muted, fontSize: 12, marginTop: 6 }}>
+              0 means cash only — credit orders will be blocked for this customer.
+            </Text>
 
             <Text style={labelStyle}>Payment Terms</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 }}>

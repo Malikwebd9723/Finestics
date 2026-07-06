@@ -35,6 +35,31 @@ export interface Customer {
   updatedAt: string;
   deletedAt: string | null;
   address?: Address;
+
+  // Self-serve app connection (present since the customer module)
+  userId?: number | null;
+  connectionStatus?: 'pending' | 'active' | 'rejected' | 'blocked';
+  connectionRequestedAt?: string | null;
+  connectionApprovedAt?: string | null;
+  connectionRejectionReason?: string | null;
+  /** Linked app account, included by GET /vendor-customers/:id */
+  customerUser?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string | null;
+  } | null;
+
+  /** Order aggregates, included by GET /vendor-customers/:id/summary */
+  stats?: {
+    totalOrders: number;
+    totalSpent: number;
+    totalOutstanding: number;
+    totalCost: number;
+    grossProfit: number;
+    grossMargin: number;
+  };
 }
 
 export interface CustomerFormData {

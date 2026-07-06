@@ -1,9 +1,12 @@
 // context/CartContext.tsx
-// Per-vendor shopping carts persisted locally in AsyncStorage. One cart per vendor.
+// Per-vendor shopping carts persisted locally, namespaced per signed-in user so
+// carts never leak between accounts on a shared device. One cart per vendor.
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from './AuthContext';
 
-const STORAGE_KEY = 'customer_carts_v1';
+const STORAGE_PREFIX = 'customer_carts_v1';
+const LEGACY_KEY = 'customer_carts_v1'; // pre-P4 un-namespaced key
 
 export interface CartLine {
   productId: number;
@@ -20,14 +23,24 @@ interface VendorCart {
 
 type Carts = Record<string, VendorCart>;
 
+export interface CartSummary {
+  vendorId: number;
+  vendorName?: string;
+  count: number;
+  total: number;
+}
+
 interface CartContextType {
   ready: boolean;
   getCart: (vendorId: number) => CartLine[];
   getCount: (vendorId: number) => number;
   getTotal: (vendorId: number) => number;
+  getAllCarts: () => CartSummary[];
   addItem: (vendorId: number, vendorName: string, line: Omit<CartLine, 'quantity'>, qty?: number) => void;
   setQty: (vendorId: number, productId: number, qty: number) => void;
   removeItem: (vendorId: number, productId: number) => void;
+  /** Refresh stored unit prices (after a PRICES_CHANGED rejection). */
+  updatePrices: (vendorId: number, prices: { productId: number; sellingPrice: string }[]) => void;
   clearCart: (vendorId: number) => void;
   clearAll: () => void;
 }
@@ -35,28 +48,53 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const [carts, setCarts] = useState<Carts>({});
   const [ready, setReady] = useState(false);
 
-  // Load persisted carts once.
+  const storageKey = user ? `${STORAGE_PREFIX}:${user.id}` : null;
+
+  // Load the signed-in user's carts; carts are empty (and unpersisted) signed out.
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
-        if (raw) setCarts(JSON.parse(raw));
-      } catch {
-        // ignore corrupt cart
-      } finally {
+      if (!storageKey) {
+        setCarts({});
         setReady(true);
+        return;
+      }
+      try {
+        let raw = await AsyncStorage.getItem(storageKey);
+        // One-time adoption of the pre-P4 un-namespaced cart.
+        if (!raw) {
+          const legacy = await AsyncStorage.getItem(LEGACY_KEY);
+          if (legacy) {
+            raw = legacy;
+            await AsyncStorage.setItem(storageKey, legacy);
+            await AsyncStorage.removeItem(LEGACY_KEY);
+          }
+        }
+        if (!cancelled) setCarts(raw ? JSON.parse(raw) : {});
+      } catch {
+        if (!cancelled) setCarts({});
+      } finally {
+        if (!cancelled) setReady(true);
       }
     })();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [storageKey]);
 
-  // Persist on every change.
-  const persist = useCallback((next: Carts) => {
-    setCarts(next);
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
-  }, []);
+  const persist = useCallback(
+    (next: Carts) => {
+      setCarts(next);
+      if (storageKey) {
+        AsyncStorage.setItem(storageKey, JSON.stringify(next)).catch(() => {});
+      }
+    },
+    [storageKey]
+  );
 
   const getCart = useCallback(
     (vendorId: number) => carts[String(vendorId)]?.items ?? [],
@@ -77,6 +115,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       ),
     [carts]
   );
+
+  const getAllCarts = useCallback((): CartSummary[] => {
+    return Object.entries(carts)
+      .map(([vendorId, cart]) => ({
+        vendorId: Number(vendorId),
+        vendorName: cart.vendorName,
+        count: cart.items.reduce((sum, l) => sum + l.quantity, 0),
+        total: cart.items.reduce((sum, l) => sum + Number(l.sellingPrice) * l.quantity, 0),
+      }))
+      .filter((c) => c.count > 0);
+  }, [carts]);
 
   const addItem: CartContextType['addItem'] = useCallback(
     (vendorId, vendorName, line, qty = 1) => {
@@ -116,6 +165,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [setQty]
   );
 
+  const updatePrices: CartContextType['updatePrices'] = useCallback(
+    (vendorId, prices) => {
+      const key = String(vendorId);
+      const cart = carts[key];
+      if (!cart) return;
+      const priceMap = new Map(prices.map((p) => [p.productId, String(p.sellingPrice)]));
+      const items = cart.items.map((l) =>
+        priceMap.has(l.productId) ? { ...l, sellingPrice: priceMap.get(l.productId)! } : l
+      );
+      persist({ ...carts, [key]: { ...cart, items } });
+    },
+    [carts, persist]
+  );
+
   const clearCart: CartContextType['clearCart'] = useCallback(
     (vendorId) => {
       const next = { ...carts };
@@ -132,9 +195,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     getCart,
     getCount,
     getTotal,
+    getAllCarts,
     addItem,
     setQty,
     removeItem,
+    updatePrices,
     clearCart,
     clearAll,
   };

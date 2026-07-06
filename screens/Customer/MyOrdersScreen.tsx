@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
@@ -28,12 +28,13 @@ const ACTIVE_STATUSES: OrderStatus[] = [
 export default function MyOrdersScreen() {
   const { colors } = useThemeContext();
   const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
   const [filter, setFilter] = useState<'all' | 'active' | 'delivered' | 'cancelled'>('all');
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['customer-orders'],
     queryFn: () => getOrders(),
-    refetchInterval: 30000, // poll while viewing
+    refetchInterval: isFocused ? 30000 : false, // poll only while actually viewing
   });
 
   const all = data?.items ?? [];

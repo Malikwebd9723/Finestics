@@ -1,6 +1,6 @@
 // screens/Customer/MarketplaceScreen.tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, RefreshControl, Pressable } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
@@ -16,6 +16,7 @@ export default function MarketplaceScreen() {
 
   const [search, setSearch] = useState('');
   const [debounced, setDebounced] = useState('');
+  const [businessType, setBusinessType] = useState<string | undefined>(undefined);
 
   // Debounce the search input so we don't fire a request per keystroke.
   useEffect(() => {
@@ -24,8 +25,9 @@ export default function MarketplaceScreen() {
   }, [search]);
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useQuery({
-    queryKey: ['marketplace-vendors', debounced],
-    queryFn: () => listVendors({ search: debounced || undefined, limit: 50 }),
+    queryKey: ['marketplace-vendors', debounced, businessType],
+    queryFn: () =>
+      listVendors({ search: debounced || undefined, businessType, limit: 50 }),
   });
 
   const vendors = data?.items ?? [];
@@ -57,6 +59,48 @@ export default function MarketplaceScreen() {
           setSearchQuery={setSearch}
           placeholder="Search vendors..."
         />
+      </View>
+
+      {/* Business-type filter (backed by GET /marketplace/vendors?businessType=) */}
+      <View
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: 8,
+          paddingHorizontal: 16,
+          paddingBottom: 10,
+        }}>
+        {[
+          { label: 'All', value: undefined },
+          { label: 'Wholesalers', value: 'wholesaler' },
+          { label: 'Retailers', value: 'retailer' },
+          { label: 'Farms', value: 'farm' },
+          { label: 'Distributors', value: 'distributor' },
+        ].map((t) => {
+          const selected = businessType === t.value;
+          return (
+            <Pressable
+              key={t.label}
+              onPress={() => setBusinessType(t.value)}
+              style={{
+                paddingHorizontal: 13,
+                paddingVertical: 7,
+                borderRadius: 999,
+                backgroundColor: selected ? colors.primary : colors.card,
+                borderWidth: 1,
+                borderColor: selected ? colors.primary : colors.border,
+              }}>
+              <Text
+                style={{
+                  color: selected ? colors.white : colors.text,
+                  fontSize: 13,
+                  fontWeight: '600',
+                }}>
+                {t.label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       {isLoading ? (

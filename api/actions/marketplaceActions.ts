@@ -21,7 +21,8 @@ export interface MarketplaceProduct {
   id: number;
   name: string;
   unit: string;
-  sellingPrice: string;
+  /** Absent until the customer's connection with the vendor is approved. */
+  sellingPrice?: string;
   tags?: string[];
   description?: string | null;
   imageUrl?: string | null;
@@ -30,6 +31,8 @@ export interface MarketplaceProduct {
 export interface VendorDetail extends MarketplaceVendor {
   addresses?: any[];
   products?: MarketplaceProduct[];
+  /** Whether the requesting customer has an approved connection. */
+  connected?: boolean;
 }
 
 export interface Pagination {
