@@ -6,6 +6,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 
 import { useThemeContext } from 'context/ThemeProvider';
 import { useCart } from 'context/CartContext';
+import { EmptyState } from 'components/ui';
+import { typo, fonts } from 'constants/design';
 import { formatPrice } from './components/ProductCard';
 
 export default function CartScreen() {
@@ -25,29 +27,23 @@ export default function CartScreen() {
 
   if (items.length === 0) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.background,
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: 32,
-        }}>
-        <MaterialCommunityIcons name="cart-outline" size={56} color={colors.muted} />
-        <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', marginTop: 16 }}>
-          Your cart is empty
-        </Text>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={{
-            marginTop: 16,
-            backgroundColor: colors.primary,
-            borderRadius: 10,
-            paddingHorizontal: 20,
-            paddingVertical: 12,
-          }}>
-          <Text style={{ color: '#fff', fontWeight: '600' }}>Browse products</Text>
-        </Pressable>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <EmptyState
+          icon="cart-outline"
+          title="Your cart is empty"
+          action={
+            <Pressable
+              onPress={() => navigation.goBack()}
+              style={{
+                backgroundColor: colors.primary,
+                borderRadius: 12,
+                paddingHorizontal: 20,
+                paddingVertical: 12,
+              }}>
+              <Text style={{ color: colors.white, fontWeight: '600' }}>Browse products</Text>
+            </Pressable>
+          }
+        />
       </View>
     );
   }
@@ -63,7 +59,7 @@ export default function CartScreen() {
               flexDirection: 'row',
               alignItems: 'center',
               backgroundColor: colors.card,
-              borderRadius: 14,
+              borderRadius: 16,
               padding: 12,
               marginHorizontal: 16,
               marginTop: 12,
@@ -71,13 +67,15 @@ export default function CartScreen() {
               borderColor: colors.border,
             }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
+              <Text
+                style={{ color: colors.text, fontSize: 15, fontFamily: fonts.bold }}
+                numberOfLines={1}>
                 {item.name}
               </Text>
               <Text style={{ color: colors.muted, fontSize: 13, marginTop: 2 }}>
                 {formatPrice(item.sellingPrice)} / {item.unit}
               </Text>
-              <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', marginTop: 4 }}>
+              <Text style={[typo.num, { color: colors.text, fontSize: 14, marginTop: 4 }]}>
                 {formatPrice(Number(item.sellingPrice) * item.quantity)}
               </Text>
             </View>
@@ -87,7 +85,7 @@ export default function CartScreen() {
                 flexDirection: 'row',
                 alignItems: 'center',
                 backgroundColor: colors.background,
-                borderRadius: 10,
+                borderRadius: 12,
                 borderWidth: 1,
                 borderColor: colors.border,
               }}>
@@ -98,7 +96,7 @@ export default function CartScreen() {
                 <MaterialCommunityIcons name="minus" size={18} color={colors.primary} />
               </Pressable>
               <Text
-                style={{ color: colors.text, fontWeight: '700', minWidth: 22, textAlign: 'center' }}>
+                style={[typo.num, { color: colors.text, minWidth: 22, textAlign: 'center' }]}>
                 {item.quantity}
               </Text>
               <Pressable
@@ -128,9 +126,7 @@ export default function CartScreen() {
         }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
           <Text style={{ color: colors.muted, fontSize: 15 }}>Subtotal</Text>
-          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700' }}>
-            {formatPrice(total)}
-          </Text>
+          <Text style={[typo.stat, { color: colors.text }]}>{formatPrice(total)}</Text>
         </View>
         <Pressable
           onPress={() => navigation.navigate('CheckoutScreen', { vendorId, vendorName })}
@@ -140,7 +136,9 @@ export default function CartScreen() {
             paddingVertical: 15,
             alignItems: 'center',
           }}>
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Proceed to Checkout</Text>
+          <Text style={{ color: colors.white, fontWeight: '700', fontSize: 16 }}>
+            Proceed to Checkout
+          </Text>
         </Pressable>
       </View>
     </View>

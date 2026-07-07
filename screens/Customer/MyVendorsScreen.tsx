@@ -55,7 +55,7 @@ export default function MyVendorsScreen() {
                 alignItems: 'center',
                 backgroundColor: selected ? colors.primary : 'transparent',
               }}>
-              <Text style={{ color: selected ? '#fff' : colors.text, fontWeight: '600' }}>
+              <Text style={{ color: selected ? colors.white : colors.text, fontWeight: '600' }}>
                 {t.label}
               </Text>
             </Pressable>

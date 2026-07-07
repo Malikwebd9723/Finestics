@@ -7,6 +7,8 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
 import { useCart } from 'context/CartContext';
+import { EmptyState } from 'components/ui';
+import { typo } from 'constants/design';
 import SearchBar from 'components/SearchBar';
 import { getVendorProducts } from 'api/actions/marketplaceActions';
 import ProductCard, { formatPrice } from './components/ProductCard';
@@ -57,15 +59,11 @@ export default function ProductCatalogScreen() {
         </View>
       ) : isError ? (
         // Catalog is connection-gated (403 NOT_CONNECTED lands here).
-        <View style={{ flex: 1, alignItems: 'center', paddingTop: 80, paddingHorizontal: 32 }}>
-          <MaterialCommunityIcons name="lock-outline" size={56} color={colors.muted} />
-          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', marginTop: 16 }}>
-            Catalog unavailable
-          </Text>
-          <Text style={{ color: colors.muted, fontSize: 13, marginTop: 6, textAlign: 'center' }}>
-            {(error as Error)?.message || 'Connect with this vendor to browse their catalog.'}
-          </Text>
-        </View>
+        <EmptyState
+          icon="lock-outline"
+          title="Catalog unavailable"
+          subtitle={(error as Error)?.message || 'Connect with this vendor to browse their catalog.'}
+        />
       ) : (
         <FlatList
           data={products}
@@ -89,14 +87,7 @@ export default function ProductCatalogScreen() {
               />
             );
           }}
-          ListEmptyComponent={
-            <View style={{ alignItems: 'center', paddingTop: 80, paddingHorizontal: 32 }}>
-              <MaterialCommunityIcons name="package-variant" size={56} color={colors.muted} />
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', marginTop: 16 }}>
-                No products found
-              </Text>
-            </View>
-          }
+          ListEmptyComponent={<EmptyState icon="package-variant" title="No products found" />}
           contentContainerStyle={{ paddingTop: 4, paddingBottom: count > 0 ? 90 : 24, flexGrow: 1 }}
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
@@ -114,25 +105,24 @@ export default function ProductCatalogScreen() {
             right: 16,
             bottom: 20,
             backgroundColor: colors.primary,
-            borderRadius: 14,
+            borderRadius: 12,
             paddingVertical: 14,
             paddingHorizontal: 18,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            shadowColor: '#000',
             shadowOpacity: 0.2,
             shadowRadius: 6,
             shadowOffset: { width: 0, height: 3 },
             elevation: 5,
           }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <MaterialCommunityIcons name="cart" size={20} color="#fff" />
-            <Text style={{ color: '#fff', fontWeight: '700', marginLeft: 8 }}>
+            <MaterialCommunityIcons name="cart" size={20} color={colors.white} />
+            <Text style={{ color: colors.white, fontWeight: '700', marginLeft: 8 }}>
               {count} item{count > 1 ? 's' : ''}
             </Text>
           </View>
-          <Text style={{ color: '#fff', fontWeight: '700' }}>
+          <Text style={[typo.num, { color: colors.white }]}>
             View Cart · {formatPrice(total)}
           </Text>
         </Pressable>

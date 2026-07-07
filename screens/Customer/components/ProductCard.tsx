@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, Image, Pressable } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
+import { typo, fonts } from 'constants/design';
 import type { MarketplaceProduct } from 'api/actions/marketplaceActions';
 import { formatPrice } from 'utils/currency';
 
@@ -36,7 +37,7 @@ export default function ProductCard({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: colors.card,
-        borderRadius: 14,
+        borderRadius: 16,
         padding: 12,
         marginHorizontal: 16,
         marginBottom: 10,
@@ -58,18 +59,22 @@ export default function ProductCard({
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-          <Text style={{ color: colors.primary, fontSize: 18, fontWeight: '700' }}>{initial}</Text>
+          <Text style={{ color: colors.primary, fontSize: 18, fontFamily: fonts.bold }}>
+            {initial}
+          </Text>
         </View>
       )}
 
       <View style={{ flex: 1, marginLeft: 12 }}>
-        <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
+        <Text
+          style={{ color: colors.text, fontSize: 15, fontFamily: fonts.bold }}
+          numberOfLines={1}>
           {product.name}
         </Text>
         {product.sellingPrice != null ? (
-          <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', marginTop: 2 }}>
+          <Text style={[typo.num, { color: colors.text, fontSize: 14, marginTop: 2 }]}>
             {formatPrice(product.sellingPrice)}
-            <Text style={{ color: colors.muted, fontWeight: '400' }}> / {product.unit}</Text>
+            <Text style={{ color: colors.muted, fontFamily: fonts.regular }}> / {product.unit}</Text>
           </Text>
         ) : (
           // Marketplace preview before connecting — prices are connection-gated.
@@ -87,14 +92,14 @@ export default function ProductCard({
               flexDirection: 'row',
               alignItems: 'center',
               backgroundColor: colors.background,
-              borderRadius: 10,
+              borderRadius: 12,
               borderWidth: 1,
               borderColor: colors.border,
             }}>
             <Pressable onPress={onDecrement} hitSlop={8} style={{ padding: 8 }}>
               <MaterialCommunityIcons name="minus" size={18} color={colors.primary} />
             </Pressable>
-            <Text style={{ color: colors.text, fontWeight: '700', minWidth: 20, textAlign: 'center' }}>
+            <Text style={[typo.num, { color: colors.text, minWidth: 20, textAlign: 'center' }]}>
               {cartQty}
             </Text>
             <Pressable onPress={onIncrement} hitSlop={8} style={{ padding: 8 }}>
@@ -108,12 +113,12 @@ export default function ProductCard({
               flexDirection: 'row',
               alignItems: 'center',
               backgroundColor: colors.primary,
-              borderRadius: 10,
+              borderRadius: 12,
               paddingHorizontal: 12,
               paddingVertical: 8,
             }}>
-            <MaterialCommunityIcons name="plus" size={16} color="#fff" />
-            <Text style={{ color: '#fff', fontWeight: '600', marginLeft: 4 }}>Add</Text>
+            <MaterialCommunityIcons name="plus" size={16} color={colors.white} />
+            <Text style={{ color: colors.white, fontWeight: '600', marginLeft: 4 }}>Add</Text>
           </Pressable>
         ))}
     </View>

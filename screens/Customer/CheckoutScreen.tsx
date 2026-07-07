@@ -14,6 +14,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
 import { useCart } from 'context/CartContext';
+import { typo, fonts, radius } from 'constants/design';
 import Toast from 'utils/Toast';
 import { getAddresses, createOrder } from 'api/actions/customerOrderActions';
 import { formatPrice } from './components/ProductCard';
@@ -99,7 +100,7 @@ export default function CheckoutScreen() {
               <Text style={{ color: colors.text, flex: 1 }} numberOfLines={1}>
                 {l.quantity} × {l.name}
               </Text>
-              <Text style={{ color: colors.text, fontWeight: '600' }}>
+              <Text style={[typo.num, { color: colors.text }]}>
                 {formatPrice(Number(l.sellingPrice) * l.quantity)}
               </Text>
             </View>
@@ -113,8 +114,10 @@ export default function CheckoutScreen() {
               borderTopWidth: 1,
               borderTopColor: colors.border,
             }}>
-            <Text style={{ color: colors.text, fontWeight: '700' }}>Total</Text>
-            <Text style={{ color: colors.text, fontWeight: '700' }}>{formatPrice(total)}</Text>
+            <Text style={{ color: colors.text, fontFamily: fonts.bold }}>Total</Text>
+            <Text style={[typo.num, { color: colors.text, fontSize: 15 }]}>
+              {formatPrice(total)}
+            </Text>
           </View>
         </Section>
 
@@ -225,14 +228,14 @@ export default function CheckoutScreen() {
           <View
             style={{
               backgroundColor: colors.primary + '10',
-              borderRadius: 12,
+              borderRadius: 16,
               borderWidth: 1,
               borderColor: colors.primary + '44',
               padding: 14,
               marginTop: 4,
               marginBottom: 4,
             }}>
-            <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 4 }}>
+            <Text style={{ color: colors.text, fontFamily: fonts.bold, marginBottom: 4 }}>
               Prices were updated
             </Text>
             <Text style={{ color: colors.text, fontSize: 13 }}>
@@ -247,14 +250,14 @@ export default function CheckoutScreen() {
           <View
             style={{
               backgroundColor: colors.error + '12',
-              borderRadius: 12,
+              borderRadius: 16,
               borderWidth: 1,
               borderColor: colors.error + '55',
               padding: 14,
               marginTop: 4,
               marginBottom: 4,
             }}>
-            <Text style={{ color: colors.error, fontWeight: '700', marginBottom: 4 }}>
+            <Text style={{ color: colors.error, fontFamily: fonts.bold, marginBottom: 4 }}>
               Over your credit limit
             </Text>
             <Text style={{ color: colors.error, fontSize: 13 }}>
@@ -278,7 +281,7 @@ export default function CheckoutScreen() {
             multiline
             style={{
               backgroundColor: colors.card,
-              borderRadius: 10,
+              borderRadius: 12,
               borderWidth: 1,
               borderColor: colors.border,
               padding: 12,
@@ -318,9 +321,9 @@ export default function CheckoutScreen() {
             opacity: placeMutation.isPending ? 0.7 : 1,
           }}>
           {placeMutation.isPending ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.white} />
           ) : (
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
+            <Text style={[typo.num, { color: colors.white, fontSize: 16 }]}>
               Place Order · {formatPrice(total)}
             </Text>
           )}
@@ -345,13 +348,13 @@ export default function CheckoutScreen() {
 function Section({ title, colors, children }: any) {
   return (
     <View style={{ marginBottom: 20 }}>
-      <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', marginBottom: 10 }}>
-        {title}
+      <Text style={[typo.eyebrow, { color: colors.muted, marginBottom: 10 }]}>
+        {title.toUpperCase()}
       </Text>
       <View
         style={{
           backgroundColor: colors.card,
-          borderRadius: 12,
+          borderRadius: radius.card,
           borderWidth: 1,
           borderColor: colors.border,
           padding: 14,

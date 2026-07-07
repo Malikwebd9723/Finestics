@@ -1,11 +1,12 @@
 // screens/Customer/MyOrdersScreen.tsx
 import React, { useState } from 'react';
 import { View, Text, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
+import { EmptyState } from 'components/ui';
+import { typo, fonts } from 'constants/design';
 import { getOrders, type OrderStatus } from 'api/actions/customerOrderActions';
 import { formatPrice } from './components/ProductCard';
 import OrderStatusBadge from './components/OrderStatusBadge';
@@ -64,7 +65,12 @@ export default function MyOrdersScreen() {
                 borderWidth: 1,
                 borderColor: selected ? colors.primary : colors.border,
               }}>
-              <Text style={{ color: selected ? '#fff' : colors.text, fontWeight: '600', fontSize: 13 }}>
+              <Text
+                style={{
+                  color: selected ? colors.white : colors.text,
+                  fontWeight: '600',
+                  fontSize: 13,
+                }}>
                 {f.label}
               </Text>
             </Pressable>
@@ -87,7 +93,7 @@ export default function MyOrdersScreen() {
               }
               style={{
                 backgroundColor: colors.card,
-                borderRadius: 14,
+                borderRadius: 16,
                 padding: 14,
                 marginHorizontal: 16,
                 marginBottom: 12,
@@ -95,7 +101,7 @@ export default function MyOrdersScreen() {
                 borderColor: colors.border,
               }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>
+                <Text style={{ color: colors.text, fontFamily: fonts.bold, fontSize: 15 }}>
                   {item.vendor?.businessName || 'Order'}
                 </Text>
                 <OrderStatusBadge status={item.status} />
@@ -113,22 +119,18 @@ export default function MyOrdersScreen() {
                 <Text style={{ color: colors.muted, fontSize: 13 }}>
                   {item.itemCount ?? 0} item{(item.itemCount ?? 0) === 1 ? '' : 's'}
                 </Text>
-                <Text style={{ color: colors.text, fontWeight: '700' }}>
+                <Text style={[typo.num, { color: colors.text }]}>
                   {formatPrice(item.totalAmount)}
                 </Text>
               </View>
             </Pressable>
           )}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', paddingTop: 80, paddingHorizontal: 32 }}>
-              <MaterialCommunityIcons name="receipt" size={56} color={colors.muted} />
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', marginTop: 16 }}>
-                No orders yet
-              </Text>
-              <Text style={{ color: colors.muted, fontSize: 13, marginTop: 6, textAlign: 'center' }}>
-                Orders you place will appear here.
-              </Text>
-            </View>
+            <EmptyState
+              icon="receipt"
+              title="No orders yet"
+              subtitle="Orders you place will appear here."
+            />
           }
           contentContainerStyle={{ paddingTop: 8, paddingBottom: 24, flexGrow: 1 }}
           refreshControl={

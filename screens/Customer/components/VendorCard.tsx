@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, Image, Pressable } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
+import { fonts } from 'constants/design';
 import type { MarketplaceVendor } from 'api/actions/marketplaceActions';
 
 interface Props {
@@ -48,13 +49,17 @@ export default function VendorCard({ vendor, onPress, rightSlot }: Props) {
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-          <Text style={{ color: colors.primary, fontSize: 22, fontWeight: '700' }}>{initial}</Text>
+          <Text style={{ color: colors.primary, fontSize: 22, fontFamily: fonts.bold }}>
+            {initial}
+          </Text>
         </View>
       )}
 
       {/* Info */}
       <View style={{ flex: 1, marginLeft: 14 }}>
-        <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }} numberOfLines={1}>
+        <Text
+          style={{ color: colors.text, fontSize: 16, fontFamily: fonts.bold }}
+          numberOfLines={1}>
           {vendor.businessName}
         </Text>
         <Text style={{ color: colors.muted, fontSize: 13, marginTop: 2 }} numberOfLines={1}>

@@ -8,11 +8,12 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
+import { EmptyState } from 'components/ui';
+import { typo, fonts, radius } from 'constants/design';
 import Toast from 'utils/Toast';
 import { getVendor } from 'api/actions/marketplaceActions';
 import { getConnections, requestConnection } from 'api/actions/connectionActions';
@@ -66,18 +67,12 @@ export default function VendorDetailScreen() {
 
   if (isError || !vendor) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.background,
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: 32,
-        }}>
-        <MaterialCommunityIcons name="alert-circle-outline" size={48} color={colors.muted} />
-        <Text style={{ color: colors.text, marginTop: 12, textAlign: 'center' }}>
-          {(error as Error)?.message || 'Could not load vendor.'}
-        </Text>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <EmptyState
+          icon="alert-circle-outline"
+          title="Could not load vendor"
+          subtitle={(error as Error)?.message || 'Please try again.'}
+        />
       </View>
     );
   }
@@ -102,7 +97,9 @@ export default function VendorDetailScreen() {
             paddingVertical: 15,
             alignItems: 'center',
           }}>
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Browse Catalog</Text>
+          <Text style={{ color: colors.white, fontWeight: '700', fontSize: 16 }}>
+            Browse Catalog
+          </Text>
         </Pressable>
       );
     }
@@ -136,9 +133,9 @@ export default function VendorDetailScreen() {
           opacity: connectMutation.isPending ? 0.7 : 1,
         }}>
         {connectMutation.isPending ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.white} />
         ) : (
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
+          <Text style={{ color: colors.white, fontWeight: '700', fontSize: 16 }}>
             {status === 'rejected' ? 'Request Again' : 'Connect'}
           </Text>
         )}
@@ -164,7 +161,7 @@ export default function VendorDetailScreen() {
           <View
             style={{
               backgroundColor: colors.card,
-              borderRadius: 16,
+              borderRadius: radius.card,
               padding: 16,
               borderWidth: 1,
               borderColor: colors.border,
@@ -185,13 +182,13 @@ export default function VendorDetailScreen() {
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}>
-                  <Text style={{ color: colors.primary, fontSize: 26, fontWeight: '700' }}>
+                  <Text style={{ color: colors.primary, fontSize: 26, fontFamily: fonts.bold }}>
                     {vendor.businessName?.[0]?.toUpperCase() || 'V'}
                   </Text>
                 </View>
               )}
               <View style={{ flex: 1, marginLeft: 14 }}>
-                <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>
+                <Text style={[typo.title, { color: colors.text, fontSize: 20 }]}>
                   {vendor.businessName}
                 </Text>
                 {!!vendor.businessType && (
@@ -231,7 +228,7 @@ export default function VendorDetailScreen() {
             marginTop: 24,
             marginBottom: 12,
           }}>
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>Products</Text>
+          <Text style={[typo.eyebrow, { color: colors.muted }]}>PRODUCTS</Text>
           {(vendor.productCount ?? 0) > 0 && (
             <Pressable
               onPress={() =>

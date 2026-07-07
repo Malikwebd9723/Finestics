@@ -5,8 +5,11 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './AuthContext';
 
-const STORAGE_PREFIX = 'customer_carts_v1';
-const LEGACY_KEY = 'customer_carts_v1'; // pre-P4 un-namespaced key
+// The live key is `${CARTS_KEY_BASE}:${userId}`. The bare, un-suffixed base
+// string is ALSO the legacy pre-P4 key (it stored carts un-namespaced), which
+// is why both constants share the same literal — do not "dedupe" them apart.
+const CARTS_KEY_BASE = 'customer_carts_v1';
+const LEGACY_KEY = CARTS_KEY_BASE; // pre-P4 un-namespaced key, migrated once
 
 export interface CartLine {
   productId: number;
@@ -52,7 +55,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [carts, setCarts] = useState<Carts>({});
   const [ready, setReady] = useState(false);
 
-  const storageKey = user ? `${STORAGE_PREFIX}:${user.id}` : null;
+  const storageKey = user ? `${CARTS_KEY_BASE}:${user.id}` : null;
 
   // Load the signed-in user's carts; carts are empty (and unpersisted) signed out.
   useEffect(() => {

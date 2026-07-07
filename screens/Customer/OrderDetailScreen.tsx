@@ -1,17 +1,36 @@
 // screens/Customer/OrderDetailScreen.tsx
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
 import Toast from 'utils/Toast';
-import { getOrder, cancelOrder } from 'api/actions/customerOrderActions';
+import Dialog from 'utils/Dialog';
+import { useCart } from 'context/CartContext';
+import { getOrder, cancelOrder, OrderStatus } from 'api/actions/customerOrderActions';
 import { getOrderStatusMeta, TIMELINE_STEPS } from 'utils/orderStatus';
 import { formatPrice } from './components/ProductCard';
 import OrderStatusBadge from './components/OrderStatusBadge';
 import InvoiceModal from './components/InvoiceModal';
+
+const TERMINAL_STATUSES: OrderStatus[] = ['delivered', 'cancelled', 'refunded'];
+
+const fmtWhen = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
 export default function OrderDetailScreen() {
   const { colors } = useThemeContext();
@@ -19,12 +38,21 @@ export default function OrderDetailScreen() {
   const route = useRoute<any>();
   const orderId: number = route.params?.orderId;
   const queryClient = useQueryClient();
+  const isFocused = useIsFocused();
+  const { addItem } = useCart();
   const [invoiceOpen, setInvoiceOpen] = useState(false);
 
-  const { data: order, isLoading, isError, error } = useQuery({
+  const { data: order, isLoading, isError, error, refetch, isRefetching } = useQuery({
     queryKey: ['customer-order', orderId],
     queryFn: () => getOrder(orderId),
     enabled: !!orderId,
+    // Live tracking: poll while the order is still moving and the screen is
+    // visible; terminal orders never poll.
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (!isFocused || !status || TERMINAL_STATUSES.includes(status)) return false;
+      return 30000;
+    },
   });
 
   const cancelMutation = useMutation({
@@ -36,6 +64,38 @@ export default function OrderDetailScreen() {
     },
     onError: (e: any) => Toast.error(e?.message || 'Failed to cancel'),
   });
+
+  const confirmCancel = () => {
+    Dialog.confirm(
+      'Cancel this order?',
+      'The vendor will be notified. This cannot be undone.',
+      {
+        confirmText: 'Cancel Order',
+        cancelText: 'Keep Order',
+        destructive: true,
+        onConfirm: () => cancelMutation.mutate(),
+      }
+    );
+  };
+
+  const reorder = () => {
+    if (!order?.vendor || !order.items?.length) return;
+    order.items.forEach((it) => {
+      addItem(
+        order.vendor!.id,
+        order.vendor!.businessName,
+        {
+          productId: it.productId,
+          name: it.productName,
+          unit: it.unit,
+          sellingPrice: it.unitPrice,
+        },
+        Math.max(1, Math.round(parseFloat(it.quantity)) || 1)
+      );
+    });
+    Toast.success('Items added to your cart');
+    navigation.navigate('CartScreen', { vendorId: order.vendor.id });
+  };
 
   if (isLoading) {
     return (
@@ -62,11 +122,27 @@ export default function OrderDetailScreen() {
 
   const isCancelled = order.status === 'cancelled' || order.status === 'refunded';
   const canCancel = order.status === 'pending' || order.status === 'confirmed';
+  const canReorder = TERMINAL_STATUSES.includes(order.status);
   const currentStepIndex = TIMELINE_STEPS.indexOf(order.status as any);
+
+  // Map each timeline step to when it actually happened (if it has).
+  const stepTimestamp = (step: string): string | null => {
+    const entry = order.statusHistory?.find((h) => h.toStatus === step);
+    return entry ? fmtWhen(entry.changedAt) : step === 'pending' ? fmtWhen(order.placedAt) : null;
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }>
         {/* Header */}
         <View
           style={{
@@ -100,8 +176,11 @@ export default function OrderDetailScreen() {
             {TIMELINE_STEPS.map((step, idx) => {
               const meta = getOrderStatusMeta(step);
               const done = idx <= currentStepIndex;
+              const when = done ? stepTimestamp(step) : null;
               return (
-                <View key={step} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                <View
+                  key={step}
+                  style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
                   <MaterialCommunityIcons
                     name={done ? 'check-circle' : 'circle-outline'}
                     size={20}
@@ -109,12 +188,16 @@ export default function OrderDetailScreen() {
                   />
                   <Text
                     style={{
+                      flex: 1,
                       color: done ? colors.text : colors.muted,
                       marginLeft: 10,
                       fontWeight: idx === currentStepIndex ? '700' : '400',
                     }}>
                     {meta.label}
                   </Text>
+                  {when ? (
+                    <Text style={{ color: colors.muted, fontSize: 12 }}>{when}</Text>
+                  ) : null}
                 </View>
               );
             })}
@@ -227,11 +310,31 @@ export default function OrderDetailScreen() {
           </Pressable>
         )}
 
+        {/* Reorder — rebuild the cart from this order's lines */}
+        {canReorder && (
+          <Pressable
+            onPress={reorder}
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: 12,
+              paddingVertical: 14,
+              alignItems: 'center',
+              marginTop: isCancelled ? 20 : 12,
+              flexDirection: 'row',
+              justifyContent: 'center',
+            }}>
+            <MaterialCommunityIcons name="cart-plus" size={18} color={colors.white} />
+            <Text style={{ color: colors.white, fontWeight: '700', marginLeft: 8 }}>
+              Reorder These Items
+            </Text>
+          </Pressable>
+        )}
+
         {/* Cancel */}
         {canCancel && (
           <Pressable
             disabled={cancelMutation.isPending}
-            onPress={() => cancelMutation.mutate()}
+            onPress={confirmCancel}
             style={{
               borderRadius: 12,
               paddingVertical: 14,

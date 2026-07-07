@@ -1,11 +1,11 @@
 // screens/Customer/MarketplaceScreen.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, RefreshControl, Pressable } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
+import { EmptyState } from 'components/ui';
 import SearchBar from 'components/SearchBar';
 import { listVendors } from 'api/actions/marketplaceActions';
 import VendorCard from './components/VendorCard';
@@ -35,19 +35,17 @@ export default function MarketplaceScreen() {
   const renderEmpty = () => {
     if (isLoading) return null;
     return (
-      <View style={{ alignItems: 'center', paddingTop: 80, paddingHorizontal: 32 }}>
-        <MaterialCommunityIcons name="storefront-outline" size={56} color={colors.muted} />
-        <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', marginTop: 16 }}>
-          {isError ? 'Could not load vendors' : 'No vendors found'}
-        </Text>
-        <Text style={{ color: colors.muted, fontSize: 13, marginTop: 6, textAlign: 'center' }}>
-          {isError
+      <EmptyState
+        icon="storefront-outline"
+        title={isError ? 'Could not load vendors' : 'No vendors found'}
+        subtitle={
+          isError
             ? (error as Error)?.message || 'Please try again.'
             : debounced
               ? 'Try a different search term.'
-              : 'Check back soon for new vendors.'}
-        </Text>
-      </View>
+              : 'Check back soon for new vendors.'
+        }
+      />
     );
   };
 
