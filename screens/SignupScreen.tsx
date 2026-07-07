@@ -1,18 +1,15 @@
-// screens/Auth/SignupScreen.tsx
-
+// screens/SignupScreen.tsx
 import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
+  Image,
   Pressable,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
@@ -26,6 +23,8 @@ import {
   CustomerSignupFormData,
 } from 'validations/formValidationSchemas';
 import Toast from 'utils/Toast';
+import { fonts } from 'constants/design';
+import { Input, Button } from 'components/ui';
 
 type SignupRole = 'customer' | 'vendor';
 
@@ -33,8 +32,6 @@ export default function SignupScreen() {
   const navigation = useNavigation<any>();
   const { colors } = useThemeContext();
   const { login } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState<SignupRole>('customer');
 
   const {
@@ -44,6 +41,8 @@ export default function SignupScreen() {
   } = useForm<CustomerSignupFormData>({
     // Cast avoids the yup<->RHF nullable-field resolver typing mismatch.
     resolver: yupResolver(customerSignupSchema) as any,
+    // The schema reads $role to require phone for vendors.
+    context: { role },
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -86,47 +85,41 @@ export default function SignupScreen() {
             flexGrow: 1,
             justifyContent: 'center',
             paddingHorizontal: 24,
-            paddingVertical: 20,
+            paddingVertical: 24,
           }}
           keyboardShouldPersistTaps="handled">
-          {/* Header */}
-          <View style={{ alignItems: 'center', marginBottom: 32 }}>
-            <View
+          {/* Brand header */}
+          <View style={{ alignItems: 'center', marginBottom: 28 }}>
+            <Image
+              source={require('../assets/icon.png')}
               style={{
-                width: 80,
-                height: 80,
-                borderRadius: 40,
-                backgroundColor: colors.primary + '15',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 20,
-              }}>
-              <Ionicons name="person-add" size={40} color={colors.primary} />
-            </View>
+                width: 64,
+                height: 64,
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: colors.border,
+                marginBottom: 18,
+              }}
+            />
             <Text
               style={{
-                fontSize: 28,
-                fontWeight: '700',
+                fontFamily: fonts.extrabold,
+                fontSize: 26,
+                letterSpacing: -0.4,
                 color: colors.text,
-                marginBottom: 8,
+                marginBottom: 6,
               }}>
-              Create Account
+              Create your account
             </Text>
-            <Text style={{ fontSize: 15, color: colors.placeholder, textAlign: 'center' }}>
-              Sign up to start managing your business
+            <Text style={{ fontSize: 15, color: colors.muted, textAlign: 'center' }}>
+              Join Finestics to run your business
             </Text>
           </View>
 
-          {/* Role Toggle */}
-          <View style={{ marginBottom: 20 }}>
+          {/* Role toggle */}
+          <View style={{ marginBottom: 18 }}>
             <Text
-              style={{
-                fontSize: 14,
-                fontWeight: '600',
-                color: colors.text,
-                marginBottom: 8,
-                marginLeft: 4,
-              }}>
+              style={{ fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 }}>
               I am a
             </Text>
             <View
@@ -136,7 +129,7 @@ export default function SignupScreen() {
                 borderRadius: 12,
                 padding: 4,
                 borderWidth: 1,
-                borderColor: colors.border || '#eee',
+                borderColor: colors.border,
               }}>
               {(['customer', 'vendor'] as SignupRole[]).map((r) => {
                 const selected = role === r;
@@ -146,16 +139,16 @@ export default function SignupScreen() {
                     onPress={() => setRole(r)}
                     style={{
                       flex: 1,
-                      paddingVertical: 12,
+                      paddingVertical: 11,
                       borderRadius: 9,
                       alignItems: 'center',
                       backgroundColor: selected ? colors.primary : 'transparent',
                     }}>
                     <Text
                       style={{
-                        color: selected ? '#fff' : colors.text,
+                        color: selected ? colors.white : colors.text,
                         fontWeight: '600',
-                        fontSize: 15,
+                        fontSize: 14,
                       }}>
                       {r === 'customer' ? 'Customer' : 'Vendor'}
                     </Text>
@@ -163,7 +156,7 @@ export default function SignupScreen() {
                 );
               })}
             </View>
-            <Text style={{ color: colors.placeholder, fontSize: 12, marginTop: 6, marginLeft: 4 }}>
+            <Text style={{ color: colors.muted, fontSize: 12, marginTop: 6 }}>
               {role === 'customer'
                 ? 'Browse vendors and place your own orders.'
                 : 'Sell products and manage your customers.'}
@@ -171,365 +164,130 @@ export default function SignupScreen() {
           </View>
 
           {/* Form */}
-          <View style={{ gap: 16 }}>
-            {/* Name Row */}
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              {/* First Name */}
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: '600',
-                    color: colors.text,
-                    marginBottom: 8,
-                    marginLeft: 4,
-                  }}>
-                  First Name
-                </Text>
-                <Controller
-                  control={control}
-                  name="firstName"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        backgroundColor: colors.card,
-                        borderRadius: 12,
-                        paddingHorizontal: 14,
-                        borderWidth: 1,
-                        borderColor: errors.firstName ? '#EF4444' : colors.border || '#eee',
-                      }}>
-                      <Ionicons name="person-outline" size={20} color={colors.placeholder} />
-                      <TextInput
-                        placeholder="First"
-                        placeholderTextColor={colors.placeholder}
-                        style={{
-                          flex: 1,
-                          paddingVertical: 14,
-                          paddingHorizontal: 10,
-                          fontSize: 16,
-                          color: colors.text,
-                        }}
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        autoCapitalize="words"
-                      />
-                    </View>
-                  )}
-                />
-                {errors.firstName && (
-                  <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4, marginLeft: 4 }}>
-                    {errors.firstName.message}
-                  </Text>
-                )}
-              </View>
-
-              {/* Last Name */}
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: '600',
-                    color: colors.text,
-                    marginBottom: 8,
-                    marginLeft: 4,
-                  }}>
-                  Last Name
-                </Text>
-                <Controller
-                  control={control}
-                  name="lastName"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        backgroundColor: colors.card,
-                        borderRadius: 12,
-                        paddingHorizontal: 14,
-                        borderWidth: 1,
-                        borderColor: errors.lastName ? '#EF4444' : colors.border || '#eee',
-                      }}>
-                      <TextInput
-                        placeholder="Last"
-                        placeholderTextColor={colors.placeholder}
-                        style={{
-                          flex: 1,
-                          paddingVertical: 14,
-                          paddingHorizontal: 10,
-                          fontSize: 16,
-                          color: colors.text,
-                        }}
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        autoCapitalize="words"
-                      />
-                    </View>
-                  )}
-                />
-                {errors.lastName && (
-                  <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4, marginLeft: 4 }}>
-                    {errors.lastName.message}
-                  </Text>
-                )}
-              </View>
-            </View>
-
-            {/* Email Field */}
-            <View>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: colors.text,
-                  marginBottom: 8,
-                  marginLeft: 4,
-                }}>
-                Email
-              </Text>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={{ flex: 1 }}>
               <Controller
                 control={control}
-                name="email"
+                name="firstName"
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      backgroundColor: colors.card,
-                      borderRadius: 12,
-                      paddingHorizontal: 14,
-                      borderWidth: 1,
-                      borderColor: errors.email ? '#EF4444' : colors.border || '#eee',
-                    }}>
-                    <Ionicons name="mail-outline" size={20} color={colors.placeholder} />
-                    <TextInput
-                      placeholder="Enter your email"
-                      placeholderTextColor={colors.placeholder}
-                      style={{
-                        flex: 1,
-                        paddingVertical: 14,
-                        paddingHorizontal: 12,
-                        fontSize: 16,
-                        color: colors.text,
-                      }}
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoComplete="email"
-                    />
-                  </View>
+                  <Input
+                    label="First name"
+                    placeholder="First name"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    autoComplete="given-name"
+                    error={errors.firstName?.message}
+                  />
                 )}
               />
-              {errors.email && (
-                <Text style={{ color: '#EF4444', fontSize: 13, marginTop: 6, marginLeft: 4 }}>
-                  {errors.email.message}
-                </Text>
-              )}
             </View>
-
-            {/* Phone Field */}
-            <View>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: colors.text,
-                  marginBottom: 8,
-                  marginLeft: 4,
-                }}>
-                Phone {role === 'customer' ? '(optional)' : ''}
-              </Text>
+            <View style={{ flex: 1 }}>
               <Controller
                 control={control}
-                name="phone"
+                name="lastName"
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      backgroundColor: colors.card,
-                      borderRadius: 12,
-                      paddingHorizontal: 14,
-                      borderWidth: 1,
-                      borderColor: errors.phone ? '#EF4444' : colors.border || '#eee',
-                    }}>
-                    <Ionicons name="call-outline" size={20} color={colors.placeholder} />
-                    <TextInput
-                      placeholder="Enter your phone number"
-                      placeholderTextColor={colors.placeholder}
-                      style={{
-                        flex: 1,
-                        paddingVertical: 14,
-                        paddingHorizontal: 12,
-                        fontSize: 16,
-                        color: colors.text,
-                      }}
-                      value={value ?? ''}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      keyboardType="phone-pad"
-                    />
-                  </View>
+                  <Input
+                    label="Last name"
+                    placeholder="Last name"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    autoComplete="family-name"
+                    error={errors.lastName?.message}
+                  />
                 )}
               />
-              {errors.phone && (
-                <Text style={{ color: '#EF4444', fontSize: 13, marginTop: 6, marginLeft: 4 }}>
-                  {errors.phone.message}
-                </Text>
-              )}
             </View>
-
-            {/* Password Field */}
-            <View>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: colors.text,
-                  marginBottom: 8,
-                  marginLeft: 4,
-                }}>
-                Password
-              </Text>
-              <Controller
-                control={control}
-                name="password"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      backgroundColor: colors.card,
-                      borderRadius: 12,
-                      paddingHorizontal: 14,
-                      borderWidth: 1,
-                      borderColor: errors.password ? '#EF4444' : colors.border || '#eee',
-                    }}>
-                    <Ionicons name="lock-closed-outline" size={20} color={colors.placeholder} />
-                    <TextInput
-                      placeholder="Create a password"
-                      placeholderTextColor={colors.placeholder}
-                      secureTextEntry={!showPassword}
-                      style={{
-                        flex: 1,
-                        paddingVertical: 14,
-                        paddingHorizontal: 12,
-                        fontSize: 16,
-                        color: colors.text,
-                      }}
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                    />
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                      <Ionicons
-                        name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                        size={20}
-                        color={colors.placeholder}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                )}
-              />
-              {errors.password && (
-                <Text style={{ color: '#EF4444', fontSize: 13, marginTop: 6, marginLeft: 4 }}>
-                  {errors.password.message}
-                </Text>
-              )}
-            </View>
-
-            {/* Confirm Password Field */}
-            <View>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: colors.text,
-                  marginBottom: 8,
-                  marginLeft: 4,
-                }}>
-                Confirm Password
-              </Text>
-              <Controller
-                control={control}
-                name="confirmPassword"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      backgroundColor: colors.card,
-                      borderRadius: 12,
-                      paddingHorizontal: 14,
-                      borderWidth: 1,
-                      borderColor: errors.confirmPassword ? '#EF4444' : colors.border || '#eee',
-                    }}>
-                    <Ionicons name="lock-closed-outline" size={20} color={colors.placeholder} />
-                    <TextInput
-                      placeholder="Confirm your password"
-                      placeholderTextColor={colors.placeholder}
-                      secureTextEntry={!showConfirmPassword}
-                      style={{
-                        flex: 1,
-                        paddingVertical: 14,
-                        paddingHorizontal: 12,
-                        fontSize: 16,
-                        color: colors.text,
-                      }}
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                    />
-                    <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                      <Ionicons
-                        name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'}
-                        size={20}
-                        color={colors.placeholder}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                )}
-              />
-              {errors.confirmPassword && (
-                <Text style={{ color: '#EF4444', fontSize: 13, marginTop: 6, marginLeft: 4 }}>
-                  {errors.confirmPassword.message}
-                </Text>
-              )}
-            </View>
-
-            {/* Sign Up Button */}
-            <Pressable
-              disabled={isSubmitting}
-              onPress={handleSubmit(onSubmit)}
-              style={{
-                backgroundColor: colors.primary,
-                borderRadius: 12,
-                paddingVertical: 16,
-                alignItems: 'center',
-                marginTop: 8,
-                opacity: isSubmitting ? 0.7 : 1,
-              }}>
-              {isSubmitting ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>
-                  Create Account
-                </Text>
-              )}
-            </Pressable>
           </View>
 
-          {/* Login Link */}
-          <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 32 }}>
-            <Text style={{ color: colors.text, fontSize: 15 }}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '600' }}>
-                Sign In
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Email"
+                icon="email-outline"
+                placeholder="you@business.com"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                error={errors.email?.message}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="phone"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label={role === 'vendor' ? 'Phone' : 'Phone (optional)'}
+                icon="phone-outline"
+                placeholder="07xxx xxxxxx"
+                value={value ?? ''}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                keyboardType="phone-pad"
+                autoComplete="tel"
+                error={errors.phone?.message}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Password"
+                icon="lock-outline"
+                placeholder="8+ chars, mixed case + number"
+                secureTextEntry
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                autoComplete="new-password"
+                error={errors.password?.message}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="confirmPassword"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Confirm password"
+                icon="lock-check-outline"
+                placeholder="Repeat your password"
+                secureTextEntry
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                autoComplete="new-password"
+                error={errors.confirmPassword?.message}
+              />
+            )}
+          />
+
+          <Button
+            title="Create Account"
+            onPress={handleSubmit(onSubmit)}
+            loading={isSubmitting}
+            disabled={isSubmitting}
+            style={{ marginTop: 6 }}
+          />
+
+          {/* Sign in link */}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 26 }}>
+            <Text style={{ color: colors.muted, fontSize: 15 }}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')} hitSlop={8}>
+              <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '700' }}>
+                Sign in
               </Text>
             </TouchableOpacity>
           </View>

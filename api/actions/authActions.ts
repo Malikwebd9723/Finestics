@@ -103,7 +103,9 @@ export const getCurrentUser = async () => {
 };
 
 /**
- * Request password reset
+ * Request a password-reset code (emailed as a 6-digit code).
+ * Response is always a neutral success so it never reveals whether the
+ * email exists.
  */
 export const requestPasswordReset = async (email: string) => {
   const response = await apiRequest('/auth/forgot-password', 'POST', { email });
@@ -111,9 +113,9 @@ export const requestPasswordReset = async (email: string) => {
 };
 
 /**
- * Reset password with token
+ * Reset password with the emailed 6-digit code.
  */
-export const resetPassword = async (token: string, password: string) => {
-  const response = await apiRequest('/auth/reset-password', 'POST', { token, password });
+export const resetPassword = async (email: string, code: string, password: string) => {
+  const response = await apiRequest('/auth/reset-password', 'POST', { email, code, password });
   return response;
 };

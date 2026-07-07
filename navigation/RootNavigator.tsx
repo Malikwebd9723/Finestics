@@ -3,10 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeContext } from 'context/ThemeProvider';
 import { useAuth } from 'context/AuthContext';
 import { getOnboardingStatus } from 'api/actions/onboardingActions';
+import { getStoredValue } from 'utils/secureStorage';
 
 // Import DrawerNavigator
 import DrawerNavigator from './DrawerNavigator';
@@ -14,11 +14,10 @@ import DrawerNavigator from './DrawerNavigator';
 // Auth Screens
 import LoginScreen from 'screens/LoginScreen';
 import SignupScreen from 'screens/SignupScreen';
+import ForgotPasswordScreen from 'screens/ForgotPasswordScreen';
 
 // Onboarding Screens
-import BusinessInfoScreen from 'screens/Onboarding/BusinessInfoScreen';
-import BusinessAddressScreen from 'screens/Onboarding/BusinessAddressScreen';
-import SubmitOnboardingScreen from 'screens/Onboarding/SubmitOnboardingScreen';
+import BusinessDetailsScreen from 'screens/Onboarding/BusinessDetailsScreen';
 import PendingVerificationScreen from 'screens/Onboarding/PendingVerificationScreen';
 
 // Other Screens
@@ -30,17 +29,14 @@ import NotificationsScreen from 'screens/NotificationsScreen';
 
 // ==================== TYPE DEFINITIONS ====================
 
-type OnboardingScreen =
-  | 'BusinessInfoScreen'
-  | 'BusinessAddressScreen'
-  | 'SubmitOnboardingScreen'
-  | 'PendingVerificationScreen';
+type OnboardingScreen = 'BusinessDetailsScreen' | 'PendingVerificationScreen';
 
 type TargetRoute = 'Login' | 'Onboarding' | 'Main';
 
 export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
+  ForgotPassword: undefined;
   Onboarding: { screen?: OnboardingScreen } | undefined;
   Main: undefined;
   CreateOrderScreen: { orderId?: number } | undefined;
@@ -51,9 +47,7 @@ export type RootStackParamList = {
 };
 
 export type OnboardingStackParamList = {
-  BusinessInfoScreen: undefined;
-  BusinessAddressScreen: undefined;
-  SubmitOnboardingScreen: undefined;
+  BusinessDetailsScreen: undefined;
   PendingVerificationScreen: undefined;
 };
 
@@ -67,9 +61,7 @@ const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
 function OnboardingNavigator() {
   return (
     <OnboardingStack.Navigator screenOptions={{ headerShown: false }}>
-      <OnboardingStack.Screen name="BusinessInfoScreen" component={BusinessInfoScreen} />
-      <OnboardingStack.Screen name="BusinessAddressScreen" component={BusinessAddressScreen} />
-      <OnboardingStack.Screen name="SubmitOnboardingScreen" component={SubmitOnboardingScreen} />
+      <OnboardingStack.Screen name="BusinessDetailsScreen" component={BusinessDetailsScreen} />
       <OnboardingStack.Screen
         name="PendingVerificationScreen"
         component={PendingVerificationScreen}
@@ -95,9 +87,10 @@ export default function RootNavigator() {
       setInitializing(true);
 
       try {
-        // Check if user exists in storage
-        const accessToken = await AsyncStorage.getItem('accessToken');
-        const profileStatus = await AsyncStorage.getItem('profileStatus');
+        // Check if user exists in storage. Tokens may live in SecureStore, so
+        // read through the wrapper — a raw AsyncStorage read can miss them.
+        const accessToken = await getStoredValue('accessToken');
+        const profileStatus = await getStoredValue('profileStatus');
 
         // No user or token -> Login
         if (!user || !accessToken) {
@@ -141,23 +134,12 @@ export default function RootNavigator() {
           return;
         }
 
-        const { onboardingCompleted, steps, profileStatus: apiProfileStatus } = response.data.data;
+        const { onboardingCompleted, profileStatus: apiProfileStatus } = response.data.data;
 
-        // If onboarding is not completed, determine which step to show
+        // Onboarding not completed -> the single business-details screen
         if (!onboardingCompleted) {
-          let nextScreen: OnboardingScreen = 'BusinessInfoScreen';
-
-          if (!steps.businessInfoCompleted) {
-            nextScreen = 'BusinessInfoScreen';
-          } else if (!steps.addressCompleted) {
-            nextScreen = 'BusinessAddressScreen';
-          } else {
-            // All steps done but not submitted
-            nextScreen = 'SubmitOnboardingScreen';
-          }
-
           setTargetRoute('Onboarding');
-          setTargetParams({ screen: nextScreen });
+          setTargetParams({ screen: 'BusinessDetailsScreen' });
           setInitializing(false);
           return;
         }
@@ -170,10 +152,10 @@ export default function RootNavigator() {
           return;
         }
 
-        // Profile is rejected - allow editing
+        // Profile is rejected - allow editing + resubmission
         if (apiProfileStatus === 'rejected') {
           setTargetRoute('Onboarding');
-          setTargetParams({ screen: 'BusinessInfoScreen' });
+          setTargetParams({ screen: 'BusinessDetailsScreen' });
           setInitializing(false);
           return;
         }
@@ -221,6 +203,7 @@ export default function RootNavigator() {
         <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="CreateOrderScreen" component={CreateOrderScreen} />
         <Stack.Screen name="CollectionSheet" component={CollectionSheet} />
         <Stack.Screen name="CustomerOrdersScreen" component={CustomerOrdersScreen} />
@@ -243,6 +226,7 @@ export default function RootNavigator() {
         <Stack.Screen name="Main" component={DrawerNavigator} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       </Stack.Navigator>
     );
   }
@@ -253,6 +237,7 @@ export default function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
       <Stack.Screen name="Main" component={DrawerNavigator} />
     </Stack.Navigator>

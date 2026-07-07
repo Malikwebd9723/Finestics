@@ -1,25 +1,20 @@
 // screens/Onboarding/PendingVerificationScreen.tsx
 
 import React from 'react';
-import { View, Text, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, Image, TouchableOpacity, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useThemeContext } from 'context/ThemeProvider';
 import { useAuth } from 'context/AuthContext';
+import { fonts } from 'constants/design';
 
 export default function PendingVerificationScreen() {
   const { colors } = useThemeContext();
   const { logout } = useAuth();
 
   const handleEmail = () => {
-    Linking.openURL('mailto:support@example.com');
-  };
-
-  const handleWhatsApp = () => {
-    const phoneNumber = '+447700900000'; // UK format
-    const message = 'Hello, I need assistance with my pending verification.';
-    Linking.openURL(`whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`);
+    Linking.openURL('mailto:support@finestics.com');
   };
 
   const handleLogout = async () => {
@@ -40,47 +35,47 @@ export default function PendingVerificationScreen() {
             paddingVertical: 10,
             borderRadius: 10,
             borderWidth: 1,
-            borderColor: colors.border || '#eee',
+            borderColor: colors.border,
           }}>
-          <Ionicons name="log-out-outline" size={18} color={colors.text} />
+          <MaterialCommunityIcons name="logout" size={18} color={colors.text} />
           <Text style={{ marginLeft: 8, color: colors.text, fontWeight: '500' }}>Sign Out</Text>
         </TouchableOpacity>
       </View>
 
       {/* Main Content */}
       <View
-        style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 }}>
-        {/* Icon */}
-        <View
+        style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
+        {/* Brand header */}
+        <Image
+          source={require('../../assets/icon.png')}
           style={{
-            width: 120,
-            height: 120,
-            borderRadius: 60,
-            backgroundColor: colors.primary + '15',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 32,
-          }}>
-          <Ionicons name="hourglass-outline" size={60} color={colors.primary} />
-        </View>
+            width: 64,
+            height: 64,
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: colors.border,
+            marginBottom: 18,
+          }}
+        />
 
         {/* Title */}
         <Text
           style={{
+            fontFamily: fonts.extrabold,
             fontSize: 26,
-            fontWeight: '700',
+            letterSpacing: -0.4,
             color: colors.text,
             textAlign: 'center',
             marginBottom: 12,
           }}>
-          Profile Under Review
+          Profile under review
         </Text>
 
         {/* Description */}
         <Text
           style={{
             fontSize: 15,
-            color: colors.placeholder,
+            color: colors.muted,
             textAlign: 'center',
             lineHeight: 22,
             paddingHorizontal: 10,
@@ -111,10 +106,10 @@ export default function PendingVerificationScreen() {
             marginTop: 32,
             width: '100%',
             borderWidth: 1,
-            borderColor: colors.border || '#eee',
+            borderColor: colors.border,
           }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-            <Ionicons name="information-circle" size={24} color={colors.primary} />
+            <MaterialCommunityIcons name="information-outline" size={22} color={colors.primary} />
             <Text style={{ marginLeft: 10, fontSize: 16, fontWeight: '600', color: colors.text }}>
               What you can do meanwhile
             </Text>
@@ -148,14 +143,14 @@ export default function PendingVerificationScreen() {
         <Text
           style={{
             fontSize: 13,
-            color: colors.placeholder,
+            color: colors.muted,
             textAlign: 'center',
             marginBottom: 16,
           }}>
           Need help? Contact us:
         </Text>
 
-        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
           <TouchableOpacity
             onPress={handleEmail}
             style={{
@@ -166,26 +161,12 @@ export default function PendingVerificationScreen() {
               paddingVertical: 14,
               borderRadius: 12,
               borderWidth: 1,
-              borderColor: colors.border || '#eee',
+              borderColor: colors.border,
             }}>
-            <Ionicons name="mail-outline" size={22} color="#EA4335" />
-            <Text style={{ marginLeft: 10, fontWeight: '500', color: colors.text }}>Email</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleWhatsApp}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: colors.card,
-              paddingHorizontal: 24,
-              paddingVertical: 14,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: colors.border || '#eee',
-            }}>
-            <Ionicons name="logo-whatsapp" size={22} color="#25D366" />
-            <Text style={{ marginLeft: 10, fontWeight: '500', color: colors.text }}>WhatsApp</Text>
+            <MaterialCommunityIcons name="email-outline" size={20} color={colors.primary} />
+            <Text style={{ marginLeft: 10, fontWeight: '500', color: colors.text }}>
+              support@finestics.com
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

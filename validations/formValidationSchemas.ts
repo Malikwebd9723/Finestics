@@ -45,7 +45,9 @@ export const signupSchema = yup.object().shape({
     .required('Please confirm your password'),
 });
 
-// Customer self-serve signup: name + email + phone + password. No business info.
+// Self-serve signup for BOTH roles: name + email + phone + password.
+// Phone is optional for customers but required for vendors — pass the chosen
+// role via the resolver context: useForm({ context: { role } }).
 export const customerSignupSchema = yup.object().shape({
   firstName: yup
     .string()
@@ -63,6 +65,10 @@ export const customerSignupSchema = yup.object().shape({
     .matches(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/, {
       message: 'Please enter a valid phone number',
       excludeEmptyString: true,
+    })
+    .when('$role', {
+      is: 'vendor',
+      then: (schema) => schema.required('Phone number is required for vendors'),
     })
     .nullable(),
   password: yup
@@ -126,6 +132,32 @@ export const businessAddressSchema = yup.object().shape({
   isPrimary: yup.boolean().default(true),
 });
 
+// Single-screen onboarding: the essentials only. Country / address type /
+// isPrimary are fixed in the submit payload, not collected from the user.
+export const businessDetailsSchema = yup.object().shape({
+  businessName: yup
+    .string()
+    .min(2, 'Business name must be at least 2 characters')
+    .max(100, 'Business name must not exceed 100 characters')
+    .required('Business name is required'),
+  businessType: yup.string().required('Please select a business type'),
+  street: yup
+    .string()
+    .min(5, 'Street address must be at least 5 characters')
+    .max(200, 'Street address must not exceed 200 characters')
+    .required('Street address is required'),
+  city: yup
+    .string()
+    .min(2, 'City must be at least 2 characters')
+    .max(100, 'City must not exceed 100 characters')
+    .required('City is required'),
+  postalCode: yup
+    .string()
+    .min(3, 'Postcode must be at least 3 characters')
+    .max(20, 'Postcode must not exceed 20 characters')
+    .required('Postcode is required'),
+});
+
 // ==================== TYPE EXPORTS ====================
 
 export type LoginFormData = yup.InferType<typeof loginSchema>;
@@ -133,4 +165,5 @@ export type SignupFormData = yup.InferType<typeof signupSchema>;
 export type CustomerSignupFormData = yup.InferType<typeof customerSignupSchema>;
 export type BusinessInfoFormData = yup.InferType<typeof businessInfoSchema>;
 export type BusinessAddressFormData = yup.InferType<typeof businessAddressSchema>;
+export type BusinessDetailsFormData = yup.InferType<typeof businessDetailsSchema>;
 export type CategoryFormData = yup.InferType<typeof categorySchema>;

@@ -1,18 +1,15 @@
-// screens/Auth/Login.tsx
-
-import React, { useState } from 'react';
+// screens/LoginScreen.tsx
+import React from 'react';
 import {
   View,
   Text,
-  TextInput,
-  Pressable,
+  Image,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
@@ -23,12 +20,13 @@ import { useAuth } from 'context/AuthContext';
 import { loginUser } from 'api/actions/authActions';
 import { loginSchema, LoginFormData } from 'validations/formValidationSchemas';
 import Toast from 'utils/Toast';
+import { fonts } from 'constants/design';
+import { Input, Button } from 'components/ui';
 
 export default function LoginScreen() {
   const navigation = useNavigation<any>();
   const { colors } = useThemeContext();
   const { login } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
 
   const {
     control,
@@ -71,216 +69,128 @@ export default function LoginScreen() {
             paddingHorizontal: 24,
           }}
           keyboardShouldPersistTaps="handled">
-          {/* Header */}
-          <View style={{ alignItems: 'center', marginBottom: 40 }}>
-            <View
+          {/* Brand header */}
+          <View style={{ alignItems: 'center', marginBottom: 36 }}>
+            <Image
+              source={require('../assets/icon.png')}
               style={{
-                width: 80,
-                height: 80,
-                borderRadius: 40,
-                backgroundColor: colors.primary + '15',
-                alignItems: 'center',
-                justifyContent: 'center',
+                width: 72,
+                height: 72,
+                borderRadius: 18,
+                borderWidth: 1,
+                borderColor: colors.border,
                 marginBottom: 20,
-              }}>
-              <Ionicons name="storefront" size={40} color={colors.primary} />
-            </View>
+              }}
+            />
             <Text
               style={{
-                fontSize: 28,
-                fontWeight: '700',
+                fontFamily: fonts.extrabold,
+                fontSize: 26,
+                letterSpacing: -0.4,
                 color: colors.text,
-                marginBottom: 8,
+                marginBottom: 6,
               }}>
-              Welcome Back
+              Welcome back
             </Text>
-            <Text style={{ fontSize: 15, color: colors.placeholder }}>
-              Sign in to continue to your account
+            <Text style={{ fontSize: 15, color: colors.muted }}>
+              Sign in to continue to Finestics
             </Text>
           </View>
 
           {/* Form */}
-          <View style={{ gap: 16 }}>
-            {/* Email Field */}
-            <View>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: colors.text,
-                  marginBottom: 8,
-                  marginLeft: 4,
-                }}>
-                Email
-              </Text>
-              <Controller
-                control={control}
-                name="email"
-                render={({ field: { onChange, onBlur, value } }) => (
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Email"
+                icon="email-outline"
+                placeholder="you@business.com"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                error={errors.email?.message}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Password"
+                icon="lock-outline"
+                placeholder="Your password"
+                secureTextEntry
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                autoComplete="password"
+                error={errors.password?.message}
+              />
+            )}
+          />
+
+          {/* Remember me & forgot password */}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 20,
+            }}>
+            <Controller
+              control={control}
+              name="rememberMe"
+              render={({ field: { onChange, value } }) => (
+                <TouchableOpacity
+                  onPress={() => onChange(!value)}
+                  style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View
                     style={{
-                      flexDirection: 'row',
+                      width: 21,
+                      height: 21,
+                      borderRadius: 6,
+                      borderWidth: 1.5,
+                      borderColor: value ? colors.primary : colors.border,
+                      backgroundColor: value ? colors.primary : 'transparent',
                       alignItems: 'center',
-                      backgroundColor: colors.card,
-                      borderRadius: 12,
-                      paddingHorizontal: 14,
-                      borderWidth: 1,
-                      borderColor: errors.email ? '#EF4444' : colors.border || '#eee',
+                      justifyContent: 'center',
+                      marginRight: 8,
                     }}>
-                    <Ionicons name="mail-outline" size={20} color={colors.placeholder} />
-                    <TextInput
-                      placeholder="Enter your email"
-                      placeholderTextColor={colors.placeholder}
-                      style={{
-                        flex: 1,
-                        paddingVertical: 14,
-                        paddingHorizontal: 12,
-                        fontSize: 16,
-                        color: colors.text,
-                      }}
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoComplete="email"
-                    />
+                    {value && (
+                      <MaterialCommunityIcons name="check" size={14} color={colors.white} />
+                    )}
                   </View>
-                )}
-              />
-              {errors.email && (
-                <Text style={{ color: '#EF4444', fontSize: 13, marginTop: 6, marginLeft: 4 }}>
-                  {errors.email.message}
-                </Text>
+                  <Text style={{ color: colors.text, fontSize: 14 }}>Remember me</Text>
+                </TouchableOpacity>
               )}
-            </View>
+            />
 
-            {/* Password Field */}
-            <View>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: colors.text,
-                  marginBottom: 8,
-                  marginLeft: 4,
-                }}>
-                Password
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} hitSlop={8}>
+              <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>
+                Forgot password?
               </Text>
-              <Controller
-                control={control}
-                name="password"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      backgroundColor: colors.card,
-                      borderRadius: 12,
-                      paddingHorizontal: 14,
-                      borderWidth: 1,
-                      borderColor: errors.password ? '#EF4444' : colors.border || '#eee',
-                    }}>
-                    <Ionicons name="lock-closed-outline" size={20} color={colors.placeholder} />
-                    <TextInput
-                      placeholder="Enter your password"
-                      placeholderTextColor={colors.placeholder}
-                      secureTextEntry={!showPassword}
-                      style={{
-                        flex: 1,
-                        paddingVertical: 14,
-                        paddingHorizontal: 12,
-                        fontSize: 16,
-                        color: colors.text,
-                      }}
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      autoComplete="password"
-                    />
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                      <Ionicons
-                        name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                        size={20}
-                        color={colors.placeholder}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                )}
-              />
-              {errors.password && (
-                <Text style={{ color: '#EF4444', fontSize: 13, marginTop: 6, marginLeft: 4 }}>
-                  {errors.password.message}
-                </Text>
-              )}
-            </View>
-
-            {/* Remember Me & Forgot Password */}
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}>
-              <Controller
-                control={control}
-                name="rememberMe"
-                render={({ field: { onChange, value } }) => (
-                  <TouchableOpacity
-                    onPress={() => onChange(!value)}
-                    style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <View
-                      style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: 6,
-                        borderWidth: 2,
-                        borderColor: value ? colors.primary : colors.border || '#ddd',
-                        backgroundColor: value ? colors.primary : 'transparent',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: 8,
-                      }}>
-                      {value && <Ionicons name="checkmark" size={14} color="#fff" />}
-                    </View>
-                    <Text style={{ color: colors.text, fontSize: 14 }}>Remember me</Text>
-                  </TouchableOpacity>
-                )}
-              />
-
-              <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-                <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '500' }}>
-                  Forgot Password?
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Login Button */}
-            <Pressable
-              disabled={isSubmitting}
-              onPress={handleSubmit(onSubmit)}
-              style={{
-                backgroundColor: colors.primary,
-                borderRadius: 12,
-                paddingVertical: 16,
-                alignItems: 'center',
-                marginTop: 8,
-                opacity: isSubmitting ? 0.7 : 1,
-              }}>
-              {isSubmitting ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Sign In</Text>
-              )}
-            </Pressable>
+            </TouchableOpacity>
           </View>
 
-          {/* Sign Up Link */}
-          <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 32 }}>
-            <Text style={{ color: colors.text, fontSize: 15 }}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-              <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '600' }}>
-                Sign Up
+          <Button
+            title="Sign In"
+            onPress={handleSubmit(onSubmit)}
+            loading={isSubmitting}
+            disabled={isSubmitting}
+          />
+
+          {/* Sign up link */}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 28 }}>
+            <Text style={{ color: colors.muted, fontSize: 15 }}>Don’t have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Signup')} hitSlop={8}>
+              <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '700' }}>
+                Sign up
               </Text>
             </TouchableOpacity>
           </View>
