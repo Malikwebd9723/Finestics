@@ -17,7 +17,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { createVendor, updateVendor, Vendor } from 'api/actions/adminActions';
-import Snackbar, { useSnackbar } from 'components/Snackbar';
+import Toast from 'utils/Toast';
 
 const { height } = Dimensions.get('window');
 
@@ -45,7 +45,6 @@ export default function VendorFormModal({ visible, onClose, mode, vendor }: Vend
   const { colors } = useThemeContext();
   const queryClient = useQueryClient();
   const [slideAnim] = useState(new Animated.Value(height));
-  const snackbar = useSnackbar();
 
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
@@ -115,16 +114,16 @@ export default function VendorFormModal({ visible, onClose, mode, vendor }: Vend
     onSuccess: (response: any) => {
       if (response.success) {
         queryClient.invalidateQueries({ queryKey: ['vendors'] });
-        snackbar.showSuccess(response.data?.message || 'Vendor created successfully');
+        Toast.success(response.data?.message || 'Vendor created successfully');
         setTimeout(() => onClose(), 500);
       } else {
         const errorMsg = response.data?.error?.message || response.data?.message || 'Failed to create vendor';
-        snackbar.showError(errorMsg);
+        Toast.error(errorMsg);
       }
     },
     onError: (error: any) => {
       const errorMsg = error?.data?.error?.message || error?.message || 'Failed to create vendor';
-      snackbar.showError(errorMsg);
+      Toast.error(errorMsg);
     },
   });
 
@@ -133,16 +132,16 @@ export default function VendorFormModal({ visible, onClose, mode, vendor }: Vend
     onSuccess: (response: any) => {
       if (response.success) {
         queryClient.invalidateQueries({ queryKey: ['vendors'] });
-        snackbar.showSuccess(response.data?.message || 'Vendor updated successfully');
+        Toast.success(response.data?.message || 'Vendor updated successfully');
         setTimeout(() => onClose(), 500);
       } else {
         const errorMsg = response.data?.error?.message || response.data?.message || 'Failed to update vendor';
-        snackbar.showError(errorMsg);
+        Toast.error(errorMsg);
       }
     },
     onError: (error: any) => {
       const errorMsg = error?.data?.error?.message || error?.message || 'Failed to update vendor';
-      snackbar.showError(errorMsg);
+      Toast.error(errorMsg);
     },
   });
 
@@ -506,14 +505,6 @@ export default function VendorFormModal({ visible, onClose, mode, vendor }: Vend
               </Pressable>
             </View>
           </Animated.View>
-
-          {/* Snackbar for feedback */}
-          <Snackbar
-            visible={snackbar.visible}
-            message={snackbar.message}
-            type={snackbar.type}
-            onDismiss={snackbar.hideSnackbar}
-          />
         </View>
       </KeyboardAvoidingView>
     </Modal>

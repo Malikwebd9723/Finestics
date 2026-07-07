@@ -1,10 +1,11 @@
 // components/Snackbar.tsx
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, Pressable, Dimensions, Modal } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+// The single global toast surface, mounted once by SnackbarProvider and fed
+// through the `Toast` bus (utils/Toast). Anchored to the TOP of the screen.
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, Animated, PanResponder, Pressable, Modal } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const { width } = Dimensions.get('window');
+import { useThemeContext } from 'context/ThemeProvider';
 
 export type SnackbarType = 'success' | 'error' | 'warning' | 'info';
 
@@ -20,30 +21,15 @@ interface SnackbarProps {
   };
 }
 
-const getSnackbarConfig = (type: SnackbarType) => {
-  switch (type) {
-    case 'success':
-      return {
-        backgroundColor: '#10b981',
-        icon: 'check-circle' as const,
-      };
-    case 'error':
-      return {
-        backgroundColor: '#ef4444',
-        icon: 'error' as const,
-      };
-    case 'warning':
-      return {
-        backgroundColor: '#f59e0b',
-        icon: 'warning' as const,
-      };
-    case 'info':
-    default:
-      return {
-        backgroundColor: '#3b82f6',
-        icon: 'info' as const,
-      };
-  }
+const HIDDEN_Y = -140;
+
+// Neutral surface + semantic icon. Only success/error carry color; the icon
+// shape alone distinguishes warning/info so no off-palette accents are needed.
+const ICONS: Record<SnackbarType, React.ComponentProps<typeof MaterialCommunityIcons>['name']> = {
+  success: 'check-circle',
+  error: 'alert-circle',
+  warning: 'alert',
+  info: 'information',
 };
 
 export default function Snackbar({
@@ -55,72 +41,84 @@ export default function Snackbar({
   action,
 }: SnackbarProps) {
   const insets = useSafeAreaInsets();
-  const translateY = useRef(new Animated.Value(100)).current;
+  const { colors } = useThemeContext();
+  const translateY = useRef(new Animated.Value(HIDDEN_Y)).current;
   const opacity = useRef(new Animated.Value(0)).current;
+  const drag = useRef(new Animated.Value(0)).current;
   // Keep the Modal mounted while the exit animation runs. The parent's `visible`
   // flag drives the fade/slide; `modalVisible` drives the RN Modal lifecycle.
-  const [modalVisible, setModalVisible] = React.useState(visible);
+  const [modalVisible, setModalVisible] = useState(visible);
+
+  const hide = (after?: () => void) => {
+    Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: HIDDEN_Y,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setModalVisible(false);
+      after?.();
+    });
+  };
 
   useEffect(() => {
     if (visible) {
+      drag.setValue(0);
       setModalVisible(true);
       Animated.parallel([
         Animated.spring(translateY, {
           toValue: 0,
-          tension: 50,
-          friction: 8,
+          tension: 60,
+          friction: 10,
           useNativeDriver: true,
         }),
         Animated.timing(opacity, {
           toValue: 1,
-          duration: 200,
+          duration: 180,
           useNativeDriver: true,
         }),
       ]).start();
 
       if (duration > 0) {
-        const timer = setTimeout(() => {
-          handleDismiss();
-        }, duration);
+        const timer = setTimeout(() => hide(onDismiss), duration);
         return () => clearTimeout(timer);
       }
     } else {
-      Animated.parallel([
-        Animated.timing(translateY, {
-          toValue: 100,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start(() => setModalVisible(false));
+      hide();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
-  const handleDismiss = () => {
-    Animated.parallel([
-      Animated.timing(translateY, {
-        toValue: 100,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setModalVisible(false);
-      onDismiss();
-    });
-  };
+  const handleDismiss = () => hide(onDismiss);
 
-  const config = getSnackbarConfig(type);
+  // Swipe up to dismiss; taps on the action/close buttons still go through
+  // because the responder only claims the gesture once it actually moves.
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_evt, g) => Math.abs(g.dy) > 6,
+      onPanResponderMove: (_evt, g) => {
+        if (g.dy < 0) drag.setValue(g.dy);
+      },
+      onPanResponderRelease: (_evt, g) => {
+        if (g.dy < -28 || g.vy < -0.6) {
+          handleDismiss();
+        } else {
+          Animated.spring(drag, { toValue: 0, useNativeDriver: true }).start();
+        }
+      },
+    })
+  ).current;
 
   if (!modalVisible) return null;
+
+  const tint =
+    type === 'success' ? colors.success : type === 'error' ? colors.error : colors.text;
 
   // Render inside a transparent RN <Modal> with `pointerEvents="box-none"` so
   // the snackbar floats above every other open modal but taps on empty areas
@@ -135,37 +133,41 @@ export default function Snackbar({
       <View style={{ flex: 1 }} pointerEvents="box-none">
         <Animated.View
           pointerEvents="box-none"
+          {...panResponder.panHandlers}
           style={{
             position: 'absolute',
-            bottom: insets.bottom + 16,
+            top: insets.top + 10,
             left: 16,
             right: 16,
-            transform: [{ translateY }],
+            transform: [{ translateY: Animated.add(translateY, drag) }],
             opacity,
           }}>
           <View
             pointerEvents="auto"
             style={{
-              backgroundColor: config.backgroundColor,
-              borderRadius: 12,
-              paddingVertical: 14,
-              paddingHorizontal: 16,
+              backgroundColor: colors.card,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: colors.border,
+              paddingVertical: 13,
+              paddingHorizontal: 14,
               flexDirection: 'row',
               alignItems: 'center',
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.14,
+              shadowRadius: 14,
               elevation: 8,
             }}>
-            <MaterialIcons name={config.icon} size={22} color="#fff" />
+            <MaterialCommunityIcons name={ICONS[type]} size={21} color={tint} />
             <Text
               style={{
                 flex: 1,
-                color: '#fff',
+                color: colors.text,
                 fontSize: 14,
                 fontWeight: '500',
-                marginLeft: 12,
+                lineHeight: 19,
+                marginLeft: 10,
                 marginRight: 8,
               }}
               numberOfLines={3}>
@@ -177,75 +179,23 @@ export default function Snackbar({
                   action.onPress();
                   handleDismiss();
                 }}
+                hitSlop={6}
                 style={{
-                  paddingHorizontal: 12,
+                  paddingHorizontal: 10,
                   paddingVertical: 6,
-                  backgroundColor: 'rgba(255,255,255,0.2)',
-                  borderRadius: 6,
-                  marginRight: 8,
+                  marginRight: 6,
                 }}>
-                <Text style={{ color: '#fff', fontWeight: '600', fontSize: 13 }}>
+                <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 13 }}>
                   {action.label}
                 </Text>
               </Pressable>
             )}
             <Pressable onPress={handleDismiss} hitSlop={8}>
-              <MaterialIcons name="close" size={20} color="rgba(255,255,255,0.8)" />
+              <MaterialCommunityIcons name="close" size={18} color={colors.muted} />
             </Pressable>
           </View>
         </Animated.View>
       </View>
     </Modal>
   );
-}
-
-// Hook for easy snackbar management
-import { useState, useCallback } from 'react';
-
-interface SnackbarState {
-  visible: boolean;
-  message: string;
-  type: SnackbarType;
-}
-
-export function useSnackbar() {
-  const [state, setState] = useState<SnackbarState>({
-    visible: false,
-    message: '',
-    type: 'info',
-  });
-
-  const showSnackbar = useCallback((message: string, type: SnackbarType = 'info') => {
-    setState({ visible: true, message, type });
-  }, []);
-
-  const hideSnackbar = useCallback(() => {
-    setState((prev) => ({ ...prev, visible: false }));
-  }, []);
-
-  const showSuccess = useCallback((message: string) => {
-    showSnackbar(message, 'success');
-  }, [showSnackbar]);
-
-  const showError = useCallback((message: string) => {
-    showSnackbar(message, 'error');
-  }, [showSnackbar]);
-
-  const showWarning = useCallback((message: string) => {
-    showSnackbar(message, 'warning');
-  }, [showSnackbar]);
-
-  const showInfo = useCallback((message: string) => {
-    showSnackbar(message, 'info');
-  }, [showSnackbar]);
-
-  return {
-    ...state,
-    showSnackbar,
-    hideSnackbar,
-    showSuccess,
-    showError,
-    showWarning,
-    showInfo,
-  };
 }

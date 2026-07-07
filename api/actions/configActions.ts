@@ -1,5 +1,12 @@
 // api/actions/configActions.ts
-import { apiRequest } from 'api/clients';
+import { apiRequest, getErrorMessage } from 'api/clients';
+
+/** Throw if the API response indicates failure */
+function throwIfError(res: { success: boolean; data: any }, fallback: string) {
+  if (!res.success) {
+    throw new Error(getErrorMessage(res.data, fallback));
+  }
+}
 
 export interface AppConfig {
   currency: { code: string; symbol: string; prefix: boolean; decimals: number };
@@ -25,5 +32,6 @@ export interface AppConfig {
 
 export const fetchConfig = async (): Promise<{ success: boolean; data: AppConfig }> => {
   const res = await apiRequest('/config', 'GET');
+  throwIfError(res, 'Failed to load app config');
   return res.data;
 };

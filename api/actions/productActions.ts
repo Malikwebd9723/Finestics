@@ -30,6 +30,7 @@ export const fetchAllProducts = async ({
   if (tag) parts.push(`tag=${encodeURIComponent(tag)}`);
   if (isActive !== undefined) parts.push(`isActive=${isActive}`);
   const res = await apiRequest(`/products?${parts.join('&')}`, 'GET');
+  throwIfError(res, 'Failed to load products');
   return res.data;
 };
 
@@ -38,6 +39,7 @@ export const fetchAllProducts = async ({
  */
 export const fetchProductDetails = async (productId: number) => {
   const res = await apiRequest(`/products/${productId}`, 'GET');
+  throwIfError(res, 'Failed to load product details');
   return res.data;
 };
 
@@ -73,6 +75,7 @@ export const deleteProduct = async (productId: number) => {
  */
 export const fetchTags = async () => {
   const res = await apiRequest('/products/tags', 'GET');
+  throwIfError(res, 'Failed to load tags');
   // API returns { success: true, data: string[] }
   return res.data?.data || res.data || [];
 };

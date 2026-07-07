@@ -25,7 +25,6 @@ import {
   deleteOrder,
 } from 'api/actions/orderActions';
 import { fetchVendorProfile } from 'api/actions/vendorActions';
-import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
 import {
   OrderDetailResponse,
   OrderStatus,
@@ -299,8 +298,6 @@ export default function OrderDetailModal({
   const { colors } = useThemeContext();
   const queryClient = useQueryClient();
   const [slideAnim] = useState(new Animated.Value(height));
-  const [cancelModalVisible, setCancelModalVisible] = useState(false);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [statusMenuVisible, setStatusMenuVisible] = useState(false);
   const [returnModalVisible, setReturnModalVisible] = useState(false);
   const [returnDetailId, setReturnDetailId] = useState<number | null>(null);
@@ -343,7 +340,6 @@ export default function OrderDetailModal({
     onSuccess: () => {
       Toast.success('Order cancelled!');
       queryClient.invalidateQueries({ queryKey: ['orders'] });
-      setCancelModalVisible(false);
       onClose();
     },
     onError: (error: any) => {
@@ -379,6 +375,31 @@ export default function OrderDetailModal({
       Dialog.alert('Error', message);
     },
   });
+
+  const confirmCancelOrder = () => {
+    Dialog.confirm(
+      'Cancel Order?',
+      'Are you sure you want to cancel this order? You can reopen it later by changing the status.',
+      {
+        confirmText: 'Cancel Order',
+        cancelText: 'Keep Order',
+        destructive: true,
+        onConfirm: () => cancelMutation.mutate(undefined),
+      }
+    );
+  };
+
+  const confirmDeleteOrder = () => {
+    Dialog.confirm(
+      'Delete Order?',
+      'This will permanently delete the order. This action cannot be undone.',
+      {
+        confirmText: 'Delete',
+        destructive: true,
+        onConfirm: () => deleteMutation.mutate(),
+      }
+    );
+  };
 
   // Slide animation
   useEffect(() => {
@@ -935,7 +956,7 @@ export default function OrderDetailModal({
                   {/* Cancel button - only for non-cancelled, non-pending orders */}
                   {((order.capabilities?.canCancel ?? canCancelOrder(order.status)) && !(order.capabilities?.canDelete ?? canDeleteOrder(order.status))) && (
                     <TouchableOpacity
-                      onPress={() => setCancelModalVisible(true)}
+                      onPress={confirmCancelOrder}
                       className="flex-1 flex-row items-center justify-center rounded-xl py-3"
                       style={{
                         backgroundColor: colors.error + '15',
@@ -955,7 +976,7 @@ export default function OrderDetailModal({
                   {order.status === 'pending' && (
                     <>
                       <TouchableOpacity
-                        onPress={() => setCancelModalVisible(true)}
+                        onPress={confirmCancelOrder}
                         className="flex-1 flex-row items-center justify-center rounded-xl py-3"
                         style={{
                           backgroundColor: colors.error + '15',
@@ -970,7 +991,7 @@ export default function OrderDetailModal({
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        onPress={() => setDeleteModalVisible(true)}
+                        onPress={confirmDeleteOrder}
                         className="flex-1 flex-row items-center justify-center rounded-xl py-3"
                         style={{
                           backgroundColor: colors.error,
@@ -984,7 +1005,7 @@ export default function OrderDetailModal({
                   {/* Delete button - only for cancelled orders */}
                   {order.status === 'cancelled' && (
                     <TouchableOpacity
-                      onPress={() => setDeleteModalVisible(true)}
+                      onPress={confirmDeleteOrder}
                       className="flex-1 flex-row items-center justify-center rounded-xl py-3"
                       style={{
                         backgroundColor: colors.error,
@@ -1005,26 +1026,6 @@ export default function OrderDetailModal({
                   </View>
                 )}
               </View>
-
-              {/* Cancel Confirmation Modal */}
-              <ConfirmDeleteModal
-                visible={cancelModalVisible}
-                loading={cancelMutation.isPending}
-                title="Cancel Order?"
-                message="Are you sure you want to cancel this order? You can reopen it later by changing the status."
-                onCancel={() => setCancelModalVisible(false)}
-                onConfirm={() => cancelMutation.mutate()}
-              />
-
-              {/* Delete Confirmation Modal */}
-              <ConfirmDeleteModal
-                visible={deleteModalVisible}
-                loading={deleteMutation.isPending}
-                title="Delete Order?"
-                message="This will permanently delete the order. This action cannot be undone."
-                onCancel={() => setDeleteModalVisible(false)}
-                onConfirm={() => deleteMutation.mutate()}
-              />
 
               {/* Process Return Modal */}
               <ProcessReturnModal

@@ -1,8 +1,16 @@
-import { apiRequest } from "api/clients";
+import { apiRequest, getErrorMessage } from "api/clients";
+
+/** Throw if the API response indicates failure */
+function throwIfError(res: { success: boolean; data: any }, fallback: string) {
+    if (!res.success) {
+        throw new Error(getErrorMessage(res.data, fallback));
+    }
+}
 
 // API Functions
 export const fetchUserDetail = async (userId: number) => {
     const res = await apiRequest(`/users/${userId}`, "GET");
+    throwIfError(res, "Failed to load user details");
     return res.data;  // Return data for queries
 };
 

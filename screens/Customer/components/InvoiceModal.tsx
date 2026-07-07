@@ -54,7 +54,6 @@ export default function InvoiceModal({ visible, order, onClose }: Props) {
       Toast.success('Invoice saved to gallery');
       onClose();
     } catch (error) {
-      console.error('Error saving invoice:', error);
       Toast.error('Failed to save invoice');
     } finally {
       setSaving(false);

@@ -27,7 +27,6 @@ import {
   fetchExpenseCategories,
 } from 'api/actions/expensesActions';
 import { FormInput, FormTextArea, FormSection } from './FormInputFields';
-import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
 import {
   ExpenseDetailResponse,
   EXPENSE_CATEGORIES,
@@ -58,7 +57,6 @@ export default function ExpenseFormModal({
 }: ExpenseFormModalProps) {
   const { colors } = useThemeContext();
   const queryClient = useQueryClient();
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const isEditMode = !!expenseId;
@@ -186,7 +184,6 @@ export default function ExpenseFormModal({
       }
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       Toast.success('Expense deleted successfully!');
-      setDeleteModalVisible(false);
       handleClose();
     },
     onError: (error: any) => {
@@ -207,6 +204,18 @@ export default function ExpenseFormModal({
     } else {
       addMutation.mutate(formData);
     }
+  };
+
+  const confirmDelete = () => {
+    Dialog.confirm(
+      'Delete Expense?',
+      'Are you sure you want to delete this expense? This action cannot be undone.',
+      {
+        confirmText: 'Delete',
+        destructive: true,
+        onConfirm: () => deleteMutation.mutate(),
+      }
+    );
   };
 
   const handleDateChange = (event: any, date?: Date) => {
@@ -411,7 +420,7 @@ export default function ExpenseFormModal({
               style={{ borderColor: colors.border }}>
               {isEditMode && (
                 <TouchableOpacity
-                  onPress={() => setDeleteModalVisible(true)}
+                  onPress={confirmDelete}
                   disabled={isSubmitting}
                   className="items-center justify-center rounded-xl px-4 py-3"
                   style={{
@@ -460,16 +469,6 @@ export default function ExpenseFormModal({
           </View>
         </SafeAreaView>
       </KeyboardAvoidingView>
-
-      {/* Delete Confirmation Modal */}
-      <ConfirmDeleteModal
-        visible={deleteModalVisible}
-        loading={deleteMutation.isPending}
-        title="Delete Expense?"
-        message="Are you sure you want to delete this expense? This action cannot be undone."
-        onCancel={() => setDeleteModalVisible(false)}
-        onConfirm={() => deleteMutation.mutate()}
-      />
     </Modal>
   );
 }

@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Pressable, View, ActivityIndicator } from 'react-native';
-import { Feather } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from '../context/ThemeProvider';
 import { fonts } from '../constants/design';
@@ -26,7 +25,6 @@ import PaymentsScreen from '../screens/Vendor/PaymentsScreen';
 import Statistics from '../screens/Vendor/Statistics';
 
 // ==================== CUSTOMER SCREENS ====================
-import CustomersDashboard from '../screens/Customers/CustomersDashboard';
 import MarketplaceScreen from '../screens/Customer/MarketplaceScreen';
 import MyVendorsScreen from '../screens/Customer/MyVendorsScreen';
 import MyOrdersScreen from '../screens/Customer/MyOrdersScreen';
@@ -50,7 +48,6 @@ const screenComponents: Record<string, React.ComponentType<any>> = {
   Statistics,
 
   // Customer
-  CustomersDashboard,
   MarketplaceScreen,
   MyVendorsScreen,
   MyOrdersScreen,
@@ -95,7 +92,7 @@ export default function TabNavigator() {
     headerLeft: () => (
       <View style={{ marginLeft: 15 }}>
         <Pressable hitSlop={8} onPress={() => navigation.openDrawer()}>
-          <Feather name="menu" size={24} color={colors.text} />
+          <MaterialCommunityIcons name="menu" size={24} color={colors.text} />
         </Pressable>
       </View>
     ),

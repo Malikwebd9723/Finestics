@@ -26,7 +26,6 @@ import {
   updateCustomer,
 } from 'api/actions/customerActions';
 import { FormInput, FormTextArea, FormSelect, FormRow, FormSection } from './FormInputFields';
-import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
 import {
   CustomerFormData,
   CustomerDetailResponse,
@@ -69,7 +68,6 @@ export default function CustomerFormModal({
 }: CustomerFormModalProps) {
   const { colors } = useThemeContext();
   const queryClient = useQueryClient();
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const isEditMode = !!customerId;
 
@@ -197,7 +195,6 @@ export default function CustomerFormModal({
       }
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       Toast.success('Customer deleted successfully!');
-      setDeleteModalVisible(false);
       handleClose();
     },
     onError: (error: any) => {
@@ -230,6 +227,18 @@ export default function CustomerFormModal({
     } else {
       addMutation.mutate(formData);
     }
+  };
+
+  const confirmDelete = () => {
+    Dialog.confirm(
+      'Delete Item?',
+      'Are you sure you want to delete this item? This action cannot be undone.',
+      {
+        confirmText: 'Delete',
+        destructive: true,
+        onConfirm: () => deleteMutation.mutate(),
+      }
+    );
   };
 
   // Loading state for edit mode
@@ -552,7 +561,7 @@ export default function CustomerFormModal({
               style={{ borderColor: colors.border }}>
               {isEditMode && (
                 <TouchableOpacity
-                  onPress={() => setDeleteModalVisible(true)}
+                  onPress={confirmDelete}
                   disabled={isSubmitting}
                   className="items-center justify-center rounded-xl px-4 py-3"
                   style={{
@@ -601,14 +610,6 @@ export default function CustomerFormModal({
           </View>
         </SafeAreaView>
       </KeyboardAvoidingView>
-
-      {/* Delete Confirmation Modal */}
-      <ConfirmDeleteModal
-        visible={deleteModalVisible}
-        loading={deleteMutation.isPending}
-        onCancel={() => setDeleteModalVisible(false)}
-        onConfirm={() => deleteMutation.mutate()}
-      />
     </Modal>
   );
 }

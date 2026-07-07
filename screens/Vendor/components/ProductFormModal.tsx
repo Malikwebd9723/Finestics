@@ -28,7 +28,6 @@ import {
   fetchTags,
 } from 'api/actions/productActions';
 import { FormInput, FormTextArea, FormSection, FormRow } from './FormInputFields';
-import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
 import { ProductFormData, ProductDetailResponse, PRODUCT_UNITS } from 'types/product.types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -51,7 +50,6 @@ const DEFAULT_VALUES: ProductFormData = {
 export default function ProductFormModal({ visible, onClose, productId }: ProductFormModalProps) {
   const { colors } = useThemeContext();
   const queryClient = useQueryClient();
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [customTagInput, setCustomTagInput] = useState('');
 
@@ -174,7 +172,6 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['products', 'tags'] });
       Toast.success('Product deleted successfully!');
-      setDeleteModalVisible(false);
       handleClose();
     },
     onError: (error: any) => {
@@ -197,6 +194,18 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
     } else {
       addMutation.mutate(formData);
     }
+  };
+
+  const confirmDelete = () => {
+    Dialog.confirm(
+      'Delete Product?',
+      'Are you sure you want to delete this product? This action cannot be undone.',
+      {
+        confirmText: 'Delete',
+        destructive: true,
+        onConfirm: () => deleteMutation.mutate(),
+      }
+    );
   };
 
   // Tag operations
@@ -547,7 +556,7 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
               style={{ borderColor: colors.border }}>
               {isEditMode && (
                 <TouchableOpacity
-                  onPress={() => setDeleteModalVisible(true)}
+                  onPress={confirmDelete}
                   disabled={isSubmitting}
                   className="items-center justify-center rounded-xl px-4 py-3"
                   style={{
@@ -596,16 +605,6 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
           </View>
         </SafeAreaView>
       </KeyboardAvoidingView>
-
-      {/* Delete Confirmation Modal */}
-      <ConfirmDeleteModal
-        visible={deleteModalVisible}
-        loading={deleteMutation.isPending}
-        title="Delete Product?"
-        message="Are you sure you want to delete this product? This action cannot be undone."
-        onCancel={() => setDeleteModalVisible(false)}
-        onConfirm={() => deleteMutation.mutate()}
-      />
     </Modal>
   );
 }

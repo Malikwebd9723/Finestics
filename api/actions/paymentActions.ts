@@ -1,7 +1,14 @@
 // api/actions/paymentActions.ts
-import { apiRequest } from 'api/clients';
+import { apiRequest, getErrorMessage } from 'api/clients';
 
 const BASE_PATH = '/payments';
+
+/** Throw if the API response indicates failure */
+function throwIfError(res: { success: boolean; data: any }, fallback: string) {
+  if (!res.success) {
+    throw new Error(getErrorMessage(res.data, fallback));
+  }
+}
 
 // ==================== TYPES ====================
 
@@ -291,6 +298,7 @@ export const fetchPaymentOverview = async (params?: {
   const queryString = queryParams.toString();
   const url = queryString ? `${BASE_PATH}/overview?${queryString}` : `${BASE_PATH}/overview`;
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load payment overview');
   return res.data;
 };
 
@@ -310,6 +318,7 @@ export const fetchPaymentCollections = async (params: {
   if (params.paymentMethod) queryParams.append('paymentMethod', params.paymentMethod);
 
   const res = await apiRequest(`${BASE_PATH}/collections?${queryParams.toString()}`, 'GET');
+  throwIfError(res, 'Failed to load collections');
   return res.data;
 };
 
@@ -320,6 +329,7 @@ export const fetchDailyCollection = async (
   date: string
 ): Promise<{ success: boolean; data: DailyCollectionData }> => {
   const res = await apiRequest(`${BASE_PATH}/collections/daily/${date}`, 'GET');
+  throwIfError(res, 'Failed to load daily collection');
   return res.data;
 };
 
@@ -347,6 +357,7 @@ export const fetchOutstandingOrders = async (params?: {
     ? `${BASE_PATH}/outstanding?${queryString}`
     : `${BASE_PATH}/outstanding`;
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load outstanding orders');
   return res.data;
 };
 
@@ -360,6 +371,7 @@ export const fetchAgingReport = async (
     ? `${BASE_PATH}/outstanding/aging?asOfDate=${asOfDate}`
     : `${BASE_PATH}/outstanding/aging`;
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load aging report');
   return res.data;
 };
 
@@ -385,6 +397,7 @@ export const fetchOutstandingByOrderDate = async (params: {
     `${BASE_PATH}/outstanding/by-order-date?${queryParams.toString()}`,
     'GET'
   );
+  throwIfError(res, 'Failed to load outstanding by date');
   return res.data;
 };
 
@@ -414,6 +427,7 @@ export const fetchCustomerPaymentSummaries = async (params?: {
     ? `${BASE_PATH}/customers/summary?${queryString}`
     : `${BASE_PATH}/customers/summary`;
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load customer summaries');
   return res.data;
 };
 
@@ -433,6 +447,7 @@ export const fetchCustomerPaymentDetail = async (
     ? `${BASE_PATH}/customers/${customerId}/summary?${queryString}`
     : `${BASE_PATH}/customers/${customerId}/summary`;
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load customer payment details');
   return res.data;
 };
 
@@ -457,6 +472,7 @@ export const fetchCustomerLedger = async (
     ? `${BASE_PATH}/customers/${customerId}/ledger?${queryString}`
     : `${BASE_PATH}/customers/${customerId}/ledger`;
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load customer ledger');
   return res.data;
 };
 
@@ -479,6 +495,7 @@ export const fetchSalesReport = async (params: {
     `${BASE_PATH}/reports/sales?${queryParams.toString()}`,
     'GET'
   );
+  throwIfError(res, 'Failed to load sales report');
   return res.data;
 };
 
@@ -499,5 +516,6 @@ export const fetchProfitLossReport = async (params: {
     `${BASE_PATH}/reports/profit-loss?${queryParams.toString()}`,
     'GET'
   );
+  throwIfError(res, 'Failed to load profit & loss report');
   return res.data;
 };

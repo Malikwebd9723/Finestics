@@ -149,8 +149,7 @@ export default function TransactionHistory() {
                 Dialog.alert("Downloaded", `Saved to app documents:\n\n${fileUri}`);
             }
         } catch (error) {
-            console.error("Error generating statement:", error);
-            showToast("Failed to generate statement!");
+            Toast.error("Failed to generate statement.");
         }
     };
 

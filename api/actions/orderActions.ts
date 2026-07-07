@@ -38,6 +38,7 @@ export const fetchAllOrders = async (params?: OrdersQueryParams) => {
   const url = queryString ? `${BASE_PATH}?${queryString}` : BASE_PATH;
 
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load orders');
   return res.data;
 };
 
@@ -46,6 +47,7 @@ export const fetchAllOrders = async (params?: OrdersQueryParams) => {
  */
 export const fetchOrderDetails = async (orderId: number) => {
   const res = await apiRequest(`${BASE_PATH}/${orderId}`, 'GET');
+  throwIfError(res, 'Failed to load order details');
   return res.data;
 };
 
@@ -179,6 +181,7 @@ export const removeOrderItem = async (orderId: number, itemId: number) => {
  */
 export const fetchOrdersByDate = async (date: string) => {
   const res = await apiRequest(`${BASE_PATH}/by-date/${date}`, 'GET');
+  throwIfError(res, 'Failed to load orders for this date');
   return res.data;
 };
 
@@ -187,6 +190,7 @@ export const fetchOrdersByDate = async (date: string) => {
  */
 export const fetchCollectionSheet = async (date: string) => {
   const res = await apiRequest(`${BASE_PATH}/collection-sheet/${date}`, 'GET');
+  throwIfError(res, 'Failed to load collection sheet');
   return res.data;
 };
 
@@ -198,6 +202,7 @@ export const fetchOrdersByVan = async (vanName: string, date?: string) => {
     ? `${BASE_PATH}/by-van/${encodeURIComponent(vanName)}?date=${date}`
     : `${BASE_PATH}/by-van/${encodeURIComponent(vanName)}`;
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load van orders');
   return res.data;
 };
 
@@ -206,6 +211,7 @@ export const fetchOrdersByVan = async (vanName: string, date?: string) => {
  */
 export const fetchDailySummary = async (date: string) => {
   const res = await apiRequest(`${BASE_PATH}/summary/${date}`, 'GET');
+  throwIfError(res, 'Failed to load daily summary');
   return res.data;
 };
 
@@ -263,6 +269,7 @@ export const fetchOrdersByCustomer = async (
     : `${BASE_PATH}/customer/${customerId}`;
 
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load customer orders');
   return res.data;
 };
 
@@ -289,6 +296,7 @@ export const fetchCustomerOrders = async (
     : `/vendor-customers/${customerId}/orders`;
 
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load customer orders');
   return res.data;
 };
 
@@ -297,6 +305,7 @@ export const fetchCustomerOrders = async (
  */
 export const fetchCustomerLastOrder = async (customerId: number) => {
   const res = await apiRequest(`/vendor-customers/${customerId}/last-order`, 'GET');
+  throwIfError(res, 'Failed to load last order');
   return res.data;
 };
 

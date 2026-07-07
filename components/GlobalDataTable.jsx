@@ -51,7 +51,7 @@ export default function GlobalDataTable({ title, columns, items, route, pressabl
 
       {items.length === 0 ? (
         <View className="py-8 items-center justify-center">
-          <Text style={{ color: colors.textSecondary }}>No records found</Text>
+          <Text style={{ color: colors.muted }}>No records found</Text>
         </View>
       ) : (
         <DataTable key={themeKey}>

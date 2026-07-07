@@ -167,7 +167,7 @@ export default function CollectionSheet() {
     try {
       await Share.share({ message: text });
     } catch (error) {
-      console.error('Share error:', error);
+      Toast.error('Failed to share collection sheet');
     }
   };
 

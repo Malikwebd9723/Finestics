@@ -1,7 +1,14 @@
 // api/actions/statisticsActions.ts
-import { apiRequest } from 'api/clients';
+import { apiRequest, getErrorMessage } from 'api/clients';
 
 const BASE_PATH = '/statistics';
+
+/** Throw if the API response indicates failure */
+function throwIfError(res: { success: boolean; data: any }, fallback: string) {
+  if (!res.success) {
+    throw new Error(getErrorMessage(res.data, fallback));
+  }
+}
 
 // ==================== TYPES ====================
 
@@ -151,6 +158,7 @@ export const fetchDashboardStats = async (params?: {
   if (params?.to) qs.append('to', params.to);
   const suffix = qs.toString() ? `?${qs.toString()}` : '';
   const res = await apiRequest(`${BASE_PATH}/dashboard${suffix}`, 'GET');
+  throwIfError(res, 'Failed to load dashboard stats');
   return res.data;
 };
 
@@ -167,6 +175,7 @@ export const fetchDetailedStats = async (params: {
   if (params.from) qs.append('from', params.from);
   if (params.to) qs.append('to', params.to);
   const res = await apiRequest(`${BASE_PATH}/detailed?${qs.toString()}`, 'GET');
+  throwIfError(res, 'Failed to load statistics');
   return res.data;
 };
 
@@ -185,6 +194,7 @@ export const fetchSalesTrend = async (params: {
   if (params.to) qs.append('to', params.to);
   if (params.interval) qs.append('interval', params.interval);
   const res = await apiRequest(`${BASE_PATH}/sales-trend?${qs.toString()}`, 'GET');
+  throwIfError(res, 'Failed to load sales trend');
   return res.data;
 };
 
@@ -193,6 +203,7 @@ export const fetchSalesTrend = async (params: {
  */
 export const fetchCustomerStats = async (): Promise<{ success: boolean; data: CustomerStats }> => {
   const res = await apiRequest(`${BASE_PATH}/customers`, 'GET');
+  throwIfError(res, 'Failed to load customer stats');
   return res.data;
 };
 
@@ -203,5 +214,6 @@ export const fetchProductStats = async (
   days: number = 30
 ): Promise<{ success: boolean; data: ProductStats }> => {
   const res = await apiRequest(`${BASE_PATH}/products?days=${days}`, 'GET');
+  throwIfError(res, 'Failed to load product stats');
   return res.data;
 };

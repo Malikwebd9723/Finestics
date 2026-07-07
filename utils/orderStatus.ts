@@ -1,11 +1,11 @@
 // utils/orderStatus.ts
 // Maps the 8 backend order statuses to customer-facing labels + a theme tone.
-// Tones resolve to theme colors at render time (no hex literals; dark-mode safe):
-//   neutral -> colors.muted, active -> colors.primary,
-//   positive -> colors.success, negative -> colors.error
+// Tone vocabulary + color resolution live in utils/statusTones (canonical).
 import type { OrderStatus } from 'api/actions/customerOrderActions';
+import { StatusTone, toneColor } from './statusTones';
 
-export type StatusTone = 'neutral' | 'active' | 'positive' | 'negative';
+export type { StatusTone };
+export { toneColor };
 
 interface StatusMeta {
   label: string;
@@ -25,20 +25,6 @@ const META: Record<OrderStatus, StatusMeta> = {
 
 export const getOrderStatusMeta = (status: OrderStatus | string): StatusMeta =>
   META[status as OrderStatus] || { label: String(status), tone: 'neutral' };
-
-/** Resolve a tone to a concrete theme color. */
-export const toneColor = (tone: StatusTone, colors: Record<string, string>): string => {
-  switch (tone) {
-    case 'active':
-      return colors.primary;
-    case 'positive':
-      return colors.success;
-    case 'negative':
-      return colors.error;
-    default:
-      return colors.muted;
-  }
-};
 
 // Ordered steps shown in the customer's order timeline (excludes cancelled/refunded).
 export const TIMELINE_STEPS: OrderStatus[] = [

@@ -1,5 +1,12 @@
 // api/actions/customerActions.ts
-import { apiRequest } from 'api/clients';
+import { apiRequest, getErrorMessage } from 'api/clients';
+
+/** Throw if the API response indicates failure */
+function throwIfError(res: { success: boolean; data: any }, fallback: string) {
+  if (!res.success) {
+    throw new Error(getErrorMessage(res.data, fallback));
+  }
+}
 
 // ==================== CUSTOMERS ====================
 
@@ -8,6 +15,7 @@ import { apiRequest } from 'api/clients';
  */
 export const fetchAllCustomers = async () => {
   const res = await apiRequest('/vendor-customers', 'GET');
+  throwIfError(res, 'Failed to load customers');
   return res.data;
 };
 
@@ -16,6 +24,7 @@ export const fetchAllCustomers = async () => {
  */
 export const fetchCustomerDetails = async (customerId: number) => {
   const res = await apiRequest(`/vendor-customers/${customerId}`, 'GET');
+  throwIfError(res, 'Failed to load customer details');
   return res.data;
 };
 
@@ -48,6 +57,7 @@ export const deleteCustomer = async (customerId: number) => {
  */
 export const fetchOutstandingCustomers = async () => {
   const res = await apiRequest('/vendor-customers/outstanding', 'GET');
+  throwIfError(res, 'Failed to load outstanding customers');
   return res.data;
 };
 
@@ -64,6 +74,7 @@ export const updateCustomerStatus = async (customerId: number, status: string) =
  */
 export const fetchCustomerSummary = async (customerId: number) => {
   const res = await apiRequest(`/vendor-customers/${customerId}/summary`, 'GET');
+  throwIfError(res, 'Failed to load customer summary');
   return res.data;
 };
 
@@ -82,5 +93,6 @@ export const fetchCustomerOrders = async (
   const query = queryParams.toString();
   const url = `/vendor-customers/${customerId}/orders${query ? `?${query}` : ''}`;
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load customer orders');
   return res.data;
 };

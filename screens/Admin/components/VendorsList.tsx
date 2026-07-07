@@ -19,7 +19,7 @@ import {
 } from 'api/actions/adminActions';
 import VendorDetailModal from './VendorDetailModal';
 import VendorActionsModal from './VendorActionsModal';
-import Snackbar, { useSnackbar } from 'components/Snackbar';
+import Toast from 'utils/Toast';
 
 interface VendorsListProps {
   searchQuery: string;
@@ -41,7 +41,6 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
   const [actionsModalVisible, setActionsModalVisible] = useState(false);
   const [actionType, setActionType] = useState<'approve' | 'reject' | 'suspend' | 'reactivate'>('approve');
   const [processingVendorId, setProcessingVendorId] = useState<number | null>(null);
-  const snackbar = useSnackbar();
 
   const filters = statusFilter !== 'all' ? { status: statusFilter as any } : undefined;
 
@@ -57,16 +56,16 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
       setProcessingVendorId(null);
       if (response.success) {
         queryClient.invalidateQueries({ queryKey: ['vendors'] });
-        snackbar.showSuccess(response.data?.message || 'Vendor approved successfully');
+        Toast.success(response.data?.message || 'Vendor approved successfully');
       } else {
         const errorMsg = response.data?.error?.message || response.data?.message || 'Failed to approve vendor';
-        snackbar.showError(errorMsg);
+        Toast.error(errorMsg);
       }
     },
     onError: (error: any) => {
       setProcessingVendorId(null);
       const errorMsg = error?.data?.error?.message || error?.message || 'Failed to approve vendor';
-      snackbar.showError(errorMsg);
+      Toast.error(errorMsg);
     },
   });
 
@@ -368,13 +367,6 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
         }}
       />
 
-      {/* Snackbar for feedback */}
-      <Snackbar
-        visible={snackbar.visible}
-        message={snackbar.message}
-        type={snackbar.type}
-        onDismiss={snackbar.hideSnackbar}
-      />
     </>
   );
 }

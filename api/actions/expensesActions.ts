@@ -1,6 +1,6 @@
 // api/actions/expensesActions.ts
 
-import { apiRequest } from 'api/clients';
+import { apiRequest, getErrorMessage } from 'api/clients';
 import {
   ExpensesQueryParams,
   CreateExpensePayload,
@@ -9,6 +9,13 @@ import {
 } from 'types/expense.types';
 
 const BASE_PATH = '/expenses';
+
+/** Throw if the API response indicates failure */
+function throwIfError(res: { success: boolean; data: any }, fallback: string) {
+  if (!res.success) {
+    throw new Error(getErrorMessage(res.data, fallback));
+  }
+}
 
 // ==================== CRUD OPERATIONS ====================
 
@@ -29,6 +36,7 @@ export const fetchAllExpenses = async (params?: ExpensesQueryParams) => {
   const queryString = queryParams.toString();
   const url = queryString ? `${BASE_PATH}?${queryString}` : BASE_PATH;
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load expenses');
   return res.data;
 };
 
@@ -37,6 +45,7 @@ export const fetchAllExpenses = async (params?: ExpensesQueryParams) => {
  */
 export const fetchExpenseDetails = async (id: number) => {
   const res = await apiRequest(`${BASE_PATH}/${id}`, 'GET');
+  throwIfError(res, 'Failed to load expense details');
   return res.data;
 };
 
@@ -81,6 +90,7 @@ export const bulkDeleteExpenses = async (data: BulkDeletePayload) => {
  */
 export const fetchExpenseCategories = async () => {
   const res = await apiRequest(`${BASE_PATH}/categories`, 'GET');
+  throwIfError(res, 'Failed to load expense categories');
   return res.data;
 };
 
@@ -100,5 +110,6 @@ export const fetchExpenseSummary = async (startDate?: string, endDate?: string) 
   const queryString = queryParams.toString();
   const url = queryString ? `${BASE_PATH}/summary?${queryString}` : `${BASE_PATH}/summary`;
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load expense summary');
   return res.data;
 };

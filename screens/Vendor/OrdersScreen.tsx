@@ -1,7 +1,7 @@
 // screens/Vendor/OrdersScreen.tsx
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Pressable, Text, TouchableOpacity } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useThemeContext } from 'context/ThemeProvider';
 import SearchBar from 'components/SearchBar';
@@ -9,8 +9,6 @@ import OrdersList from './components/OrdersList';
 import OrderDetailModal from './components/OrderDetailModal';
 import PaymentModal from './components/PaymentModal';
 import BulkActionsBar from './components/BulkActionsBar';
-import VanOrdersModal from './components/VanOrdersModal';
-import CustomerOrdersModal from './components/CustomerOrderDetailsModal';
 
 export default function Orders() {
   const { colors } = useThemeContext();
@@ -27,26 +25,23 @@ export default function Orders() {
   // Modal states
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
-  const [vanOrdersModalVisible, setVanOrdersModalVisible] = useState(false);
-  const [customerOrdersModalVisible, setCustomerOrdersModalVisible] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
 
   // Bulk selection state
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState<Set<number>>(new Set());
 
+  // Filters can be preset by other screens (e.g. Dashboard attention rows).
+  const route = useRoute<any>();
+  useEffect(() => {
+    if (route.params?.statusFilter) {
+      setStatusFilter(route.params.statusFilter);
+    }
+    if (route.params?.paymentFilter) {
+      setPaymentFilter(route.params.paymentFilter);
+    }
+  }, [route.params]);
 
-  // Add this after the useState declarations
-const route = useRoute<any>();
-
-useEffect(() => {
-  if (route.params?.statusFilter) {
-    setStatusFilter(route.params.statusFilter);
-  }
-  if (route.params?.paymentFilter) {
-    setPaymentFilter(route.params.paymentFilter);
-  }
-}, [route.params]);
   // Handlers
   const handleCreateOrder = () => {
     navigation.navigate('CreateOrderScreen');
@@ -132,14 +127,6 @@ useEffect(() => {
     setVanFilter(van);
   };
 
-  const handleViewVanOrders = () => {
-    setVanOrdersModalVisible(true);
-  };
-
-  const handleViewCustomerOrders = () => {
-    setCustomerOrdersModalVisible(true);
-  };
-
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       {/* Selection Mode Header */}
@@ -149,7 +136,7 @@ useEffect(() => {
           style={{ backgroundColor: colors.primary }}>
           <View className="flex-row items-center">
             <TouchableOpacity onPress={handleCancelSelection} className="mr-3">
-              <Ionicons name="close" size={24} color="#fff" />
+              <MaterialCommunityIcons name="close" size={24} color={colors.white} />
             </TouchableOpacity>
             <Text className="text-lg font-bold text-white">{selectedOrders.size} selected</Text>
           </View>
@@ -175,7 +162,7 @@ useEffect(() => {
                 borderWidth: 1,
                 borderColor: colors.border,
               }}>
-              <MaterialIcons name="shopping-basket" size={16} color={colors.primary} />
+              <MaterialCommunityIcons name="basket-outline" size={16} color={colors.primary} />
               <Text className="ml-1.5 text-sm font-medium" style={{ color: colors.text }}>
                 Collection
               </Text>
@@ -189,7 +176,7 @@ useEffect(() => {
                 borderWidth: 1,
                 borderColor: colors.border,
               }}>
-              <Ionicons name="car" size={16} color={colors.primary} />
+              <MaterialCommunityIcons name="truck-outline" size={16} color={colors.primary} />
               <Text className="ml-1.5 text-sm font-medium" style={{ color: colors.text }}>
                 By Van
               </Text>
@@ -204,7 +191,7 @@ useEffect(() => {
                 borderWidth: 1,
                 borderColor: colors.border,
               }}>
-              <Ionicons name="person" size={16} color={colors.primary} />
+              <MaterialCommunityIcons name="account-outline" size={16} color={colors.primary} />
               <Text className="ml-1.5 text-sm font-medium" style={{ color: colors.text }}>
                 By Customer
               </Text>
@@ -230,7 +217,6 @@ useEffect(() => {
         isSelectionMode={isSelectionMode}
         selectedOrders={selectedOrders}
         onSelectAll={handleSelectAll}
-        onViewCustomerOrders={handleViewCustomerOrders}
       />
 
       {/* Bulk Actions Bar */}
@@ -255,7 +241,7 @@ useEffect(() => {
             shadowRadius: 6,
             elevation: 8,
           }}>
-          <Ionicons name="add" size={28} color="#fff" />
+          <MaterialCommunityIcons name="plus" size={28} color={colors.white} />
         </Pressable>
       )}
 
@@ -275,31 +261,6 @@ useEffect(() => {
         onClose={handleClosePaymentModal}
       />
 
-      {/* Van Orders Modal */}
-      <VanOrdersModal
-        visible={vanOrdersModalVisible}
-        onClose={() => setVanOrdersModalVisible(false)}
-        onViewOrder={(orderId) => {
-          setVanOrdersModalVisible(false);
-          setTimeout(() => {
-            setSelectedOrderId(orderId);
-            setDetailModalVisible(true);
-          }, 300);
-        }}
-      />
-
-      {/* Customer Orders Modal (NEW) */}
-      {/* <CustomerOrdersModal
-        visible={customerOrdersModalVisible}
-        onClose={() => setCustomerOrdersModalVisible(false)}
-        onViewOrder={(orderId) => {
-          setCustomerOrdersModalVisible(false);
-          setTimeout(() => {
-            setSelectedOrderId(orderId);
-            setDetailModalVisible(true);
-          }, 300);
-        }}
-      /> */}
     </View>
   );
 }

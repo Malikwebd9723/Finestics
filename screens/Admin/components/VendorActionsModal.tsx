@@ -19,7 +19,7 @@ import {
   suspendVendor,
   reactivateVendor,
 } from 'api/actions/adminActions';
-import Snackbar, { useSnackbar } from 'components/Snackbar';
+import Toast from 'utils/Toast';
 
 const { height } = Dimensions.get('window');
 
@@ -40,7 +40,6 @@ export default function VendorActionsModal({
   const queryClient = useQueryClient();
   const [slideAnim] = useState(new Animated.Value(height));
   const [reason, setReason] = useState('');
-  const snackbar = useSnackbar();
 
   const needsReason = actionType === 'reject' || actionType === 'suspend';
 
@@ -64,13 +63,13 @@ export default function VendorActionsModal({
 
   const handleSuccess = (message: string) => {
     queryClient.invalidateQueries({ queryKey: ['vendors'] });
-    snackbar.showSuccess(message);
+    Toast.success(message);
     setTimeout(() => onClose(), 500);
   };
 
   const handleError = (error: any, defaultMessage: string) => {
     const errorMessage = error?.data?.error?.message || error?.data?.message || error?.message || defaultMessage;
-    snackbar.showError(errorMessage);
+    Toast.error(errorMessage);
   };
 
   const approveMutation = useMutation({
@@ -133,7 +132,7 @@ export default function VendorActionsModal({
     if (!vendorId) return;
 
     if (needsReason && !reason.trim()) {
-      snackbar.showWarning('Please provide a reason');
+      Toast.warning('Please provide a reason');
       return;
     }
 
@@ -282,14 +281,6 @@ export default function VendorActionsModal({
             </Pressable>
           </View>
         </Animated.View>
-
-        {/* Snackbar */}
-        <Snackbar
-          visible={snackbar.visible}
-          message={snackbar.message}
-          type={snackbar.type}
-          onDismiss={snackbar.hideSnackbar}
-        />
       </View>
     </Modal>
   );

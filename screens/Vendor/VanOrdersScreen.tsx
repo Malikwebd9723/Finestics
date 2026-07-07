@@ -19,6 +19,7 @@ import { fetchOrdersByVan } from 'api/actions/orderActions';
 import { formatPrice, getStatusColor, getStatusLabel } from 'types/order.types';
 import OrderTableView, { ViewToggle } from './components/OrderTableView';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'utils/Toast';
 
 interface AggregatedProduct {
   productId: number;
@@ -184,7 +185,7 @@ export default function VanOrdersScreen({ navigation }: any) {
         title: `Van Orders - ${selectedVan} (${formatDisplayDate(selectedDate)})`,
       });
     } catch (error) {
-      console.error('Share error:', error);
+      Toast.error('Failed to share van orders');
     }
   };
 

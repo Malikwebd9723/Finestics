@@ -12,12 +12,12 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { deleteCustomer, fetchCustomerSummary } from 'api/actions/customerActions';
 import { checkPendingItems } from 'api/actions/returnActions';
-import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
 import CustomerOrderHistory from './CustomerOrderHistory';
 import PendingItemsModal from './PendingItemsModal';
 import OrderDetailModal from './OrderDetailModal'; // ADD THIS
@@ -53,7 +53,6 @@ export default function CustomerDetailModal({
   const queryClient = useQueryClient();
   const navigation = useNavigation<any>();
   const slideAnim = useRef(new Animated.Value(height)).current;
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   // ADD: Order detail modal state
   const [orderDetailVisible, setOrderDetailVisible] = useState(false);
@@ -85,7 +84,6 @@ export default function CustomerDetailModal({
     onSuccess: () => {
       Toast.success('Customer deleted successfully!');
       queryClient.invalidateQueries({ queryKey: ['customers'] });
-      setDeleteModalVisible(false);
       onClose();
     },
     onError: (error: any) => {
@@ -93,6 +91,18 @@ export default function CustomerDetailModal({
       Toast.error(message);
     },
   });
+
+  const confirmDelete = () => {
+    Dialog.confirm(
+      'Delete Item?',
+      'Are you sure you want to delete this item? This action cannot be undone.',
+      {
+        confirmText: 'Delete',
+        destructive: true,
+        onConfirm: () => deleteMutation.mutate(),
+      }
+    );
+  };
 
   // Slide animation
   useEffect(() => {
@@ -479,7 +489,7 @@ export default function CustomerDetailModal({
                 className="flex-row gap-3 border-t px-5 py-4"
                 style={{ borderColor: colors.border }}>
                 <TouchableOpacity
-                  onPress={() => setDeleteModalVisible(true)}
+                  onPress={confirmDelete}
                   className="flex-1 flex-row items-center justify-center rounded-xl py-3"
                   style={{
                     backgroundColor: colors.error + '15',
@@ -503,14 +513,6 @@ export default function CustomerDetailModal({
                   <Text className="ml-2 text-sm font-bold text-white">Edit</Text>
                 </TouchableOpacity>
               </View>
-
-              {/* Delete Confirmation Modal */}
-              <ConfirmDeleteModal
-                visible={deleteModalVisible}
-                loading={deleteMutation.isPending}
-                onCancel={() => setDeleteModalVisible(false)}
-                onConfirm={() => deleteMutation.mutate()}
-              />
             </>
           ) : (
             <View className="flex-1 items-center justify-center px-6">

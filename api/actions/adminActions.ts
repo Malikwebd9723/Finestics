@@ -1,5 +1,12 @@
 // api/actions/adminActions.ts
-import { apiRequest } from 'api/clients';
+import { apiRequest, getErrorMessage } from 'api/clients';
+
+/** Throw if the API response indicates failure */
+function throwIfError(res: { success: boolean; data: any }, fallback: string) {
+  if (!res.success) {
+    throw new Error(getErrorMessage(res.data, fallback));
+  }
+}
 
 // ==================== TYPES ====================
 
@@ -77,6 +84,7 @@ export interface AdminUser {
 export const fetchAdminDashboardStats = async (): Promise<{ data: AdminDashboardStats }> => {
   // Placeholder - will be connected to API later
   const res = await apiRequest('/admin/dashboard/stats', 'GET');
+  throwIfError(res, 'Failed to load dashboard stats');
   return res.data;
 };
 
@@ -87,6 +95,7 @@ export const fetchAdminDashboardStats = async (): Promise<{ data: AdminDashboard
  */
 export const fetchAllVendorsStats = async () => {
   const res = await apiRequest('/vendors/stats', 'GET');
+  throwIfError(res, 'Failed to load vendor stats');
   return res.data;
 };
 
@@ -95,6 +104,7 @@ export const fetchAllVendorsStats = async () => {
  */
 export const fetchPendingVendorsForApproval = async (page = 1, limit = 20) => {
   const res = await apiRequest(`/vendors/pending?page=${page}&limit=${limit}`, 'GET');
+  throwIfError(res, 'Failed to load pending vendors');
   return res.data;
 };
 
@@ -107,6 +117,7 @@ export const fetchAllVendors = async (page = 1, limit = 20, filters?: VendorFilt
   if (filters?.search) params.append('search', filters.search);
 
   const res = await apiRequest(`/vendors?${params.toString()}`, 'GET');
+  throwIfError(res, 'Failed to load vendors');
   return res.data;
 };
 
@@ -134,6 +145,7 @@ export const createVendor = async (data: {
  */
 export const fetchVendorById = async (id: number) => {
   const res = await apiRequest(`/vendors/${id}`, 'GET');
+  throwIfError(res, 'Failed to load vendor');
   return res.data;  // Return data for queries
 };
 
@@ -182,6 +194,7 @@ export const reactivateVendor = async (id: number) => {
  */
 export const deleteVendor = async (id: number) => {
   const res = await apiRequest(`/vendors/${id}`, 'DELETE');
+  throwIfError(res, 'Failed to delete vendor');
   return res.data;
 };
 
@@ -190,6 +203,7 @@ export const deleteVendor = async (id: number) => {
  */
 export const fetchVendorStatsById = async (id: number) => {
   const res = await apiRequest(`/vendors/${id}/stats`, 'GET');
+  throwIfError(res, 'Failed to load vendor stats');
   return res.data;
 };
 
@@ -200,6 +214,7 @@ export const fetchVendorStatsById = async (id: number) => {
  */
 export const fetchUserStats = async () => {
   const res = await apiRequest('/users/stats', 'GET');
+  throwIfError(res, 'Failed to load user stats');
   return res.data;
 };
 
@@ -213,6 +228,7 @@ export const fetchAllUsersAdmin = async (page = 1, limit = 20, filters?: UserFil
   if (filters?.search) params.append('search', filters.search);
 
   const res = await apiRequest(`/users?${params.toString()}`, 'GET');
+  throwIfError(res, 'Failed to load users');
   return res.data;
 };
 
@@ -221,6 +237,7 @@ export const fetchAllUsersAdmin = async (page = 1, limit = 20, filters?: UserFil
  */
 export const fetchUserByIdAdmin = async (id: number) => {
   const res = await apiRequest(`/users/${id}`, 'GET');
+  throwIfError(res, 'Failed to load user');
   return res.data;
 };
 
@@ -229,6 +246,7 @@ export const fetchUserByIdAdmin = async (id: number) => {
  */
 export const updateUserAdmin = async (id: number, data: Partial<AdminUser>) => {
   const res = await apiRequest(`/users/${id}`, 'PUT', data);
+  throwIfError(res, 'Failed to update user');
   return res.data;
 };
 
@@ -237,6 +255,7 @@ export const updateUserAdmin = async (id: number, data: Partial<AdminUser>) => {
  */
 export const updateUserStatusAdmin = async (id: number, status: string) => {
   const res = await apiRequest(`/users/${id}/status`, 'PATCH', { accountStatus: status });
+  throwIfError(res, 'Failed to update user status');
   return res.data;
 };
 
@@ -245,6 +264,7 @@ export const updateUserStatusAdmin = async (id: number, status: string) => {
  */
 export const updateUserRoleAdmin = async (id: number, role: string) => {
   const res = await apiRequest(`/users/${id}/role`, 'PATCH', { role });
+  throwIfError(res, 'Failed to update user role');
   return res.data;
 };
 
@@ -253,6 +273,7 @@ export const updateUserRoleAdmin = async (id: number, role: string) => {
  */
 export const deleteUserAdmin = async (id: number) => {
   const res = await apiRequest(`/users/${id}`, 'DELETE');
+  throwIfError(res, 'Failed to delete user');
   return res.data;
 };
 
@@ -263,6 +284,7 @@ export const deleteUserAdmin = async (id: number) => {
  */
 export const fetchAdminProfile = async () => {
   const res = await apiRequest('/users/me', 'GET');
+  throwIfError(res, 'Failed to load profile');
   return res.data;
 };
 
@@ -276,6 +298,7 @@ export const updateAdminProfile = async (data: {
   profileImage?: string;
 }) => {
   const res = await apiRequest('/users/me', 'PUT', data);
+  throwIfError(res, 'Failed to update profile');
   return res.data;
 };
 
@@ -286,6 +309,7 @@ export const updateAdminProfile = async (data: {
  */
 export const fetchPlatformStats = async (period: 'week' | 'month' | 'quarter' | 'year') => {
   const res = await apiRequest(`/admin/statistics/overview?period=${period}`, 'GET');
+  throwIfError(res, 'Failed to load platform stats');
   return res.data;
 };
 
@@ -294,6 +318,7 @@ export const fetchPlatformStats = async (period: 'week' | 'month' | 'quarter' | 
  */
 export const fetchVendorPerformanceStats = async (period: 'week' | 'month' | 'quarter' | 'year') => {
   const res = await apiRequest(`/admin/statistics/vendors?period=${period}`, 'GET');
+  throwIfError(res, 'Failed to load vendor performance stats');
   return res.data;
 };
 
@@ -302,5 +327,6 @@ export const fetchVendorPerformanceStats = async (period: 'week' | 'month' | 'qu
  */
 export const fetchUserGrowthStats = async (period: 'week' | 'month' | 'quarter' | 'year') => {
   const res = await apiRequest(`/admin/statistics/users?period=${period}`, 'GET');
+  throwIfError(res, 'Failed to load user growth stats');
   return res.data;
 };

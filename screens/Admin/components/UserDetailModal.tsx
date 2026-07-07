@@ -15,7 +15,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useThemeContext } from "context/ThemeProvider";
 import { deleteUserAccount, fetchUserDetail, updateAccountStatus, updateUserRole } from "api/actions/userActions";
-import Snackbar, { useSnackbar } from "components/Snackbar";
+import Toast from "utils/Toast";
 
 const { height } = Dimensions.get("window");
 
@@ -36,12 +36,11 @@ export default function UserDetailModal({
     const [showRoleDialog, setShowRoleDialog] = useState(false);
     const [showStatusDialog, setShowStatusDialog] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const snackbar = useSnackbar();
 
     const handleSuccess = (message: string, closeModal = false) => {
         queryClient.invalidateQueries({ queryKey: ["users"], refetchType: "all" });
         queryClient.invalidateQueries({ queryKey: ["userDetail", userId] });
-        snackbar.showSuccess(message);
+        Toast.success(message);
         if (closeModal) {
             setTimeout(() => onClose(), 500);
         }
@@ -49,7 +48,7 @@ export default function UserDetailModal({
 
     const handleError = (response: any, defaultMessage: string) => {
         const errorMessage = response?.data?.error?.message || response?.data?.message || response?.message || defaultMessage;
-        snackbar.showError(errorMessage);
+        Toast.error(errorMessage);
     };
 
     // Fetch user details
@@ -569,14 +568,6 @@ export default function UserDetailModal({
                         </View>
                     )}
                 </Animated.View>
-
-                {/* Snackbar for feedback */}
-                <Snackbar
-                    visible={snackbar.visible}
-                    message={snackbar.message}
-                    type={snackbar.type}
-                    onDismiss={snackbar.hideSnackbar}
-                />
             </View>
         </Modal>
     );

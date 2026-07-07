@@ -12,11 +12,11 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import Toast from 'utils/Toast';
+import Dialog from 'utils/Dialog';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { deleteProduct, fetchProductDetails } from 'api/actions/productActions';
-import ConfirmDeleteModal from 'components/DeleteConfirmationModal';
 import {
   Product,
   ProductDetailResponse,
@@ -45,7 +45,6 @@ export default function ProductDetailModal({
   const { colors } = useThemeContext();
   const queryClient = useQueryClient();
   const [slideAnim] = useState(new Animated.Value(height));
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   // Fetch product details
   const { data, isLoading, error } = useQuery<ProductDetailResponse>({
@@ -60,9 +59,8 @@ export default function ProductDetailModal({
   const deleteMutation = useMutation({
     mutationFn: () => deleteProduct(productId!),
     onSuccess: () => {
-      setDeleteModalVisible(false);
       // On iOS, closing two modals at once freezes the screen.
-      // Close the confirmation first, then the parent modal after a short delay.
+      // The confirm dialog dismisses on tap; close the parent modal after a short delay.
       setTimeout(() => {
         Toast.success('Product deleted successfully!');
         queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -71,10 +69,21 @@ export default function ProductDetailModal({
       }, 300);
     },
     onError: (error: any) => {
-      setDeleteModalVisible(false);
       Toast.error(error?.message || 'Failed to delete product');
     },
   });
+
+  const confirmDelete = () => {
+    Dialog.confirm(
+      'Delete Product?',
+      'Are you sure you want to delete this product? This action cannot be undone.',
+      {
+        confirmText: 'Delete',
+        destructive: true,
+        onConfirm: () => deleteMutation.mutate(),
+      }
+    );
+  };
 
   // Slide animation
   useEffect(() => {
@@ -321,7 +330,7 @@ export default function ProductDetailModal({
                 className="flex-row gap-3 border-t px-5 py-4"
                 style={{ borderColor: colors.border }}>
                 <TouchableOpacity
-                  onPress={() => setDeleteModalVisible(true)}
+                  onPress={confirmDelete}
                   className="flex-1 flex-row items-center justify-center rounded-xl py-3"
                   style={{
                     backgroundColor: colors.error + '15',
@@ -345,16 +354,6 @@ export default function ProductDetailModal({
                   <Text className="ml-2 text-sm font-bold text-white">Edit</Text>
                 </TouchableOpacity>
               </View>
-
-              {/* Delete Confirmation Modal */}
-              <ConfirmDeleteModal
-                visible={deleteModalVisible}
-                loading={deleteMutation.isPending}
-                title="Delete Product?"
-                message="Are you sure you want to delete this product? This action cannot be undone."
-                onCancel={() => setDeleteModalVisible(false)}
-                onConfirm={() => deleteMutation.mutate()}
-              />
             </>
           ) : (
             <View className="flex-1 items-center justify-center px-6">

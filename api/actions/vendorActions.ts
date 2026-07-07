@@ -1,5 +1,12 @@
 // api/actions/vendorActions.ts
-import { apiRequest } from 'api/clients';
+import { apiRequest, getErrorMessage } from 'api/clients';
+
+/** Throw if the API response indicates failure */
+function throwIfError(res: { success: boolean; data: any }, fallback: string) {
+  if (!res.success) {
+    throw new Error(getErrorMessage(res.data, fallback));
+  }
+}
 
 // ==================== VENDOR PROFILE ====================
 
@@ -8,6 +15,7 @@ import { apiRequest } from 'api/clients';
  */
 export const fetchVendorProfile = async () => {
   const res = await apiRequest('/vendors/me', 'GET');
+  throwIfError(res, 'Failed to load vendor profile');
   return res.data;
 };
 
@@ -26,6 +34,7 @@ export const updateVendorProfile = async (data: {
   deliveryAreas?: string[];
 }) => {
   const res = await apiRequest('/vendors/me', 'PUT', data);
+  throwIfError(res, 'Failed to update profile');
   return res.data;
 };
 
@@ -34,6 +43,7 @@ export const updateVendorProfile = async (data: {
  */
 export const fetchVendorStats = async () => {
   const res = await apiRequest('/vendors/me/stats', 'GET');
+  throwIfError(res, 'Failed to load vendor stats');
   return res.data;
 };
 
@@ -44,6 +54,7 @@ export const fetchVendorStats = async () => {
  */
 export const fetchVans = async () => {
   const res = await apiRequest('/vendors/me/vans', 'GET');
+  throwIfError(res, 'Failed to load vans');
   return res.data;
 };
 
@@ -52,6 +63,7 @@ export const fetchVans = async () => {
  */
 export const addVan = async (vanName: string) => {
   const res = await apiRequest('/vendors/me/vans', 'POST', { vanName });
+  throwIfError(res, 'Failed to add van');
   return res.data;
 };
 
@@ -60,5 +72,6 @@ export const addVan = async (vanName: string) => {
  */
 export const removeVan = async (vanName: string) => {
   const res = await apiRequest(`/vendors/me/vans/${encodeURIComponent(vanName)}`, 'DELETE');
+  throwIfError(res, 'Failed to remove van');
   return res.data;
 };

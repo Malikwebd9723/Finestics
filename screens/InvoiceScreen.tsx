@@ -28,8 +28,8 @@ export default function InvoiceScreen() {
                     return;
                 }
             } catch (err) {
-                console.log("Media permission error:", err);
-                Dialog.alert("Permission Error", "This feature requires a custom build (not Expo Go).");
+                Toast.error("Could not access the gallery — invoice not saved.");
+                return;
             }
 
             // Capture the invoice container only
@@ -49,8 +49,7 @@ export default function InvoiceScreen() {
             showToast("Invoice saved to gallery!");
             console.log("Invoice saved:", asset.uri);
         } catch (error) {
-            console.error("Error saving invoice:", error);
-            showToast("Failed to save invoice!");
+            Toast.error("Failed to save invoice.");
         }
     };
 
@@ -90,7 +89,7 @@ export default function InvoiceScreen() {
                     >
                         Order #3445456845
                     </Text>
-                    <Text className="text-sm" style={{ color: colors.subtext }}>
+                    <Text className="text-sm" style={{ color: colors.muted }}>
                         Delivered on 12 July 2025
                     </Text>
                 </View>
@@ -110,7 +109,7 @@ export default function InvoiceScreen() {
                         >
                             Delivered to
                         </Text>
-                        <Text className="text-sm" style={{ color: colors.subtext }}>
+                        <Text className="text-sm" style={{ color: colors.muted }}>
                             Complete address of customer
                         </Text>
                     </View>

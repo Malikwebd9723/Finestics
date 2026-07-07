@@ -33,6 +33,7 @@ export const processReturn = async (orderId: number, data: ProcessReturnPayload)
  */
 export const fetchReturnsByOrder = async (orderId: number) => {
   const res = await apiRequest(`${ORDERS_BASE}/${orderId}/returns`, 'GET');
+  throwIfError(res, 'Failed to load returns for this order');
   return res.data;
 };
 
@@ -54,6 +55,7 @@ export const fetchAllReturns = async (params?: ReturnsQueryParams) => {
   const url = queryString ? `${RETURNS_BASE}?${queryString}` : RETURNS_BASE;
 
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load returns');
   return res.data;
 };
 
@@ -62,6 +64,7 @@ export const fetchAllReturns = async (params?: ReturnsQueryParams) => {
  */
 export const fetchReturnDetail = async (returnId: number) => {
   const res = await apiRequest(`${RETURNS_BASE}/${returnId}`, 'GET');
+  throwIfError(res, 'Failed to load return details');
   return res.data;
 };
 
@@ -99,6 +102,7 @@ export const fetchPendingItems = async (
     : `${CUSTOMERS_BASE}/${customerId}/pending-items`;
 
   const res = await apiRequest(url, 'GET');
+  throwIfError(res, 'Failed to load pending items');
   return res.data;
 };
 
@@ -107,6 +111,7 @@ export const fetchPendingItems = async (
  */
 export const checkPendingItems = async (customerId: number) => {
   const res = await apiRequest(`${CUSTOMERS_BASE}/${customerId}/pending-items/check`, 'GET');
+  throwIfError(res, 'Failed to check pending items');
   return res.data;
 };
 
