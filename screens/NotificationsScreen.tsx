@@ -6,15 +6,17 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Pressable,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
 import { useAuth } from 'context/AuthContext';
-import { typo } from 'constants/design';
-import { ListRow } from 'components/ui';
+import { fonts } from 'constants/design';
+import { ListRow, EmptyState } from 'components/ui';
 import {
   getNotifications,
   markNotificationRead,
@@ -78,72 +80,87 @@ export default function NotificationsScreen() {
     if (route) navigation.navigate(route.name, route.params);
   };
 
-  if (isLoading) {
-    return (
-      <View
-        className="flex-1 items-center justify-center"
-        style={{ backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <FlatList
-        data={items}
-        keyExtractor={(item) => String(item.id)}
-        ListHeaderComponent={
-          items.length > 0 ? (
+    <SafeAreaView
+      edges={['top']}
+      style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Header — this screen sits on the root stack with no navigator header */}
+      <View
+        className="flex-row items-center px-4"
+        style={{
+          paddingVertical: 12,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          backgroundColor: colors.card,
+        }}>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={{ marginRight: 12 }}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
+        </Pressable>
+        <View className="flex-1 flex-row items-center">
+          <Text style={{ color: colors.text, fontSize: 18, fontFamily: fonts.bold }}>
+            Notifications
+          </Text>
+          {unreadCount > 0 && (
             <View
-              className="flex-row items-center justify-between px-4"
-              style={{ paddingTop: 14, paddingBottom: 4 }}>
-              <Text className="text-[13px] font-medium" style={{ color: colors.muted }}>
-                {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
+              className="ml-2 items-center justify-center rounded-full px-2"
+              style={{ backgroundColor: colors.primary, minWidth: 22, height: 20 }}>
+              <Text style={{ color: colors.white, fontSize: 11, fontWeight: '700' }}>
+                {unreadCount > 99 ? '99+' : unreadCount}
               </Text>
-              {unreadCount > 0 && (
-                <TouchableOpacity onPress={() => readAllMutation.mutate()} hitSlop={8}>
-                  <Text className="text-[13px] font-medium" style={{ color: colors.primary }}>
-                    Mark all read
-                  </Text>
-                </TouchableOpacity>
-              )}
             </View>
-          ) : null
-        }
-        renderItem={({ item, index }) => (
-          <View className="px-4" style={{ opacity: item.isRead ? 0.62 : 1 }}>
-            <ListRow
-              icon={ICON_BY_TYPE[item.type] || 'bell-outline'}
-              title={item.title}
-              subtitle={item.message}
-              amount={timeAgo(item.createdAt)}
-              badge={!item.isRead ? { label: 'NEW' } : undefined}
-              divider={index > 0}
-              onPress={() => openNotification(item)}
-            />
-          </View>
+          )}
+        </View>
+        {unreadCount > 0 && (
+          <TouchableOpacity
+            onPress={() => readAllMutation.mutate()}
+            disabled={readAllMutation.isPending}
+            hitSlop={8}>
+            <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>
+              Mark all read
+            </Text>
+          </TouchableOpacity>
         )}
-        ListEmptyComponent={
-          <View className="flex-1 items-center justify-center px-8" style={{ paddingTop: 90 }}>
-            <View
-              className="mb-4 h-16 w-16 items-center justify-center rounded-full"
-              style={{ backgroundColor: colors.gray }}>
-              <MaterialCommunityIcons name="bell-outline" size={30} color={colors.muted} />
+      </View>
+
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={items}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={({ item, index }) => (
+            <View className="px-4" style={{ opacity: item.isRead ? 0.62 : 1 }}>
+              <ListRow
+                icon={ICON_BY_TYPE[item.type] || 'bell-outline'}
+                title={item.title}
+                subtitle={item.message}
+                amount={timeAgo(item.createdAt)}
+                badge={!item.isRead ? { label: 'NEW' } : undefined}
+                divider={index > 0}
+                onPress={() => openNotification(item)}
+              />
             </View>
-            <Text style={[typo.title, { color: colors.text, fontSize: 18 }]}>
-              You{'’'}re all caught up
-            </Text>
-            <Text className="mt-1 text-center text-sm" style={{ color: colors.muted }}>
-              Order updates and connection activity will land here.
-            </Text>
-          </View>
-        }
-        contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
-        }
-      />
-    </View>
+          )}
+          ListEmptyComponent={
+            <EmptyState
+              icon="bell-outline"
+              title="You’re all caught up"
+              subtitle="Order updates and connection activity will land here."
+            />
+          }
+          contentContainerStyle={{ paddingBottom: 24, paddingTop: 4, flexGrow: 1 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
+        />
+      )}
+    </SafeAreaView>
   );
 }
