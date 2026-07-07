@@ -154,7 +154,7 @@ export default function VendorProfile() {
     // ✅ FIX: Wrap with KeyboardAvoidingView to handle keyboard covering inputs
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
       <ScrollView
         className="flex-1"

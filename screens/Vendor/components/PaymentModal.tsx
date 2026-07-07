@@ -108,7 +108,7 @@ export default function PaymentModal({ visible, orderId, onClose }: PaymentModal
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         <SafeAreaView className="flex-1 justify-end bg-black/50">
           <View className="rounded-t-3xl" style={{ backgroundColor: colors.card }}>

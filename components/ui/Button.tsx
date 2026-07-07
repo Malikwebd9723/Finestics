@@ -31,9 +31,13 @@ export default function Button({
 
   // Primary uses the dedicated CTA pair — in dark mode the zinc `primary`
   // reads as disabled, so filled buttons flip to near-white with dark text.
+  // Fallbacks keep the button visible even against a stale theme bundle
+  // that predates the cta/onCta tokens.
+  const ctaBg = colors.cta ?? colors.accent ?? colors.primary;
+  const ctaLabel = colors.onCta ?? colors.background ?? colors.white;
   const background =
-    variant === 'primary' ? colors.cta : variant === 'secondary' ? colors.card : 'transparent';
-  const labelColor = variant === 'primary' ? colors.onCta : colors.text;
+    variant === 'primary' ? ctaBg : variant === 'secondary' ? colors.card : 'transparent';
+  const labelColor = variant === 'primary' ? ctaLabel : colors.text;
 
   return (
     <Pressable

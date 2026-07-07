@@ -182,8 +182,10 @@ export default function BusinessDetailsScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+      {/* No KAV behavior on Android — the window already resizes; "height"
+          here double-compensates and hides the submit button while typing. */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{

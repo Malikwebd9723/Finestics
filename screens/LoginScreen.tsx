@@ -59,8 +59,11 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Android already resizes the window (softwareKeyboardLayoutMode:
+          "resize") — adding KAV "height" there double-compensates and pushes
+          the submit button off-screen while typing. iOS still needs padding. */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{
