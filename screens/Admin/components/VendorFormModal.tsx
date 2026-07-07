@@ -11,7 +11,6 @@ import {
   Dimensions,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -201,7 +200,7 @@ export default function VendorFormModal({ visible, onClose, mode, vendor }: Vend
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        behavior={'padding'}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <Pressable style={{ height: height * 0.1 }} onPress={onClose} />
 

@@ -7,7 +7,6 @@ import {
   Pressable,
   TouchableOpacity,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -77,11 +76,9 @@ export default function SignupScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* No KAV behavior on Android — the window already resizes; "height"
-          here double-compensates and hides the submit button while typing. */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}>
+      {/* 'padding' on BOTH platforms — edge-to-edge Android ignores the
+          window-resize mode, so the KAV must handle the keyboard itself. */}
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,

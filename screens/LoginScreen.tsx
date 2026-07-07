@@ -6,7 +6,6 @@ import {
   Image,
   TouchableOpacity,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -59,12 +58,10 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Android already resizes the window (softwareKeyboardLayoutMode:
-          "resize") — adding KAV "height" there double-compensates and pushes
-          the submit button off-screen while typing. iOS still needs padding. */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}>
+      {/* 'padding' on BOTH platforms: SDK 54 Android is edge-to-edge, where
+          softwareKeyboardLayoutMode:"resize" is ignored, so the KAV is the
+          only thing keeping the keyboard off the inputs. */}
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
