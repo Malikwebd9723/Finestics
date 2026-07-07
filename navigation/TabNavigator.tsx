@@ -15,6 +15,7 @@ import { getTabNavigationItems } from './NavigationItems';
 import AdminDashboard from '../screens/Admin/Dashboard';
 import AdminStatistics from '../screens/Admin/Statistics';
 import Users from '../screens/Admin/Users';
+import Vendors from '../screens/Admin/Vendors';
 
 // ==================== VENDOR SCREENS ====================
 import Dashboard from '../screens/Vendor/Dashboard';
@@ -37,7 +38,8 @@ const screenComponents: Record<string, React.ComponentType<any>> = {
   // Admin
   AdminDashboard,
   AdminStatistics,
-  Users,
+  AdminVendors: Vendors,
+  AdminUsers: Users,
 
   // Vendor
   Dashboard,

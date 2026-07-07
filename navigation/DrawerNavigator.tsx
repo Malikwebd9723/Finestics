@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { AppState, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useThemeContext } from '../context/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
@@ -19,6 +19,7 @@ import TabNavigator from './TabNavigator';
 import NavigationList from './NavigationList';
 import VendorProfile from '../screens/Vendor/VendorProfile';
 import Statistics from '../screens/Vendor/Statistics';
+import AdminStatistics from '../screens/Admin/Statistics';
 import Customers from '../screens/Vendor/Customers';
 import PaymentsScreen from 'screens/Vendor/PaymentsScreen';
 import ReturnsScreen from 'screens/Vendor/ReturnsScreen';
@@ -56,12 +57,22 @@ function CustomDrawerContent(props: any) {
   const isVendor = user?.role === 'vendor';
   const isAdmin = user?.role === 'admin';
 
+  // Only poll while the app is foregrounded — these queries live for the
+  // whole session, so an unguarded interval would poll in the background.
+  const [appActive, setAppActive] = useState(AppState.currentState === 'active');
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => setAppActive(s === 'active'));
+    return () => sub.remove();
+  }, []);
+  const pollInterval = appActive ? 60000 : false;
+
   // Real unread count for the Notifications badge.
   const { data: notificationData } = useQuery({
     queryKey: ['notifications'],
     queryFn: getNotifications,
     enabled: !!user,
-    refetchInterval: 60000,
+    refetchInterval: pollInterval,
+    refetchIntervalInBackground: false,
   });
   const unreadCount = notificationData?.unreadCount ?? 0;
 
@@ -70,13 +81,15 @@ function CustomDrawerContent(props: any) {
     queryKey: ['vendor-connection-requests'],
     queryFn: () => getConnectionRequests('pending'),
     enabled: isVendor,
-    refetchInterval: 60000,
+    refetchInterval: pollInterval,
+    refetchIntervalInBackground: false,
   });
   const { data: pendingOrders } = useQuery({
     queryKey: ['vendor-customer-orders', 'pending-badge'],
     queryFn: () => getVendorOrders('pending'),
     enabled: isVendor,
-    refetchInterval: 60000,
+    refetchInterval: pollInterval,
+    refetchIntervalInBackground: false,
   });
 
   const menuBadges = isVendor
@@ -304,6 +317,18 @@ export default function DrawerNavigator() {
       <Drawer.Screen
         name="Statistics"
         component={Statistics}
+        options={{
+          headerShown: true,
+          headerTitle: 'Statistics',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+        }}
+      />
+
+      {/* Admin platform statistics — direct route target for admin screens */}
+      <Drawer.Screen
+        name="AdminStatistics"
+        component={AdminStatistics}
         options={{
           headerShown: true,
           headerTitle: 'Statistics',

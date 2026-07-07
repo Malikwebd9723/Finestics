@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import {
   fetchAllVendors,
@@ -19,6 +19,7 @@ import {
 } from 'api/actions/adminActions';
 import VendorDetailModal from './VendorDetailModal';
 import VendorActionsModal from './VendorActionsModal';
+import VendorFormModal from './VendorFormModal';
 import Toast from 'utils/Toast';
 
 interface VendorsListProps {
@@ -38,6 +39,7 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
   const [fadeAnim] = useState(new Animated.Value(0));
   const [selectedVendorId, setSelectedVendorId] = useState<number | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [editVendor, setEditVendor] = useState<Vendor | null>(null);
   const [actionsModalVisible, setActionsModalVisible] = useState(false);
   const [actionType, setActionType] = useState<'approve' | 'reject' | 'suspend' | 'reactivate'>('approve');
   const [processingVendorId, setProcessingVendorId] = useState<number | null>(null);
@@ -166,6 +168,13 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
     approveMutation.mutate(vendorId);
   };
 
+  const handleEdit = (vendorId: number) => {
+    const vendor = filteredVendors.find((v) => v.id === vendorId) ?? null;
+    setDetailModalVisible(false);
+    setSelectedVendorId(null);
+    setEditVendor(vendor);
+  };
+
   const renderSkeleton = () => (
     <View className="px-4">
       {[...Array(6)].map((_, i) => (
@@ -203,7 +212,7 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
   if (error) {
     return (
       <View className="flex-1 items-center justify-center px-4">
-        <Ionicons name="alert-circle" size={64} color={colors.error} />
+        <MaterialCommunityIcons name="alert-circle" size={64} color={colors.error} />
         <Text className="text-lg font-semibold mt-4" style={{ color: colors.text }}>
           Failed to load vendors
         </Text>
@@ -225,7 +234,7 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
         ListEmptyComponent={
           <View className="items-center justify-center py-16">
-            <MaterialIcons name="store" size={64} color={colors.muted} />
+            <MaterialCommunityIcons name="store" size={64} color={colors.muted} />
             <Text className="text-center mt-4 text-base font-medium" style={{ color: colors.text }}>
               No vendors found
             </Text>
@@ -247,7 +256,7 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
                 <View
                   className="w-14 h-14 rounded-full items-center justify-center"
                   style={{ backgroundColor: colors.primary + '20' }}>
-                  <MaterialIcons name="store" size={24} color={colors.primary} />
+                  <MaterialCommunityIcons name="store" size={24} color={colors.primary} />
                 </View>
 
                 <View className="ml-4 flex-1">
@@ -288,7 +297,7 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
                       <ActivityIndicator size="small" color={colors.success} />
                     ) : (
                       <>
-                        <MaterialIcons name="check" size={16} color={colors.success} />
+                        <MaterialCommunityIcons name="check" size={16} color={colors.success} />
                         <Text className="ml-1 text-sm font-medium" style={{ color: colors.success }}>
                           Approve
                         </Text>
@@ -300,7 +309,7 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
                     disabled={processingVendorId === item.id}
                     className="flex-1 flex-row items-center justify-center py-2 rounded-lg"
                     style={{ backgroundColor: colors.error + '15' }}>
-                    <MaterialIcons name="close" size={16} color={colors.error} />
+                    <MaterialCommunityIcons name="close" size={16} color={colors.error} />
                     <Text className="ml-1 text-sm font-medium" style={{ color: colors.error }}>
                       Reject
                     </Text>
@@ -313,7 +322,7 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
                   onPress={() => handleAction(item.id, 'suspend')}
                   className="flex-1 flex-row items-center justify-center py-2 rounded-lg"
                   style={{ backgroundColor: colors.error + '15' }}>
-                  <MaterialIcons name="block" size={16} color={colors.error} />
+                  <MaterialCommunityIcons name="cancel" size={16} color={colors.error} />
                   <Text className="ml-1 text-sm font-medium" style={{ color: colors.error }}>
                     Suspend
                   </Text>
@@ -325,7 +334,7 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
                   onPress={() => handleAction(item.id, 'reactivate')}
                   className="flex-1 flex-row items-center justify-center py-2 rounded-lg"
                   style={{ backgroundColor: colors.success + '15' }}>
-                  <MaterialIcons name="refresh" size={16} color={colors.success} />
+                  <MaterialCommunityIcons name="refresh" size={16} color={colors.success} />
                   <Text className="ml-1 text-sm font-medium" style={{ color: colors.success }}>
                     Reactivate
                   </Text>
@@ -336,7 +345,7 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
                 onPress={() => handleVendorPress(item.id)}
                 className="px-4 flex-row items-center justify-center py-2 rounded-lg"
                 style={{ backgroundColor: colors.background }}>
-                <MaterialIcons name="info-outline" size={16} color={colors.text} />
+                <MaterialCommunityIcons name="information-outline" size={16} color={colors.text} />
                 <Text className="ml-1 text-sm font-medium" style={{ color: colors.text }}>
                   Details
                 </Text>
@@ -350,10 +359,19 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
       <VendorDetailModal
         visible={detailModalVisible}
         vendorId={selectedVendorId}
+        onEdit={handleEdit}
         onClose={() => {
           setDetailModalVisible(false);
           setSelectedVendorId(null);
         }}
+      />
+
+      {/* Edit Vendor Modal */}
+      <VendorFormModal
+        visible={!!editVendor}
+        mode="edit"
+        vendor={editVendor ?? undefined}
+        onClose={() => setEditVendor(null)}
       />
 
       {/* Vendor Actions Modal */}

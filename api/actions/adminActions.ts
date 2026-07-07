@@ -9,6 +9,14 @@ function throwIfError(res: { success: boolean; data: any }, fallback: string) {
 }
 
 // ==================== TYPES ====================
+// Shapes mirror the backend exactly (finestics-backend adminStats.service.js).
+// "Revenue" is gross order value across BOTH channels: vendor-authored
+// wholesale orders (direct) + customer-app marketplace orders.
+
+export interface ChannelSplit {
+  direct: { orders: number; revenue: number };
+  marketplace: { orders: number; revenue: number };
+}
 
 export interface AdminDashboardStats {
   vendors: {
@@ -27,9 +35,103 @@ export interface AdminDashboardStats {
   overview: {
     totalOrders: number;
     totalRevenue: number;
+    byChannel: ChannelSplit;
     newUsersThisWeek: number;
     newUsersThisMonth: number;
   };
+  attentionRequired: {
+    pendingVendors: number;
+    suspendedVendors: number;
+    pendingCustomers: number;
+    unverifiedUsers: number;
+  };
+}
+
+export type StatsPeriod = 'week' | 'month' | 'quarter' | 'year';
+
+export interface PlatformOverviewStats {
+  period: StatsPeriod;
+  range: { from: string; to: string };
+  revenue: {
+    total: number;
+    previousPeriod: number;
+    percentageChange: number;
+    byChannel: ChannelSplit;
+  };
+  orders: {
+    total: number;
+    previousPeriod: number;
+    percentageChange: number;
+    averageOrderValue: number;
+  };
+  users: { newUsers: number; activeUsers: number };
+  chartData: { labels: string[]; revenue: number[]; orders: number[] };
+}
+
+export interface AdminVendorStats {
+  period: StatsPeriod;
+  totalVendors: number;
+  activeVendors: number;
+  newVendors: number;
+  vendorsByStatus: { active: number; pending: number; suspended: number; rejected: number };
+  topVendors: {
+    id: number;
+    businessName: string;
+    status: string | null;
+    totalOrders: number;
+    totalRevenue: number;
+  }[];
+  vendorGrowth: { labels: string[]; newVendors: number[] };
+}
+
+export interface AdminUserGrowthStats {
+  period: StatsPeriod;
+  totalUsers: number;
+  newUsers: number;
+  activeUsers: number;
+  usersByRole: { admin: number; vendor: number; customer: number };
+  userGrowth: { labels: string[]; newUsers: number[] };
+  verificationRate: number;
+}
+
+export interface VendorsSummary {
+  total: number;
+  active: number;
+  pending: number;
+  suspended: number;
+  rejected: number;
+  newThisWeek: number;
+  newThisMonth: number;
+}
+
+export interface UsersSummary {
+  total: number;
+  active: number;
+  suspended: number;
+  deleted: number;
+  byRole: { admin: number; vendor: number; customer: number };
+  verified: number;
+  unverified: number;
+  newThisWeek: number;
+  newThisMonth: number;
+  completedOnboarding: number;
+  pendingOnboarding: number;
+  pendingApprovals: number;
+}
+
+/** GET /vendors/:id/stats — admin detail view, both order channels. */
+export interface VendorAdminStats {
+  vendorId: number;
+  businessName: string;
+  status: string;
+  totalOrders: number;
+  totalRevenue: number;
+  ordersThisMonth: number;
+  revenueThisMonth: number;
+  totalProducts: number;
+  totalCustomers: number;
+  outstandingBalance: number;
+  byChannel: ChannelSplit;
 }
 
 export interface VendorFilters {
@@ -82,7 +184,6 @@ export interface AdminUser {
  * Fetch admin dashboard statistics
  */
 export const fetchAdminDashboardStats = async (): Promise<{ data: AdminDashboardStats }> => {
-  // Placeholder - will be connected to API later
   const res = await apiRequest('/admin/dashboard/stats', 'GET');
   throwIfError(res, 'Failed to load dashboard stats');
   return res.data;
@@ -93,7 +194,7 @@ export const fetchAdminDashboardStats = async (): Promise<{ data: AdminDashboard
 /**
  * Fetch all vendors stats summary
  */
-export const fetchAllVendorsStats = async () => {
+export const fetchAllVendorsStats = async (): Promise<{ data: VendorsSummary }> => {
   const res = await apiRequest('/vendors/stats', 'GET');
   throwIfError(res, 'Failed to load vendor stats');
   return res.data;
@@ -201,7 +302,7 @@ export const deleteVendor = async (id: number) => {
 /**
  * Fetch vendor statistics
  */
-export const fetchVendorStatsById = async (id: number) => {
+export const fetchVendorStatsById = async (id: number): Promise<{ data: VendorAdminStats }> => {
   const res = await apiRequest(`/vendors/${id}/stats`, 'GET');
   throwIfError(res, 'Failed to load vendor stats');
   return res.data;
@@ -212,7 +313,7 @@ export const fetchVendorStatsById = async (id: number) => {
 /**
  * Fetch user stats summary
  */
-export const fetchUserStats = async () => {
+export const fetchUserStats = async (): Promise<{ data: UsersSummary }> => {
   const res = await apiRequest('/users/stats', 'GET');
   throwIfError(res, 'Failed to load user stats');
   return res.data;
@@ -307,7 +408,9 @@ export const updateAdminProfile = async (data: {
 /**
  * Fetch platform overview statistics
  */
-export const fetchPlatformStats = async (period: 'week' | 'month' | 'quarter' | 'year') => {
+export const fetchPlatformStats = async (
+  period: StatsPeriod
+): Promise<{ data: PlatformOverviewStats }> => {
   const res = await apiRequest(`/admin/statistics/overview?period=${period}`, 'GET');
   throwIfError(res, 'Failed to load platform stats');
   return res.data;
@@ -316,7 +419,9 @@ export const fetchPlatformStats = async (period: 'week' | 'month' | 'quarter' | 
 /**
  * Fetch vendor performance statistics
  */
-export const fetchVendorPerformanceStats = async (period: 'week' | 'month' | 'quarter' | 'year') => {
+export const fetchVendorPerformanceStats = async (
+  period: StatsPeriod
+): Promise<{ data: AdminVendorStats }> => {
   const res = await apiRequest(`/admin/statistics/vendors?period=${period}`, 'GET');
   throwIfError(res, 'Failed to load vendor performance stats');
   return res.data;
@@ -325,7 +430,9 @@ export const fetchVendorPerformanceStats = async (period: 'week' | 'month' | 'qu
 /**
  * Fetch user growth statistics
  */
-export const fetchUserGrowthStats = async (period: 'week' | 'month' | 'quarter' | 'year') => {
+export const fetchUserGrowthStats = async (
+  period: StatsPeriod
+): Promise<{ data: AdminUserGrowthStats }> => {
   const res = await apiRequest(`/admin/statistics/users?period=${period}`, 'GET');
   throwIfError(res, 'Failed to load user growth stats');
   return res.data;

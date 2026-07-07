@@ -9,12 +9,13 @@ import {
     Animated,
     Dimensions,
     ActivityIndicator,
-    TextInput,
 } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useThemeContext } from "context/ThemeProvider";
 import { deleteUserAccount, fetchUserDetail, updateAccountStatus, updateUserRole } from "api/actions/userActions";
+import { updateUserAdmin } from "api/actions/adminActions";
+import { BottomSheet, Input, Button } from "components/ui";
 import Toast from "utils/Toast";
 
 const { height } = Dimensions.get("window");
@@ -36,6 +37,8 @@ export default function UserDetailModal({
     const [showRoleDialog, setShowRoleDialog] = useState(false);
     const [showStatusDialog, setShowStatusDialog] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showEditSheet, setShowEditSheet] = useState(false);
+    const [editForm, setEditForm] = useState({ firstName: "", lastName: "", phone: "" });
 
     const handleSuccess = (message: string, closeModal = false) => {
         queryClient.invalidateQueries({ queryKey: ["users"], refetchType: "all" });
@@ -94,6 +97,34 @@ export default function UserDetailModal({
             handleError(error, "Failed to update status");
         },
     });
+
+    // Edit details mutation
+    const updateUserMutation = useMutation({
+        mutationFn: () =>
+            updateUserAdmin(userId!, {
+                firstName: editForm.firstName.trim(),
+                lastName: editForm.lastName.trim(),
+                phone: editForm.phone.trim(),
+            }),
+        onSuccess: () => {
+            Toast.success("User updated");
+            queryClient.invalidateQueries({ queryKey: ["users"] });
+            queryClient.invalidateQueries({ queryKey: ["userDetail", userId] });
+            setShowEditSheet(false);
+        },
+        onError: (error: any) => {
+            Toast.error(error?.message || "Failed to update user");
+        },
+    });
+
+    const openEditSheet = () => {
+        setEditForm({
+            firstName: user?.firstName || "",
+            lastName: user?.lastName || "",
+            phone: user?.phone || "",
+        });
+        setShowEditSheet(true);
+    };
 
     // Delete user mutation
     const deleteUserMutation = useMutation({
@@ -219,7 +250,7 @@ export default function UserDetailModal({
                             className="w-10 h-10 rounded-full items-center justify-center"
                             style={{ backgroundColor: colors.background }}
                         >
-                            <MaterialIcons name="close" size={24} color={colors.text} />
+                            <MaterialCommunityIcons name="close" size={24} color={colors.text} />
                         </Pressable>
                     </View>
 
@@ -233,7 +264,7 @@ export default function UserDetailModal({
                         </View>
                     ) : error ? (
                         <View className="flex-1 items-center justify-center px-6">
-                            <MaterialIcons name="error-outline" size={64} color={colors.error} />
+                            <MaterialCommunityIcons name="alert-circle-outline" size={64} color={colors.error} />
                             <Text className="text-lg font-semibold mt-4" style={{ color: colors.text }}>
                                 Failed to load details
                             </Text>
@@ -271,13 +302,21 @@ export default function UserDetailModal({
                                                 </Text>
                                             </View>
                                         </View>
+                                        <Pressable
+                                            onPress={openEditSheet}
+                                            hitSlop={8}
+                                            className="w-9 h-9 rounded-full items-center justify-center"
+                                            style={{ backgroundColor: colors.primary + "15" }}
+                                        >
+                                            <MaterialCommunityIcons name="pencil" size={18} color={colors.primary} />
+                                        </Pressable>
                                     </View>
 
                                     <View className="space-y-2">
-                                        <InfoRow icon="email" label="Email" value={user.email || 'N/A'} colors={colors} />
+                                        <InfoRow icon="email-outline" label="Email" value={user.email || 'N/A'} colors={colors} />
                                         <InfoRow icon="phone" label="Phone" value={user.phone || "Not provided"} colors={colors} />
                                         <InfoRow
-                                            icon="verified-user"
+                                            icon="shield-account"
                                             label="Account Status"
                                             value={user.accountStatus || 'N/A'}
                                             colors={colors}
@@ -292,8 +331,8 @@ export default function UserDetailModal({
                                             badge
                                             badgeColor={user.isEmailVerified ? colors.success : colors.error}
                                         />
-                                        <InfoRow icon="access-time" label="Last Login" value={formatDate(user.lastLoginAt)} colors={colors} />
-                                        <InfoRow icon="event" label="Joined" value={formatDate(user.createdAt)} colors={colors} />
+                                        <InfoRow icon="clock-outline" label="Last Login" value={formatDate(user.lastLoginAt)} colors={colors} />
+                                        <InfoRow icon="calendar" label="Joined" value={formatDate(user.createdAt)} colors={colors} />
                                     </View>
                                 </View>
 
@@ -304,7 +343,7 @@ export default function UserDetailModal({
                                         style={{ backgroundColor: colors.background }}
                                     >
                                         <View className="flex-row items-center mb-3">
-                                            <MaterialIcons name="person" size={24} color={colors.primary} />
+                                            <MaterialCommunityIcons name="account" size={24} color={colors.primary} />
                                             <Text className="text-lg font-bold ml-2" style={{ color: colors.text }}>
                                                 Customer Profile
                                             </Text>
@@ -322,7 +361,7 @@ export default function UserDetailModal({
                                         style={{ backgroundColor: colors.background }}
                                     >
                                         <View className="flex-row items-center mb-3">
-                                            <MaterialIcons name="location-on" size={24} color={colors.primary} />
+                                            <MaterialCommunityIcons name="map-marker" size={24} color={colors.primary} />
                                             <Text className="text-lg font-bold ml-2" style={{ color: colors.text }}>
                                                 Addresses
                                             </Text>
@@ -358,7 +397,7 @@ export default function UserDetailModal({
                                         className="flex-1 py-3 rounded-xl items-center justify-center flex-row"
                                         style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.primary }}
                                     >
-                                        <MaterialIcons name="swap-horiz" size={18} color={colors.primary} />
+                                        <MaterialCommunityIcons name="swap-horizontal" size={18} color={colors.primary} />
                                         <Text className="text-sm font-bold ml-1" style={{ color: colors.primary }}>
                                             Role
                                         </Text>
@@ -370,7 +409,7 @@ export default function UserDetailModal({
                                         className="flex-1 py-3 rounded-xl items-center justify-center flex-row"
                                         style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.primary }}
                                     >
-                                        <MaterialIcons name="toggle-on" size={18} color={colors.primary} />
+                                        <MaterialCommunityIcons name="toggle-switch" size={18} color={colors.primary} />
                                         <Text className="text-sm font-bold ml-1" style={{ color: colors.primary }}>
                                             Status
                                         </Text>
@@ -380,9 +419,9 @@ export default function UserDetailModal({
                                     <Pressable
                                         onPress={() => setShowDeleteDialog(true)}
                                         className="flex-1 py-3 rounded-xl items-center justify-center flex-row"
-                                        style={{ backgroundColor: "#ef444420", borderWidth: 1, borderColor: colors.error }}
+                                        style={{ backgroundColor: colors.error + "20", borderWidth: 1, borderColor: colors.error }}
                                     >
-                                        <MaterialIcons name="delete" size={18} color={colors.error} />
+                                        <MaterialCommunityIcons name="delete-outline" size={18} color={colors.error} />
                                         <Text className="text-sm font-bold ml-1" style={{ color: colors.error }}>
                                             Delete
                                         </Text>
@@ -395,7 +434,7 @@ export default function UserDetailModal({
                                 <View className="flex-1 bg-black/70 items-center justify-center px-6">
                                     <View className="w-full rounded-3xl p-6" style={{ backgroundColor: colors.card, maxWidth: 400 }}>
                                         <View className="flex-row items-center mb-4">
-                                            <MaterialIcons name="swap-horiz" size={28} color={colors.primary} />
+                                            <MaterialCommunityIcons name="swap-horizontal" size={28} color={colors.primary} />
                                             <Text className="text-xl font-bold ml-3" style={{ color: colors.text }}>
                                                 Change User Role
                                             </Text>
@@ -420,8 +459,8 @@ export default function UserDetailModal({
                                                     }}
                                                 >
                                                     <View className="flex-row items-center">
-                                                        <MaterialIcons
-                                                            name={role === "admin" ? "admin-panel-settings" : role === "vendor" ? "store" : "person"}
+                                                        <MaterialCommunityIcons
+                                                            name={role === "admin" ? "shield-crown" : role === "vendor" ? "store" : "account"}
                                                             size={24}
                                                             color={user?.role === role ? getRoleColor(role) : colors.text}
                                                         />
@@ -430,7 +469,7 @@ export default function UserDetailModal({
                                                         </Text>
                                                     </View>
                                                     {user?.role === role && (
-                                                        <MaterialIcons name="check-circle" size={20} color={getRoleColor(role)} />
+                                                        <MaterialCommunityIcons name="check-circle" size={20} color={getRoleColor(role)} />
                                                     )}
                                                 </Pressable>
                                             ))}
@@ -454,7 +493,7 @@ export default function UserDetailModal({
                                 <View className="flex-1 bg-black/70 items-center justify-center px-6">
                                     <View className="w-full rounded-3xl p-6" style={{ backgroundColor: colors.card, maxWidth: 400 }}>
                                         <View className="flex-row items-center mb-4">
-                                            <MaterialIcons name="toggle-on" size={28} color={colors.primary} />
+                                            <MaterialCommunityIcons name="toggle-switch" size={28} color={colors.primary} />
                                             <Text className="text-xl font-bold ml-3" style={{ color: colors.text }}>
                                                 Update Account Status
                                             </Text>
@@ -479,8 +518,8 @@ export default function UserDetailModal({
                                                     }}
                                                 >
                                                     <View className="flex-row items-center">
-                                                        <MaterialIcons
-                                                            name={status === "active" ? "check-circle" : status === "suspended" ? "block" : "cancel"}
+                                                        <MaterialCommunityIcons
+                                                            name={status === "active" ? "check-circle" : status === "suspended" ? "cancel" : "close-circle"}
                                                             size={24}
                                                             color={user?.accountStatus === status ? getStatusColor(status) : colors.text}
                                                         />
@@ -489,7 +528,7 @@ export default function UserDetailModal({
                                                         </Text>
                                                     </View>
                                                     {user?.accountStatus === status && (
-                                                        <MaterialIcons name="check-circle" size={20} color={getStatusColor(status)} />
+                                                        <MaterialCommunityIcons name="check-circle" size={20} color={getStatusColor(status)} />
                                                     )}
                                                 </Pressable>
                                             ))}
@@ -513,7 +552,7 @@ export default function UserDetailModal({
                                 <View className="flex-1 bg-black/70 items-center justify-center px-6">
                                     <View className="w-full rounded-3xl p-6" style={{ backgroundColor: colors.card, maxWidth: 400 }}>
                                         <View className="flex-row items-center mb-4">
-                                            <MaterialIcons name="warning" size={28} color={colors.error} />
+                                            <MaterialCommunityIcons name="alert" size={28} color={colors.error} />
                                             <Text className="text-xl font-bold ml-3" style={{ color: colors.text }}>
                                                 Delete Account
                                             </Text>
@@ -547,7 +586,7 @@ export default function UserDetailModal({
                                                 style={{ backgroundColor: colors.error }}
                                             >
                                                 {deleteUserMutation.isPending ? (
-                                                    <ActivityIndicator size="small" color="#fff" />
+                                                    <ActivityIndicator size="small" color={colors.white} />
                                                 ) : (
                                                     <Text className="text-base font-bold text-white">
                                                         Delete
@@ -558,10 +597,45 @@ export default function UserDetailModal({
                                     </View>
                                 </View>
                             </Modal>
+
+                            {/* Edit Details Sheet */}
+                            <BottomSheet
+                                visible={showEditSheet}
+                                onClose={() => setShowEditSheet(false)}
+                                title="Edit user"
+                            >
+                                <Input
+                                    label="First name"
+                                    icon="account"
+                                    value={editForm.firstName}
+                                    onChangeText={(text) => setEditForm((f) => ({ ...f, firstName: text }))}
+                                    placeholder="First name"
+                                />
+                                <Input
+                                    label="Last name"
+                                    icon="account-outline"
+                                    value={editForm.lastName}
+                                    onChangeText={(text) => setEditForm((f) => ({ ...f, lastName: text }))}
+                                    placeholder="Last name"
+                                />
+                                <Input
+                                    label="Phone"
+                                    icon="phone"
+                                    value={editForm.phone}
+                                    onChangeText={(text) => setEditForm((f) => ({ ...f, phone: text }))}
+                                    placeholder="Phone number"
+                                    keyboardType="phone-pad"
+                                />
+                                <Button
+                                    title="Save changes"
+                                    onPress={() => updateUserMutation.mutate()}
+                                    loading={updateUserMutation.isPending}
+                                />
+                            </BottomSheet>
                         </>
                     ) : (
                         <View className="flex-1 items-center justify-center px-6">
-                            <MaterialIcons name="person-off" size={64} color={colors.muted} />
+                            <MaterialCommunityIcons name="account-off" size={64} color={colors.muted} />
                             <Text className="text-lg font-semibold mt-4" style={{ color: colors.text }}>
                                 No user data available
                             </Text>
@@ -590,7 +664,7 @@ const InfoRow = ({
     badgeColor?: string;
 }) => (
     <View className="flex-row items-center py-2">
-        <MaterialIcons name={icon as any} size={18} color={colors.muted} />
+        <MaterialCommunityIcons name={icon as any} size={18} color={colors.muted} />
         <Text className="text-sm ml-2 w-28" style={{ color: colors.muted }}>{label}:</Text>
         {badge ? (
             <View

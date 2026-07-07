@@ -1,11 +1,14 @@
 // screens/Admin/Users.tsx
 import React, { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { useRoute } from '@react-navigation/native';
 import { ScrollView } from 'react-native-gesture-handler';
 import SearchBar from 'components/SearchBar';
 import UsersList from './components/UsersList';
+import { StatInline } from 'components/ui';
+import { fetchUserStats } from 'api/actions/adminActions';
 
 type StatusFilter = 'all' | 'active' | 'suspended';
 type RoleFilter = 'all' | 'admin' | 'vendor' | 'customer';
@@ -20,6 +23,12 @@ export default function Users() {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>(
     ['admin', 'vendor', 'customer'].includes(initialFilter) ? initialFilter : 'all'
   );
+
+  const { data: summaryData } = useQuery({
+    queryKey: ['usersSummary'],
+    queryFn: fetchUserStats,
+  });
+  const summary = summaryData?.data;
 
   // Filter chip component
   const FilterChip = ({
@@ -39,7 +48,7 @@ export default function Users() {
         elevation: isActive ? 4 : 0,
       }}>
       <View className="flex-row items-center">
-        <Text className="text-sm font-bold" style={{ color: isActive ? '#fff' : colors.text }}>
+        <Text className="text-sm font-bold" style={{ color: isActive ? colors.white : colors.text }}>
           {label}
         </Text>
       </View>
@@ -103,6 +112,19 @@ export default function Users() {
           />
         </ScrollView>
       </View>
+
+      {/* Summary Tiles */}
+      {summary ? (
+        <View className="px-4 pb-3">
+          <StatInline
+            items={[
+              { label: 'Total', value: String(summary.total) },
+              { label: 'Verified', value: String(summary.verified) },
+              { label: 'New · month', value: String(summary.newThisMonth) },
+            ]}
+          />
+        </View>
+      ) : null}
 
       {/* Users List */}
       <UsersList

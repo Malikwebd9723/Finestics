@@ -1,13 +1,16 @@
 // screens/Admin/Vendors.tsx
 import React, { useState, useCallback } from 'react';
 import { View, Text, Pressable } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { useRoute } from '@react-navigation/native';
 import { ScrollView } from 'react-native-gesture-handler';
 import SearchBar from 'components/SearchBar';
 import VendorsList from './components/VendorsList';
 import VendorFormModal from './components/VendorFormModal';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { StatInline } from 'components/ui';
+import { fetchAllVendorsStats } from 'api/actions/adminActions';
 
 type FilterType = 'all' | 'pending' | 'active' | 'suspended' | 'rejected';
 
@@ -19,6 +22,12 @@ export default function Vendors() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>(initialFilter);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  const { data: summaryData } = useQuery({
+    queryKey: ['vendorsSummary'],
+    queryFn: fetchAllVendorsStats,
+  });
+  const summary = summaryData?.data;
 
   // Filter chip component
   const FilterChip = ({
@@ -40,16 +49,16 @@ export default function Vendors() {
         elevation: isActive ? 4 : 0,
       }}>
       <View className="flex-row items-center">
-        <Text className="text-sm font-bold" style={{ color: isActive ? '#fff' : colors.text }}>
+        <Text className="text-sm font-bold" style={{ color: isActive ? colors.white : colors.text }}>
           {label}
         </Text>
         {count !== undefined && count > 0 && (
           <View
             className="ml-2 h-5 min-w-5 items-center justify-center rounded-full px-1"
-            style={{ backgroundColor: isActive ? 'rgba(255,255,255,0.3)' : colors.primary + '20' }}>
+            style={{ backgroundColor: isActive ? colors.white + '4D' : colors.primary + '20' }}>
             <Text
               className="text-xs font-bold"
-              style={{ color: isActive ? '#fff' : colors.primary }}>
+              style={{ color: isActive ? colors.white : colors.primary }}>
               {count}
             </Text>
           </View>
@@ -69,7 +78,7 @@ export default function Vendors() {
           onPress={() => setShowAddModal(true)}
           className="ml-2 h-12 w-12 items-center justify-center rounded-xl"
           style={{ backgroundColor: colors.primary }}>
-          <Ionicons name="add" size={24} color="#fff" />
+          <MaterialCommunityIcons name="plus" size={24} color={colors.white} />
         </Pressable>
       </View>
 
@@ -103,6 +112,19 @@ export default function Vendors() {
           />
         </ScrollView>
       </View>
+
+      {/* Summary Tiles */}
+      {summary ? (
+        <View className="px-4 pb-3">
+          <StatInline
+            items={[
+              { label: 'Total', value: String(summary.total) },
+              { label: 'Active', value: String(summary.active) },
+              { label: 'New · month', value: String(summary.newThisMonth) },
+            ]}
+          />
+        </View>
+      ) : null}
 
       {/* Vendors List */}
       <VendorsList searchQuery={searchQuery} statusFilter={activeFilter} />

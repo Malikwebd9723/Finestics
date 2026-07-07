@@ -75,13 +75,28 @@ export const navigationItems: NavigationItem[] = [
   },
 
   // ==================== ADMIN ITEMS ====================
-  // Tab + Drawer items (Vendors and Users are in MANAGEMENT section in DrawerNavigator)
+  // Vendors/Users are tabs here AND in the drawer's MANAGEMENT section
+  // (DrawerNavigator hardcodes that section), so location stays 'tab'.
   {
     label: 'Dashboard',
     screen: 'AdminDashboard',
     icon: 'view-dashboard',
     roles: ['admin'],
     location: 'both',
+  },
+  {
+    label: 'Vendors',
+    screen: 'AdminVendors',
+    icon: 'storefront-outline',
+    roles: ['admin'],
+    location: 'tab',
+  },
+  {
+    label: 'Users',
+    screen: 'AdminUsers',
+    icon: 'account-group-outline',
+    roles: ['admin'],
+    location: 'tab',
   },
   {
     label: 'Statistics',

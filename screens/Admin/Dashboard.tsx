@@ -1,70 +1,125 @@
 // screens/Admin/Dashboard.tsx
-import React from 'react';
+// Admin home — platform health at a glance. Built on components/ui like the
+// vendor Dashboard: one hero (platform revenue), a 2×2 KPI grid, the approval
+// attention queue, top vendors by revenue, user mix, and quick actions.
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  AppState,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
-import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
-import { fetchAdminDashboardStats, AdminDashboardStats } from 'api/actions/adminActions';
+import {
+  fetchAdminDashboardStats,
+  fetchPlatformStats,
+  fetchVendorPerformanceStats,
+} from 'api/actions/adminActions';
+import { formatPrice } from 'types/order.types';
+import { typo } from 'constants/design';
+import { HeroMetric, StatCell, AttentionRow, ActionBar, RankBars, Button } from 'components/ui';
 
 export default function AdminDashboard() {
   const { colors } = useThemeContext();
   const navigation = useNavigation<any>();
 
+  const [appActive, setAppActive] = useState(AppState.currentState === 'active');
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => setAppActive(s === 'active'));
+    return () => sub.remove();
+  }, []);
+
   const {
-    data: statsData,
+    data: dashData,
     isLoading,
+    isError,
     refetch,
     isRefetching,
   } = useQuery({
     queryKey: ['adminDashboardStats'],
     queryFn: fetchAdminDashboardStats,
-    refetchInterval: 60000,
+    refetchInterval: appActive ? 60000 : false,
+    refetchIntervalInBackground: false,
   });
 
-  const stats: AdminDashboardStats | null = statsData?.data || null;
+  const { data: overviewData, refetch: refetchOverview } = useQuery({
+    queryKey: ['adminPlatformStats', 'month'],
+    queryFn: () => fetchPlatformStats('month'),
+  });
 
-  // Placeholder data for when API is not yet connected
-  const placeholderStats: AdminDashboardStats = {
-    vendors: {
-      total: 0,
-      active: 0,
-      pending: 0,
-      suspended: 0,
-      rejected: 0,
+  const { data: vendorStatsData, refetch: refetchVendors } = useQuery({
+    queryKey: ['adminVendorStats', 'month'],
+    queryFn: () => fetchVendorPerformanceStats('month'),
+  });
+
+  const stats = dashData?.data ?? null;
+  const overview = overviewData?.data ?? null;
+  const topVendors = vendorStatsData?.data?.topVendors ?? [];
+
+  const attention = stats?.attentionRequired;
+  const attentionRows = [
+    {
+      key: 'pendingVendors',
+      count: attention?.pendingVendors ?? 0,
+      icon: 'store-clock-outline' as const,
+      title: (n: number) => `${n} vendor ${n === 1 ? 'application' : 'applications'} pending`,
+      subtitle: 'Review and approve',
+      onPress: () => navigation.navigate('Vendors'),
     },
-    users: {
-      total: 0,
-      active: 0,
-      suspended: 0,
-      byRole: { admin: 0, vendor: 0, customer: 0 },
+    {
+      key: 'pendingCustomers',
+      count: attention?.pendingCustomers ?? 0,
+      icon: 'account-clock-outline' as const,
+      title: (n: number) => `${n} customer ${n === 1 ? 'application' : 'applications'} pending`,
+      subtitle: 'Review and approve',
+      onPress: () => navigation.navigate('Users'),
     },
-    overview: {
-      totalOrders: 0,
-      totalRevenue: 0,
-      newUsersThisWeek: 0,
-      newUsersThisMonth: 0,
+    {
+      key: 'suspendedVendors',
+      count: attention?.suspendedVendors ?? 0,
+      icon: 'store-off-outline' as const,
+      title: (n: number) => `${n} suspended ${n === 1 ? 'vendor' : 'vendors'}`,
+      subtitle: 'Reactivate or follow up',
+      onPress: () => navigation.navigate('Vendors'),
     },
+  ].filter((r) => r.count > 0);
+
+  const revenueSeries = overview?.chartData?.revenue ?? [];
+  const revenueDelta = overview != null ? { pct: overview.revenue.percentageChange } : null;
+
+  const onRefresh = () => {
+    refetch();
+    refetchOverview();
+    refetchVendors();
   };
 
-  const displayStats = stats || placeholderStats;
-
-  if (isLoading) {
+  if (isLoading && !stats) {
     return (
       <View
         className="flex-1 items-center justify-center"
         style={{ backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text className="mt-4" style={{ color: colors.muted }}>
-          Loading dashboard...
+          Loading dashboard…
         </Text>
+      </View>
+    );
+  }
+
+  if (isError && !stats) {
+    return (
+      <View
+        className="flex-1 items-center justify-center px-8"
+        style={{ backgroundColor: colors.background }}>
+        <Text style={[typo.title, { color: colors.text }]}>Couldn’t load dashboard</Text>
+        <Text className="mb-5 mt-2 text-center text-sm" style={{ color: colors.muted }}>
+          Check your connection and try again.
+        </Text>
+        <Button title="Retry" icon="refresh" onPress={() => refetch()} />
       </View>
     );
   }
@@ -73,356 +128,172 @@ export default function AdminDashboard() {
     <ScrollView
       className="flex-1"
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={{ paddingBottom: 100 }}
+      contentContainerStyle={{ paddingBottom: 120 }}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
           refreshing={isRefetching}
-          onRefresh={refetch}
+          onRefresh={onRefresh}
           colors={[colors.primary]}
           tintColor={colors.primary}
         />
       }>
-      {/* Header */}
-      <View className="px-4 pb-2 pt-4">
-        <Text className="text-2xl font-bold" style={{ color: colors.text }}>
-          Admin Dashboard
-        </Text>
-        <Text className="text-sm" style={{ color: colors.muted }}>
-          {new Date().toLocaleDateString('en-US', {
-            weekday: 'long',
-            month: 'long',
-            day: 'numeric',
-          })}
-        </Text>
+      {/* Platform revenue — hero */}
+      <View className="px-4 pt-5">
+        <HeroMetric
+          variant="card"
+          label="Platform revenue"
+          value={formatPrice(overview?.revenue.total ?? 0)}
+          sublabel={`${overview?.orders.total ?? 0} orders`}
+          series={revenueSeries.length > 1 ? revenueSeries : undefined}
+          seriesCaption="Revenue · last 30 days"
+          delta={revenueDelta}
+          onPress={() => navigation.navigate('Statistics')}
+          footer={
+            overview ? (
+              <View className="flex-row justify-between">
+                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '500' }}>
+                  Marketplace {formatPrice(overview.revenue.byChannel.marketplace.revenue)}
+                </Text>
+                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '500' }}>
+                  Direct {formatPrice(overview.revenue.byChannel.direct.revenue)}
+                </Text>
+              </View>
+            ) : undefined
+          }
+        />
       </View>
 
-      {/* Today's Highlights */}
-      <View className="px-4 py-3">
-        <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-          OVERVIEW
-        </Text>
+      {/* KPIs — 2×2 */}
+      <View className="px-4 pt-4">
         <View className="flex-row gap-3">
-          {/* Total Vendors */}
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Vendors')}
-            activeOpacity={0.8}
-            className="flex-1 rounded-2xl p-4"
-            style={{ backgroundColor: colors.primary }}>
-            <View className="mb-2 flex-row items-center justify-between">
-              <View className="rounded-full bg-white/20 p-2">
-                <MaterialIcons name="store" size={20} color="#fff" />
-              </View>
-              <Text className="text-3xl font-bold text-white">{displayStats.vendors.total}</Text>
-            </View>
-            <Text className="text-sm text-white/80">Total Vendors</Text>
-          </TouchableOpacity>
-
-          {/* Active Vendors */}
-          <View className="flex-1 rounded-2xl p-4" style={{ backgroundColor: colors.success }}>
-            <View className="mb-2 flex-row items-center justify-between">
-              <View className="rounded-full bg-white/20 p-2">
-                <MaterialIcons name="verified" size={20} color="#fff" />
-              </View>
-              <Text className="text-3xl font-bold text-white">{displayStats.vendors.active}</Text>
-            </View>
-            <Text className="text-sm text-white/80">Active Vendors</Text>
+          <View className="flex-1">
+            <StatCell
+              boxed
+              icon="receipt"
+              label="Orders · 30d"
+              value={String(overview?.orders.total ?? 0)}
+            />
+          </View>
+          <View className="flex-1">
+            <StatCell
+              boxed
+              icon="account-group-outline"
+              label="Total users"
+              value={String(stats?.users.total ?? 0)}
+              onPress={() => navigation.navigate('Users')}
+            />
           </View>
         </View>
-
-        {/* Second Row */}
         <View className="mt-3 flex-row gap-3">
-          {/* Total Users */}
-          <View
-            className="flex-1 rounded-2xl p-4"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <View className="mb-2 flex-row items-center">
-              <View className="rounded-full p-2" style={{ backgroundColor: colors.primary + '20' }}>
-                <Ionicons name="people" size={18} color={colors.primary} />
-              </View>
-            </View>
-            <Text className="text-xl font-bold" style={{ color: colors.text }}>
-              {displayStats.users.total}
-            </Text>
-            <Text className="text-xs" style={{ color: colors.muted }}>
-              Total Users
-            </Text>
+          <View className="flex-1">
+            <StatCell
+              boxed
+              icon="storefront-outline"
+              label="Active vendors"
+              value={String(stats?.vendors.active ?? 0)}
+              onPress={() => navigation.navigate('Vendors')}
+            />
           </View>
-
-          {/* Active Users */}
-          <View
-            className="flex-1 rounded-2xl p-4"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <View className="mb-2 flex-row items-center">
-              <View className="rounded-full p-2" style={{ backgroundColor: colors.success + '20' }}>
-                <MaterialIcons name="person" size={18} color={colors.success} />
-              </View>
-            </View>
-            <Text className="text-xl font-bold" style={{ color: colors.success }}>
-              {displayStats.users.active}
-            </Text>
-            <Text className="text-xs" style={{ color: colors.muted }}>
-              Active Users
-            </Text>
+          <View className="flex-1">
+            <StatCell
+              boxed
+              icon="account-plus-outline"
+              label="New users · month"
+              value={String(stats?.overview.newUsersThisMonth ?? 0)}
+            />
           </View>
         </View>
       </View>
 
-      {/* Quick Actions */}
-      <View className="px-4 py-3">
-        <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-          QUICK ACTIONS
-        </Text>
-        <View className="flex-row gap-3">
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Vendors', { filter: 'pending' })}
-            className="flex-1 items-center rounded-xl p-4"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <View
-              className="mb-2 rounded-full p-3"
-              style={{ backgroundColor: '#f59e0b' + '15' }}>
-              <MaterialIcons name="pending-actions" size={24} color="#f59e0b" />
-            </View>
-            <Text className="text-sm font-medium" style={{ color: colors.text }}>
-              Approve Vendors
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Users')}
-            className="flex-1 items-center rounded-xl p-4"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <View className="mb-2 rounded-full p-3" style={{ backgroundColor: colors.primary + '15' }}>
-              <Ionicons name="people" size={24} color={colors.primary} />
-            </View>
-            <Text className="text-sm font-medium" style={{ color: colors.text }}>
-              Manage Users
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Statistics')}
-            className="flex-1 items-center rounded-xl p-4"
-            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <View className="mb-2 rounded-full p-3" style={{ backgroundColor: '#8b5cf6' + '15' }}>
-              <Ionicons name="stats-chart" size={24} color="#8b5cf6" />
-            </View>
-            <Text className="text-sm font-medium" style={{ color: colors.text }}>
-              View Statistics
-            </Text>
-          </TouchableOpacity>
+      {/* Needs attention */}
+      {attentionRows.length > 0 && (
+        <View className="px-4 pt-4" style={{ gap: 10 }}>
+          <Text style={[typo.eyebrow, { color: colors.muted }]}>NEEDS ATTENTION</Text>
+          {attentionRows.map((row) => (
+            <AttentionRow
+              key={row.key}
+              icon={row.icon}
+              title={row.title(row.count)}
+              subtitle={row.subtitle}
+              tone="info"
+              onPress={row.onPress}
+            />
+          ))}
         </View>
-      </View>
+      )}
 
-      {/* Attention Required */}
-      <View className="px-4 py-3">
-        <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-          ATTENTION REQUIRED
-        </Text>
-        <View className="gap-3">
-          {/* Pending Vendors */}
-          {displayStats.vendors.pending > 0 && (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Vendors', { filter: 'pending' })}
-              className="flex-row items-center rounded-xl p-4"
-              style={{
-                backgroundColor: '#f59e0b' + '15',
-                borderWidth: 1,
-                borderColor: '#f59e0b' + '30',
-              }}>
-              <View className="mr-3 rounded-full p-2" style={{ backgroundColor: '#f59e0b' + '20' }}>
-                <MaterialIcons name="pending-actions" size={20} color="#f59e0b" />
-              </View>
-              <View className="flex-1">
-                <Text className="font-semibold" style={{ color: colors.text }}>
-                  {displayStats.vendors.pending} Pending Vendor{displayStats.vendors.pending !== 1 ? 's' : ''}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Awaiting approval
-                </Text>
-              </View>
-              <MaterialIcons name="chevron-right" size={24} color={colors.muted} />
-            </TouchableOpacity>
-          )}
-
-          {/* Suspended Vendors */}
-          {displayStats.vendors.suspended > 0 && (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Vendors', { filter: 'suspended' })}
-              className="flex-row items-center rounded-xl p-4"
-              style={{
-                backgroundColor: colors.error + '10',
-                borderWidth: 1,
-                borderColor: colors.error + '30',
-              }}>
-              <View
-                className="mr-3 rounded-full p-2"
-                style={{ backgroundColor: colors.error + '20' }}>
-                <MaterialIcons name="block" size={20} color={colors.error} />
-              </View>
-              <View className="flex-1">
-                <Text className="font-semibold" style={{ color: colors.text }}>
-                  {displayStats.vendors.suspended} Suspended Vendor{displayStats.vendors.suspended !== 1 ? 's' : ''}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Review or reactivate
-                </Text>
-              </View>
-              <MaterialIcons name="chevron-right" size={24} color={colors.muted} />
-            </TouchableOpacity>
-          )}
-
-          {/* No attention required */}
-          {displayStats.vendors.pending === 0 && displayStats.vendors.suspended === 0 && (
-            <View
-              className="flex-row items-center rounded-xl p-4"
-              style={{
-                backgroundColor: colors.success + '10',
-                borderWidth: 1,
-                borderColor: colors.success + '30',
-              }}>
-              <View
-                className="mr-3 rounded-full p-2"
-                style={{ backgroundColor: colors.success + '20' }}>
-                <MaterialIcons name="check-circle" size={20} color={colors.success} />
-              </View>
-              <View className="flex-1">
-                <Text className="font-semibold" style={{ color: colors.text }}>
-                  All Clear
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  No pending actions required
-                </Text>
-              </View>
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* Period Summary */}
-      <View className="px-4 py-3">
-        <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
-          GROWTH
-        </Text>
-        <View
-          className="rounded-2xl p-4"
-          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-          {/* This Week */}
-          <View className="mb-4">
-            <Text className="mb-2 text-xs font-semibold" style={{ color: colors.muted }}>
-              THIS WEEK
-            </Text>
-            <View className="flex-row gap-4">
-              <View className="flex-1">
-                <Text className="text-lg font-bold" style={{ color: colors.success }}>
-                  +{displayStats.overview.newUsersThisWeek}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  New Users
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Divider */}
-          <View className="mb-4 h-px" style={{ backgroundColor: colors.border }} />
-
-          {/* This Month */}
-          <View>
-            <Text className="mb-2 text-xs font-semibold" style={{ color: colors.muted }}>
-              THIS MONTH
-            </Text>
-            <View className="flex-row gap-4">
-              <View className="flex-1">
-                <Text className="text-lg font-bold" style={{ color: colors.success }}>
-                  +{displayStats.overview.newUsersThisMonth}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  New Users
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* Vendor Status Overview */}
-      <View className="px-4 py-3">
-        <View className="mb-3 flex-row items-center justify-between">
-          <Text className="text-sm font-semibold" style={{ color: colors.muted }}>
-            VENDOR STATUS
+      {/* Top vendors by revenue */}
+      {topVendors.length > 0 && (
+        <View className="px-4 pt-4">
+          <Text className="mb-2" style={[typo.eyebrow, { color: colors.muted }]}>
+            TOP VENDORS · 30 DAYS
           </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Vendors')}>
-            <Text className="text-sm font-medium" style={{ color: colors.primary }}>
-              View All
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View
-          className="rounded-2xl p-4"
-          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-          <View className="flex-row flex-wrap gap-3">
-            {[
-              { key: 'pending', label: 'Pending', color: '#f59e0b', value: displayStats.vendors.pending },
-              { key: 'active', label: 'Active', color: '#10b981', value: displayStats.vendors.active },
-              { key: 'suspended', label: 'Suspended', color: '#ef4444', value: displayStats.vendors.suspended },
-              { key: 'rejected', label: 'Rejected', color: '#6b7280', value: displayStats.vendors.rejected },
-            ].map((status) => (
-              <TouchableOpacity
-                key={status.key}
-                onPress={() => navigation.navigate('Vendors', { filter: status.key })}
-                className="flex-row items-center rounded-full px-3 py-2"
-                style={{ backgroundColor: status.color + '15' }}>
-                <View
-                  className="mr-2 h-2 w-2 rounded-full"
-                  style={{ backgroundColor: status.color }}
-                />
-                <Text className="text-sm font-medium" style={{ color: status.color }}>
-                  {status.label}: {status.value}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <View
+            className="rounded-2xl border p-4"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+            <RankBars
+              items={topVendors.map((v) => ({
+                id: v.id,
+                label: v.businessName,
+                value: v.totalRevenue,
+              }))}
+              formatValue={(n) => formatPrice(n)}
+            />
           </View>
+        </View>
+      )}
+
+      {/* User mix */}
+      <View className="px-4 pt-4">
+        <Text className="mb-2" style={[typo.eyebrow, { color: colors.muted }]}>
+          USERS
+        </Text>
+        <View
+          className="flex-row rounded-2xl border px-1 py-3"
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+          {[
+            { label: 'Customers', value: stats?.users.byRole.customer ?? 0 },
+            { label: 'Vendors', value: stats?.users.byRole.vendor ?? 0 },
+            { label: 'New this week', value: stats?.overview.newUsersThisWeek ?? 0 },
+          ].map((item, i) => (
+            <View
+              key={item.label}
+              className="flex-1 px-3"
+              style={i > 0 ? { borderLeftWidth: 1, borderLeftColor: colors.border } : undefined}>
+              <Text style={[typo.stat, { color: colors.text }]} numberOfLines={1}>
+                {item.value}
+              </Text>
+              <Text className="mt-0.5 text-xs" style={{ color: colors.muted }}>
+                {item.label}
+              </Text>
+            </View>
+          ))}
         </View>
       </View>
 
-      {/* User Status Overview */}
-      <View className="px-4 py-3">
-        <View className="mb-3 flex-row items-center justify-between">
-          <Text className="text-sm font-semibold" style={{ color: colors.muted }}>
-            USER DISTRIBUTION
-          </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Users')}>
-            <Text className="text-sm font-medium" style={{ color: colors.primary }}>
-              View All
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View
-          className="rounded-2xl p-4"
-          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-          <View className="flex-row flex-wrap gap-3">
-            {[
-              { key: 'admin', label: 'Admins', color: '#8b5cf6', value: displayStats.users.byRole.admin },
-              { key: 'vendor', label: 'Vendors', color: '#3b82f6', value: displayStats.users.byRole.vendor },
-              { key: 'customer', label: 'Customers', color: '#10b981', value: displayStats.users.byRole.customer },
-            ].map((role) => (
-              <TouchableOpacity
-                key={role.key}
-                onPress={() => navigation.navigate('Users', { filter: role.key })}
-                className="flex-row items-center rounded-full px-3 py-2"
-                style={{ backgroundColor: role.color + '15' }}>
-                <View
-                  className="mr-2 h-2 w-2 rounded-full"
-                  style={{ backgroundColor: role.color }}
-                />
-                <Text className="text-sm font-medium" style={{ color: role.color }}>
-                  {role.label}: {role.value}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+      {/* Quick actions */}
+      <View className="px-4 pt-4">
+        <ActionBar
+          actions={[
+            {
+              icon: 'storefront-outline',
+              label: 'Vendors',
+              primary: true,
+              onPress: () => navigation.navigate('Vendors'),
+            },
+            {
+              icon: 'account-group-outline',
+              label: 'Users',
+              onPress: () => navigation.navigate('Users'),
+            },
+            {
+              icon: 'chart-line',
+              label: 'Statistics',
+              onPress: () => navigation.navigate('Statistics'),
+            },
+          ]}
+        />
       </View>
     </ScrollView>
   );
