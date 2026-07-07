@@ -149,18 +149,18 @@ export default function PaymentsCustomersTab({
                     height: 28,
                     backgroundColor: active ? colors.primary + '14' : colors.card,
                     borderWidth: 1,
-                    borderColor: active ? colors.primary : colors.border,
+                    borderColor: active ? colors.accent : colors.border,
                   }}>
                   <Text
                     className="text-xs"
-                    style={{ color: active ? colors.primary : colors.muted }}>
+                    style={{ color: active ? colors.accent : colors.muted }}>
                     {opt.label}
                   </Text>
                   {active && (
                     <MaterialCommunityIcons
                       name={sortOrder === 'DESC' ? 'arrow-down' : 'arrow-up'}
                       size={12}
-                      color={colors.primary}
+                      color={colors.accent}
                     />
                   )}
                 </TouchableOpacity>

@@ -2,16 +2,18 @@
 // Single-screen vendor onboarding: the five essentials, then submit for
 // approval. Also handles the rejected-profile flow (update + resubmit).
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   Image,
   Pressable,
+  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
@@ -48,7 +50,7 @@ const BUSINESS_TYPES = [
 export default function BusinessDetailsScreen() {
   const navigation = useNavigation<any>();
   const { colors } = useThemeContext();
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, logout } = useAuth() as any;
 
   const [typePickerOpen, setTypePickerOpen] = useState(false);
   // Truthy when the profile was rejected; carries the admin's reason.
@@ -58,9 +60,15 @@ export default function BusinessDetailsScreen() {
   const profile: any = (user as any)?.vendorProfile ?? (user as any)?.customerProfile ?? null;
   const existingAddress = profile?.addresses?.[0];
 
+  // Typed-but-unsubmitted values survive app kills / sign-outs on this device.
+  const draftKey = user?.id ? `onboarding_draft_v1:${user.id}` : null;
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const {
     control,
     handleSubmit,
+    reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<BusinessDetailsFormData>({
     resolver: yupResolver(businessDetailsSchema),
@@ -83,6 +91,34 @@ export default function BusinessDetailsScreen() {
     };
     loadStatus();
   }, []);
+
+  // Restore a saved draft (draft wins over profile prefill — it's newer).
+  useEffect(() => {
+    if (!draftKey) return;
+    AsyncStorage.getItem(draftKey)
+      .then((raw) => {
+        if (raw) reset(JSON.parse(raw));
+      })
+      .catch(() => {
+        // Corrupt/missing draft — keep the prefill.
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey]);
+
+  // Persist as the user types (debounced), until successfully submitted.
+  useEffect(() => {
+    if (!draftKey) return;
+    const sub = watch((values) => {
+      if (draftTimer.current) clearTimeout(draftTimer.current);
+      draftTimer.current = setTimeout(() => {
+        AsyncStorage.setItem(draftKey, JSON.stringify(values)).catch(() => {});
+      }, 400);
+    });
+    return () => {
+      sub.unsubscribe();
+      if (draftTimer.current) clearTimeout(draftTimer.current);
+    };
+  }, [watch, draftKey]);
 
   const onSubmit = async (formData: BusinessDetailsFormData) => {
     const info = {
@@ -115,6 +151,7 @@ export default function BusinessDetailsScreen() {
     }
 
     Toast.success(rejected ? 'Profile resubmitted for review!' : 'Profile submitted for review!');
+    if (draftKey) await AsyncStorage.removeItem(draftKey).catch(() => {});
     await refreshUser();
     navigation.reset({
       index: 0,
@@ -124,6 +161,27 @@ export default function BusinessDetailsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Escape hatch — onboarding must never trap the user. Their draft is
+          saved locally, so signing out and back in resumes where they left off. */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 12, alignItems: 'flex-end' }}>
+        <TouchableOpacity
+          onPress={() => logout?.()}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.card,
+            paddingHorizontal: 14,
+            paddingVertical: 9,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}>
+          <MaterialCommunityIcons name="logout" size={17} color={colors.text} />
+          <Text style={{ marginLeft: 7, color: colors.text, fontWeight: '500', fontSize: 13 }}>
+            Sign Out
+          </Text>
+        </TouchableOpacity>
+      </View>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}>
@@ -224,7 +282,7 @@ export default function BusinessDetailsScreen() {
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    backgroundColor: colors.background,
+                    backgroundColor: colors.card,
                     borderRadius: 12,
                     borderWidth: 1,
                     borderColor: errors.businessType ? colors.error : colors.border,
@@ -278,13 +336,13 @@ export default function BusinessDetailsScreen() {
                           <Text
                             style={{
                               fontSize: 15,
-                              color: selected ? colors.primary : colors.text,
+                              color: selected ? colors.accent : colors.text,
                               fontWeight: selected ? '700' : '400',
                             }}>
                             {option}
                           </Text>
                           {selected ? (
-                            <MaterialCommunityIcons name="check" size={20} color={colors.primary} />
+                            <MaterialCommunityIcons name="check" size={20} color={colors.accent} />
                           ) : null}
                         </Pressable>
                       );

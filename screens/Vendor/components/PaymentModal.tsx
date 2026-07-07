@@ -217,15 +217,15 @@ export default function PaymentModal({ visible, orderId, onClose }: PaymentModal
                         className="rounded-xl px-4 py-2.5"
                         style={{
                           backgroundColor:
-                            paymentMethod === method.value ? colors.primary : colors.background,
+                            paymentMethod === method.value ? colors.cta : colors.background,
                           borderWidth: 1,
                           borderColor:
-                            paymentMethod === method.value ? colors.primary : colors.border,
+                            paymentMethod === method.value ? colors.cta : colors.border,
                         }}>
                         <Text
                           className="text-sm font-medium"
                           style={{
-                            color: paymentMethod === method.value ? colors.white : colors.text,
+                            color: paymentMethod === method.value ? colors.onCta : colors.text,
                           }}>
                           {method.label}
                         </Text>

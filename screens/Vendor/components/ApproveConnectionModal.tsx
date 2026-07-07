@@ -227,11 +227,11 @@ export default function ApproveConnectionModal({
                       paddingHorizontal: 14,
                       paddingVertical: 8,
                       borderRadius: 999,
-                      backgroundColor: selected ? colors.primary : colors.background,
+                      backgroundColor: selected ? colors.cta : colors.background,
                       borderWidth: 1,
-                      borderColor: selected ? colors.primary : colors.border,
+                      borderColor: selected ? colors.cta : colors.border,
                     }}>
-                    <Text style={{ color: selected ? colors.white : colors.text, fontSize: 13 }}>
+                    <Text style={{ color: selected ? colors.onCta : colors.text, fontSize: 13 }}>
                       {term}
                     </Text>
                   </Pressable>
@@ -262,7 +262,7 @@ export default function ApproveConnectionModal({
               disabled={submitting}
               onPress={handleSubmit}
               style={{
-                backgroundColor: colors.primary,
+                backgroundColor: colors.cta,
                 borderRadius: 12,
                 paddingVertical: 15,
                 alignItems: 'center',
@@ -270,9 +270,9 @@ export default function ApproveConnectionModal({
                 opacity: submitting ? 0.7 : 1,
               }}>
               {submitting ? (
-                <ActivityIndicator color={colors.white} />
+                <ActivityIndicator color={colors.onCta} />
               ) : (
-                <Text style={{ color: colors.white, fontWeight: '700', fontSize: 16 }}>
+                <Text style={{ color: colors.onCta, fontWeight: '700', fontSize: 16 }}>
                   Approve & Set Terms
                 </Text>
               )}

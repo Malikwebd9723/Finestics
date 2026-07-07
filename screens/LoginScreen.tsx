@@ -156,14 +156,14 @@ export default function LoginScreen() {
                       height: 21,
                       borderRadius: 6,
                       borderWidth: 1.5,
-                      borderColor: value ? colors.primary : colors.border,
-                      backgroundColor: value ? colors.primary : 'transparent',
+                      borderColor: value ? colors.cta : colors.border,
+                      backgroundColor: value ? colors.cta : 'transparent',
                       alignItems: 'center',
                       justifyContent: 'center',
                       marginRight: 8,
                     }}>
                     {value && (
-                      <MaterialCommunityIcons name="check" size={14} color={colors.white} />
+                      <MaterialCommunityIcons name="check" size={14} color={colors.onCta} />
                     )}
                   </View>
                   <Text style={{ color: colors.text, fontSize: 14 }}>Remember me</Text>

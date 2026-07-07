@@ -195,9 +195,11 @@ export default function VendorProfile() {
               <TouchableOpacity
                 onPress={handleEdit}
                 className="flex-row items-center rounded-lg px-4 py-2"
-                style={{ backgroundColor: colors.primary }}>
-                <MaterialCommunityIcons name="pencil" size={16} color={colors.white} />
-                <Text className="ml-1 font-medium text-white">Edit</Text>
+                style={{ backgroundColor: colors.cta }}>
+                <MaterialCommunityIcons name="pencil" size={16} color={colors.onCta} />
+                <Text className="ml-1 font-medium" style={{ color: colors.onCta }}>
+                  Edit
+                </Text>
               </TouchableOpacity>
             ) : (
               <View className="flex-row gap-2">
@@ -216,13 +218,15 @@ export default function VendorProfile() {
                   disabled={updateMutation.isPending}
                   className="flex-row items-center rounded-lg px-4 py-2"
                   style={{
-                    backgroundColor: colors.primary,
+                    backgroundColor: colors.cta,
                     opacity: updateMutation.isPending ? 0.7 : 1,
                   }}>
                   {updateMutation.isPending ? (
-                    <ActivityIndicator size="small" color={colors.white} />
+                    <ActivityIndicator size="small" color={colors.onCta} />
                   ) : (
-                    <Text className="font-medium text-white">Save</Text>
+                    <Text className="font-medium" style={{ color: colors.onCta }}>
+                      Save
+                    </Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -452,11 +456,11 @@ export default function VendorProfile() {
                   onPress={handleAddVan}
                   disabled={addVanMutation.isPending}
                   className="items-center justify-center rounded-lg px-4"
-                  style={{ backgroundColor: colors.primary }}>
+                  style={{ backgroundColor: colors.cta }}>
                   {addVanMutation.isPending ? (
-                    <ActivityIndicator size="small" color={colors.white} />
+                    <ActivityIndicator size="small" color={colors.onCta} />
                   ) : (
-                    <MaterialCommunityIcons name="check" size={20} color={colors.white} />
+                    <MaterialCommunityIcons name="check" size={20} color={colors.onCta} />
                   )}
                 </TouchableOpacity>
               </View>

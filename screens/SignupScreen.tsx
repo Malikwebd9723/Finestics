@@ -142,11 +142,11 @@ export default function SignupScreen() {
                       paddingVertical: 11,
                       borderRadius: 9,
                       alignItems: 'center',
-                      backgroundColor: selected ? colors.primary : 'transparent',
+                      backgroundColor: selected ? colors.cta : 'transparent',
                     }}>
                     <Text
                       style={{
-                        color: selected ? colors.white : colors.text,
+                        color: selected ? colors.onCta : colors.text,
                         fontWeight: '600',
                         fontSize: 14,
                       }}>

@@ -168,7 +168,7 @@ export default function VendorOrderDetailScreen() {
             disabled={mutation.isPending}
             onPress={() => mutation.mutate(next.status)}
             style={{
-              backgroundColor: colors.primary,
+              backgroundColor: colors.cta,
               borderRadius: 12,
               paddingVertical: 15,
               alignItems: 'center',
@@ -176,9 +176,11 @@ export default function VendorOrderDetailScreen() {
               opacity: mutation.isPending ? 0.7 : 1,
             }}>
             {mutation.isPending ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.onCta} />
             ) : (
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{next.label}</Text>
+              <Text style={{ color: colors.onCta, fontWeight: '700', fontSize: 16 }}>
+                {next.label}
+              </Text>
             )}
           </Pressable>
         )}

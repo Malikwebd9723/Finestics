@@ -325,8 +325,10 @@ export default function OrdersList({
         <TouchableOpacity
           onPress={() => refetch()}
           className="mt-4 rounded-xl px-6 py-3"
-          style={{ backgroundColor: colors.primary }}>
-          <Text className="font-semibold text-white">Retry</Text>
+          style={{ backgroundColor: colors.cta }}>
+          <Text className="font-semibold" style={{ color: colors.onCta }}>
+            Retry
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -373,12 +375,12 @@ export default function OrdersList({
             className="rounded-lg px-3 py-2"
             style={{
               backgroundColor: isToday(quickDate.toISOString())
-                ? colors.primary
+                ? colors.cta
                 : colors.background,
             }}>
             <Text
               className="text-xs font-semibold"
-              style={{ color: isToday(quickDate.toISOString()) ? colors.white : colors.text }}>
+              style={{ color: isToday(quickDate.toISOString()) ? colors.onCta : colors.text }}>
               Today
             </Text>
           </TouchableOpacity>
@@ -545,17 +547,17 @@ export default function OrdersList({
             onPress={() => setShowFilters(!showFilters)}
             className="flex-row items-center rounded-lg px-2.5 py-1.5"
             style={{
-              backgroundColor: activeFiltersCount > 0 ? colors.primary : colors.card,
+              backgroundColor: activeFiltersCount > 0 ? colors.cta : colors.card,
               borderWidth: 1,
-              borderColor: activeFiltersCount > 0 ? colors.primary : colors.border,
+              borderColor: activeFiltersCount > 0 ? colors.cta : colors.border,
             }}>
             <MaterialCommunityIcons
               name="tune"
               size={16}
-              color={activeFiltersCount > 0 ? colors.white : colors.text}
+              color={activeFiltersCount > 0 ? colors.onCta : colors.text}
             />
             {activeFiltersCount > 0 && (
-              <Text className="ml-1 text-xs font-bold" style={{ color: colors.white }}>
+              <Text className="ml-1 text-xs font-bold" style={{ color: colors.onCta }}>
                 {activeFiltersCount}
               </Text>
             )}
@@ -568,12 +570,12 @@ export default function OrdersList({
             style={{
               backgroundColor: showSummary ? colors.primary + '15' : colors.card,
               borderWidth: 1,
-              borderColor: showSummary ? colors.primary : colors.border,
+              borderColor: showSummary ? colors.accent : colors.border,
             }}>
             <MaterialCommunityIcons
               name="chart-bar"
               size={16}
-              color={showSummary ? colors.primary : colors.text}
+              color={showSummary ? colors.accent : colors.text}
             />
           </TouchableOpacity>
         </View>
@@ -623,13 +625,13 @@ export default function OrdersList({
                   }}
                   className="rounded-full px-3 py-1.5"
                   style={{
-                    backgroundColor: sortBy === option.value ? colors.primary : colors.background,
+                    backgroundColor: sortBy === option.value ? colors.cta : colors.background,
                     borderWidth: 1,
-                    borderColor: sortBy === option.value ? colors.primary : colors.border,
+                    borderColor: sortBy === option.value ? colors.cta : colors.border,
                   }}>
                   <Text
                     className="text-xs font-semibold"
-                    style={{ color: sortBy === option.value ? colors.white : colors.text }}>
+                    style={{ color: sortBy === option.value ? colors.onCta : colors.text }}>
                     {option.label}
                   </Text>
                 </TouchableOpacity>
@@ -705,12 +707,12 @@ export default function OrdersList({
               className="flex-1 flex-row items-center justify-between px-4 py-3 border-r"
               style={{ borderColor: colors.border }}>
               <View className="flex-row items-center">
-                <MaterialCommunityIcons name="calendar-outline" size={16} color={dateFrom ? colors.primary : colors.muted} />
+                <MaterialCommunityIcons name="calendar-outline" size={16} color={dateFrom ? colors.accent : colors.muted} />
                 <Text className="ml-2 text-sm font-medium" style={{ color: colors.text }}>
                   From
                 </Text>
               </View>
-              <Text className="text-sm" style={{ color: dateFrom ? colors.primary : colors.muted }}>
+              <Text className="text-sm" style={{ color: dateFrom ? colors.accent : colors.muted }}>
                 {dateFrom ? dateFrom.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Any'}
               </Text>
             </TouchableOpacity>
@@ -718,12 +720,12 @@ export default function OrdersList({
               onPress={() => setShowDateTo(true)}
               className="flex-1 flex-row items-center justify-between px-4 py-3">
               <View className="flex-row items-center">
-                <MaterialCommunityIcons name="calendar-outline" size={16} color={dateTo ? colors.primary : colors.muted} />
+                <MaterialCommunityIcons name="calendar-outline" size={16} color={dateTo ? colors.accent : colors.muted} />
                 <Text className="ml-2 text-sm font-medium" style={{ color: colors.text }}>
                   To
                 </Text>
               </View>
-              <Text className="text-sm" style={{ color: dateTo ? colors.primary : colors.muted }}>
+              <Text className="text-sm" style={{ color: dateTo ? colors.accent : colors.muted }}>
                 {dateTo ? dateTo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Any'}
               </Text>
             </TouchableOpacity>
@@ -740,7 +742,7 @@ export default function OrdersList({
             className="flex-row items-center justify-between px-4 py-3 border-b"
             style={{ borderColor: colors.border }}>
             <View className="flex-row items-center">
-              <MaterialCommunityIcons name="flag-outline" size={18} color={statusFilter ? colors.primary : colors.muted} />
+              <MaterialCommunityIcons name="flag-outline" size={18} color={statusFilter ? colors.accent : colors.muted} />
               <Text className="ml-3 text-sm font-medium" style={{ color: colors.text }}>
                 Order Status
               </Text>
@@ -778,7 +780,7 @@ export default function OrdersList({
             className="flex-row items-center justify-between px-4 py-3 border-b"
             style={{ borderColor: colors.border }}>
             <View className="flex-row items-center">
-              <MaterialCommunityIcons name="wallet-outline" size={18} color={paymentFilter ? colors.primary : colors.muted} />
+              <MaterialCommunityIcons name="wallet-outline" size={18} color={paymentFilter ? colors.accent : colors.muted} />
               <Text className="ml-3 text-sm font-medium" style={{ color: colors.text }}>
                 Payment Status
               </Text>
@@ -817,7 +819,7 @@ export default function OrdersList({
               className="flex-row items-center justify-between px-4 py-3"
               style={{ borderColor: colors.border }}>
               <View className="flex-row items-center">
-                <MaterialCommunityIcons name="truck-outline" size={18} color={vanFilter ? colors.primary : colors.muted} />
+                <MaterialCommunityIcons name="truck-outline" size={18} color={vanFilter ? colors.accent : colors.muted} />
                 <Text className="ml-3 text-sm font-medium" style={{ color: colors.text }}>
                   Van
                 </Text>
@@ -825,7 +827,7 @@ export default function OrdersList({
               <View className="flex-row items-center">
                 {vanFilter ? (
                   <>
-                    <Text className="text-sm" style={{ color: colors.primary }}>{vanFilter}</Text>
+                    <Text className="text-sm" style={{ color: colors.accent }}>{vanFilter}</Text>
                     <TouchableOpacity onPress={() => onVanFilterChange(null)} className="ml-2">
                       <MaterialCommunityIcons name="close-circle" size={18} color={colors.error} />
                     </TouchableOpacity>
@@ -966,12 +968,12 @@ export default function OrdersList({
                     style={{
                       backgroundColor: !statusFilter ? colors.primary + '15' : colors.background,
                       borderWidth: !statusFilter ? 1 : 0,
-                      borderColor: colors.primary,
+                      borderColor: colors.accent,
                     }}>
-                    <Text className="text-sm font-medium" style={{ color: !statusFilter ? colors.primary : colors.text }}>
+                    <Text className="text-sm font-medium" style={{ color: !statusFilter ? colors.accent : colors.text }}>
                       All Statuses
                     </Text>
-                    {!statusFilter && <MaterialCommunityIcons name="check" size={20} color={colors.primary} />}
+                    {!statusFilter && <MaterialCommunityIcons name="check" size={20} color={colors.accent} />}
                   </TouchableOpacity>
                   {ORDER_STATUSES.map((status) => {
                     const statusColor = toneColor(status.tone, colors);
@@ -1018,12 +1020,12 @@ export default function OrdersList({
                     style={{
                       backgroundColor: !paymentFilter ? colors.primary + '15' : colors.background,
                       borderWidth: !paymentFilter ? 1 : 0,
-                      borderColor: colors.primary,
+                      borderColor: colors.accent,
                     }}>
-                    <Text className="text-sm font-medium" style={{ color: !paymentFilter ? colors.primary : colors.text }}>
+                    <Text className="text-sm font-medium" style={{ color: !paymentFilter ? colors.accent : colors.text }}>
                       All Payment Statuses
                     </Text>
-                    {!paymentFilter && <MaterialCommunityIcons name="check" size={20} color={colors.primary} />}
+                    {!paymentFilter && <MaterialCommunityIcons name="check" size={20} color={colors.accent} />}
                   </TouchableOpacity>
                   {PAYMENT_STATUSES.map((status) => {
                     const statusColor = toneColor(status.tone, colors);
@@ -1070,15 +1072,15 @@ export default function OrdersList({
                     style={{
                       backgroundColor: !vanFilter ? colors.primary + '15' : colors.background,
                       borderWidth: !vanFilter ? 1 : 0,
-                      borderColor: colors.primary,
+                      borderColor: colors.accent,
                     }}>
                     <View className="flex-row items-center">
-                      <MaterialCommunityIcons name="truck-outline" size={18} color={!vanFilter ? colors.primary : colors.muted} style={{ marginRight: 12 }} />
-                      <Text className="text-sm font-medium" style={{ color: !vanFilter ? colors.primary : colors.text }}>
+                      <MaterialCommunityIcons name="truck-outline" size={18} color={!vanFilter ? colors.accent : colors.muted} style={{ marginRight: 12 }} />
+                      <Text className="text-sm font-medium" style={{ color: !vanFilter ? colors.accent : colors.text }}>
                         All Vans
                       </Text>
                     </View>
-                    {!vanFilter && <MaterialCommunityIcons name="check" size={20} color={colors.primary} />}
+                    {!vanFilter && <MaterialCommunityIcons name="check" size={20} color={colors.accent} />}
                   </TouchableOpacity>
                   {vans.map((van) => (
                     <TouchableOpacity
@@ -1091,17 +1093,17 @@ export default function OrdersList({
                       style={{
                         backgroundColor: vanFilter === van ? colors.primary + '15' : colors.background,
                         borderWidth: vanFilter === van ? 1 : 0,
-                        borderColor: colors.primary,
+                        borderColor: colors.accent,
                       }}>
                       <View className="flex-row items-center">
-                        <MaterialCommunityIcons name="truck-outline" size={18} color={vanFilter === van ? colors.primary : colors.muted} style={{ marginRight: 12 }} />
+                        <MaterialCommunityIcons name="truck-outline" size={18} color={vanFilter === van ? colors.accent : colors.muted} style={{ marginRight: 12 }} />
                         <Text
                           className="text-sm font-medium"
-                          style={{ color: vanFilter === van ? colors.primary : colors.text }}>
+                          style={{ color: vanFilter === van ? colors.accent : colors.text }}>
                           {van}
                         </Text>
                       </View>
-                      {vanFilter === van && <MaterialCommunityIcons name="check" size={20} color={colors.primary} />}
+                      {vanFilter === van && <MaterialCommunityIcons name="check" size={20} color={colors.accent} />}
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -1147,7 +1149,7 @@ function OrderCard({
       style={{
         backgroundColor: isSelected ? colors.primary + '15' : colors.card,
         borderWidth: isSelected ? 2 : 1,
-        borderColor: isSelected ? colors.primary : colors.border,
+        borderColor: isSelected ? colors.accent : colors.border,
       }}>
       {/* Selection Checkbox */}
       {isSelectionMode && (
@@ -1155,11 +1157,11 @@ function OrderCard({
           <View
             className="h-6 w-6 items-center justify-center rounded-full"
             style={{
-              backgroundColor: isSelected ? colors.primary : colors.background,
+              backgroundColor: isSelected ? colors.cta : colors.background,
               borderWidth: isSelected ? 0 : 2,
               borderColor: colors.border,
             }}>
-            {isSelected && <MaterialCommunityIcons name="check" size={16} color={colors.white} />}
+            {isSelected && <MaterialCommunityIcons name="check" size={16} color={colors.onCta} />}
           </View>
         </View>
       )}

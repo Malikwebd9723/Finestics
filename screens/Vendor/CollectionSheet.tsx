@@ -346,8 +346,10 @@ export default function CollectionSheet() {
               <TouchableOpacity
                 onPress={() => refetch()}
                 className="mt-4 rounded-lg px-6 py-2"
-                style={{ backgroundColor: colors.primary }}>
-                <Text className="font-semibold text-white">Retry</Text>
+                style={{ backgroundColor: colors.cta }}>
+                <Text className="font-semibold" style={{ color: colors.onCta }}>
+                  Retry
+                </Text>
               </TouchableOpacity>
             </View>
           ) : !collectionSheet?.items?.length ? (

@@ -76,13 +76,13 @@ export default function DateRangeSelector({
           className="items-center justify-center rounded-full px-4"
           style={{
             height: 34,
-            backgroundColor: todayActive ? colors.primary : colors.card,
+            backgroundColor: todayActive ? colors.cta : colors.card,
             borderWidth: 1,
-            borderColor: todayActive ? colors.primary : colors.border,
+            borderColor: todayActive ? colors.cta : colors.border,
           }}>
           <Text
             className="text-xs font-semibold"
-            style={{ color: todayActive ? colors.white : colors.text }}>
+            style={{ color: todayActive ? colors.onCta : colors.text }}>
             Today
           </Text>
         </TouchableOpacity>
@@ -100,11 +100,11 @@ export default function DateRangeSelector({
           <MaterialCommunityIcons
             name="calendar-today"
             size={13}
-            color={!todayActive ? colors.primary : colors.muted}
+            color={!todayActive ? colors.accent : colors.muted}
           />
           <Text
             className="ml-1.5 text-xs font-medium"
-            style={{ color: !todayActive ? colors.primary : colors.text }}>
+            style={{ color: !todayActive ? colors.accent : colors.text }}>
             {formatDisplay(startDate)}
           </Text>
         </TouchableOpacity>
@@ -123,11 +123,11 @@ export default function DateRangeSelector({
           <MaterialCommunityIcons
             name="calendar-today"
             size={13}
-            color={!todayActive ? colors.primary : colors.muted}
+            color={!todayActive ? colors.accent : colors.muted}
           />
           <Text
             className="ml-1.5 text-xs font-medium"
-            style={{ color: !todayActive ? colors.primary : colors.text }}>
+            style={{ color: !todayActive ? colors.accent : colors.text }}>
             {formatDisplay(endDate)}
           </Text>
         </TouchableOpacity>

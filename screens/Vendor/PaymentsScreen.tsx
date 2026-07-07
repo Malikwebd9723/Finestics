@@ -92,11 +92,11 @@ export default function PaymentsScreen() {
                 className="mr-1 items-center justify-center rounded-full px-4"
                 style={{
                   height: 34,
-                  backgroundColor: active ? colors.primary : 'transparent',
+                  backgroundColor: active ? colors.cta : 'transparent',
                 }}>
                 <Text
                   className="text-xs font-semibold"
-                  style={{ color: active ? '#fff' : colors.muted }}>
+                  style={{ color: active ? colors.onCta : colors.muted }}>
                   {tab.label}
                 </Text>
               </TouchableOpacity>

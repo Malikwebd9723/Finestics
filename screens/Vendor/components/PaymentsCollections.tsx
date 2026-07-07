@@ -105,13 +105,13 @@ export default function PaymentsCollectionsTab({ startDate, endDate, isActive }:
                   className="items-center justify-center rounded-full px-3.5"
                   style={{
                     height: 30,
-                    backgroundColor: active ? colors.primary : colors.card,
+                    backgroundColor: active ? colors.cta : colors.card,
                     borderWidth: 1,
-                    borderColor: active ? colors.primary : colors.border,
+                    borderColor: active ? colors.cta : colors.border,
                   }}>
                   <Text
                     className="text-xs font-medium"
-                    style={{ color: active ? colors.white : colors.muted }}>
+                    style={{ color: active ? colors.onCta : colors.muted }}>
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
@@ -162,7 +162,7 @@ export default function PaymentsCollectionsTab({ startDate, endDate, isActive }:
               style={{
                 backgroundColor: colors.card,
                 borderWidth: 1,
-                borderColor: selectedDate === item.period ? colors.primary : colors.border,
+                borderColor: selectedDate === item.period ? colors.accent : colors.border,
               }}>
               <View className="flex-1">
                 <Text className="text-sm font-semibold" style={{ color: colors.text }}>

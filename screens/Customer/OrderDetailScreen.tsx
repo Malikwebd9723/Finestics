@@ -295,7 +295,7 @@ export default function OrderDetailScreen() {
           <Pressable
             onPress={() => setInvoiceOpen(true)}
             style={{
-              backgroundColor: colors.primary,
+              backgroundColor: colors.cta,
               borderRadius: 12,
               paddingVertical: 14,
               alignItems: 'center',
@@ -303,8 +303,8 @@ export default function OrderDetailScreen() {
               flexDirection: 'row',
               justifyContent: 'center',
             }}>
-            <MaterialCommunityIcons name="file-document-outline" size={18} color={colors.white} />
-            <Text style={{ color: colors.white, fontWeight: '700', marginLeft: 8 }}>
+            <MaterialCommunityIcons name="file-document-outline" size={18} color={colors.onCta} />
+            <Text style={{ color: colors.onCta, fontWeight: '700', marginLeft: 8 }}>
               View Invoice
             </Text>
           </Pressable>
@@ -315,7 +315,7 @@ export default function OrderDetailScreen() {
           <Pressable
             onPress={reorder}
             style={{
-              backgroundColor: colors.primary,
+              backgroundColor: colors.cta,
               borderRadius: 12,
               paddingVertical: 14,
               alignItems: 'center',
@@ -323,8 +323,8 @@ export default function OrderDetailScreen() {
               flexDirection: 'row',
               justifyContent: 'center',
             }}>
-            <MaterialCommunityIcons name="cart-plus" size={18} color={colors.white} />
-            <Text style={{ color: colors.white, fontWeight: '700', marginLeft: 8 }}>
+            <MaterialCommunityIcons name="cart-plus" size={18} color={colors.onCta} />
+            <Text style={{ color: colors.onCta, fontWeight: '700', marginLeft: 8 }}>
               Reorder These Items
             </Text>
           </Pressable>

@@ -29,9 +29,11 @@ export default function Button({
   const { colors } = useThemeContext();
   const blocked = disabled || loading;
 
+  // Primary uses the dedicated CTA pair — in dark mode the zinc `primary`
+  // reads as disabled, so filled buttons flip to near-white with dark text.
   const background =
-    variant === 'primary' ? colors.primary : variant === 'secondary' ? colors.card : 'transparent';
-  const labelColor = variant === 'primary' ? colors.white : colors.text;
+    variant === 'primary' ? colors.cta : variant === 'secondary' ? colors.card : 'transparent';
+  const labelColor = variant === 'primary' ? colors.onCta : colors.text;
 
   return (
     <Pressable

@@ -337,15 +337,15 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
                             className="rounded-xl px-4 py-2.5"
                             style={{
                               backgroundColor:
-                                field.value === unit.value ? colors.primary : colors.background,
+                                field.value === unit.value ? colors.cta : colors.background,
                               borderWidth: 1,
                               borderColor:
-                                field.value === unit.value ? colors.primary : colors.border,
+                                field.value === unit.value ? colors.cta : colors.border,
                             }}>
                             <Text
                               className="text-sm font-medium"
                               style={{
-                                color: field.value === unit.value ? '#fff' : colors.text,
+                                color: field.value === unit.value ? colors.onCta : colors.text,
                               }}>
                               {unit.label}
                             </Text>
@@ -449,10 +449,10 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
                         disabled={!customTagInput.trim() || isSubmitting}
                         className="items-center justify-center rounded-xl px-4"
                         style={{
-                          backgroundColor: colors.primary,
+                          backgroundColor: colors.cta,
                           opacity: !customTagInput.trim() ? 0.5 : 1,
                         }}>
-                        <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+                        <MaterialCommunityIcons name="plus" size={24} color={colors.onCta} />
                       </TouchableOpacity>
                     </View>
 
@@ -467,12 +467,16 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
                             <View
                               key={idx}
                               className="flex-row items-center rounded-lg px-3 py-2"
-                              style={{ backgroundColor: colors.primary }}>
-                              <Text className="mr-2 text-sm font-medium text-white">{tag}</Text>
+                              style={{ backgroundColor: colors.cta }}>
+                              <Text
+                                className="mr-2 text-sm font-medium"
+                                style={{ color: colors.onCta }}>
+                                {tag}
+                              </Text>
                               <TouchableOpacity
                                 onPress={() => removeTag(tag)}
                                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                                <MaterialCommunityIcons name="close" size={16} color="#fff" />
+                                <MaterialCommunityIcons name="close" size={16} color={colors.onCta} />
                               </TouchableOpacity>
                             </View>
                           ))}
@@ -635,19 +639,19 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
                 disabled={isSubmitting}
                 className="flex-1 flex-row items-center justify-center rounded-xl py-3.5"
                 style={{
-                  backgroundColor: colors.primary,
+                  backgroundColor: colors.cta,
                   opacity: isSubmitting ? 0.7 : 1,
                 }}>
                 {isSubmitting ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={colors.onCta} />
                 ) : (
                   <>
                     <MaterialCommunityIcons
                       name={isEditMode ? 'check' : 'plus'}
                       size={18}
-                      color="#fff"
+                      color={colors.onCta}
                     />
-                    <Text className="ml-1 font-semibold text-white">
+                    <Text className="ml-1 font-semibold" style={{ color: colors.onCta }}>
                       {isEditMode ? 'Update' : 'Add'}
                     </Text>
                   </>

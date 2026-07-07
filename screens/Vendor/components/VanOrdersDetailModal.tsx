@@ -308,9 +308,9 @@ export default function VanOrderDetailsModal({
                         <TouchableOpacity
                             onPress={handleOpenOrderDetail}
                             className="flex-row items-center justify-center rounded-xl py-3"
-                            style={{ backgroundColor: colors.primary }}>
-                            <MaterialCommunityIcons name="receipt" size={20} color={colors.white} />
-                            <Text className="ml-2 font-semibold" style={{ color: colors.white }}>
+                            style={{ backgroundColor: colors.cta }}>
+                            <MaterialCommunityIcons name="receipt" size={20} color={colors.onCta} />
+                            <Text className="ml-2 font-semibold" style={{ color: colors.onCta }}>
                                 Full Order Details
                             </Text>
                         </TouchableOpacity>

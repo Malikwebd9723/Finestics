@@ -112,13 +112,13 @@ export default function ProductCard({
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              backgroundColor: colors.primary,
+              backgroundColor: colors.cta,
               borderRadius: 12,
               paddingHorizontal: 12,
               paddingVertical: 8,
             }}>
-            <MaterialCommunityIcons name="plus" size={16} color={colors.white} />
-            <Text style={{ color: colors.white, fontWeight: '600', marginLeft: 4 }}>Add</Text>
+            <MaterialCommunityIcons name="plus" size={16} color={colors.onCta} />
+            <Text style={{ color: colors.onCta, fontWeight: '600', marginLeft: 4 }}>Add</Text>
           </Pressable>
         ))}
     </View>

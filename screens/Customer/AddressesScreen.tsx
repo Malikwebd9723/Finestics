@@ -109,15 +109,15 @@ export default function AddressesScreen() {
         <Pressable
           onPress={() => setAddOpen(true)}
           style={{
-            backgroundColor: colors.primary,
+            backgroundColor: colors.cta,
             borderRadius: 14,
             paddingVertical: 15,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-          <MaterialCommunityIcons name="plus" size={20} color={colors.white} />
-          <Text style={{ color: colors.white, fontWeight: '700', fontSize: 16, marginLeft: 6 }}>
+          <MaterialCommunityIcons name="plus" size={20} color={colors.onCta} />
+          <Text style={{ color: colors.onCta, fontWeight: '700', fontSize: 16, marginLeft: 6 }}>
             Add Address
           </Text>
         </Pressable>

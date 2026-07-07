@@ -173,7 +173,7 @@ export default function ExpensesList({
         style={{
           backgroundColor: colors.card,
           borderWidth: isSelected ? 2 : 1,
-          borderColor: isSelected ? colors.primary : colors.border,
+          borderColor: isSelected ? colors.accent : colors.border,
         }}
         activeOpacity={0.7}>
         <View className="flex-row items-center p-4">
@@ -182,11 +182,11 @@ export default function ExpensesList({
             <View
               className="mr-3 h-6 w-6 items-center justify-center rounded-full"
               style={{
-                backgroundColor: isSelected ? colors.primary : 'transparent',
+                backgroundColor: isSelected ? colors.cta : 'transparent',
                 borderWidth: isSelected ? 0 : 2,
                 borderColor: colors.border,
               }}>
-              {isSelected && <MaterialCommunityIcons name="check" size={16} color={colors.white} />}
+              {isSelected && <MaterialCommunityIcons name="check" size={16} color={colors.onCta} />}
             </View>
           )}
 
@@ -239,18 +239,18 @@ export default function ExpensesList({
       onPress={onPress}
       className="mr-2 flex-row items-center rounded-full px-3 py-2"
       style={{
-        backgroundColor: isActive ? colors.primary : colors.card,
+        backgroundColor: isActive ? colors.cta : colors.card,
         borderWidth: 1,
-        borderColor: isActive ? colors.primary : colors.border,
+        borderColor: isActive ? colors.cta : colors.border,
       }}>
       <Text
         className="text-sm font-medium"
-        style={{ color: isActive ? colors.white : colors.text }}>
+        style={{ color: isActive ? colors.onCta : colors.text }}>
         {label}
       </Text>
       {isActive && onClear && (
         <TouchableOpacity onPress={onClear} className="ml-1.5">
-          <MaterialCommunityIcons name="close-circle" size={16} color={colors.white} />
+          <MaterialCommunityIcons name="close-circle" size={16} color={colors.onCta} />
         </TouchableOpacity>
       )}
       {!isActive && (
@@ -287,8 +287,10 @@ export default function ExpensesList({
         <TouchableOpacity
           onPress={() => refetch()}
           className="mt-4 rounded-xl px-6 py-3"
-          style={{ backgroundColor: colors.primary }}>
-          <Text className="font-semibold text-white">Retry</Text>
+          style={{ backgroundColor: colors.cta }}>
+          <Text className="font-semibold" style={{ color: colors.onCta }}>
+            Retry
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -377,14 +379,14 @@ export default function ExpensesList({
         <View
           className="mx-4 mb-3 flex-row items-center justify-between rounded-xl p-3"
           style={{ backgroundColor: colors.primary + '14' }}>
-          <Text className="font-medium" style={{ color: colors.primary }}>
+          <Text className="font-medium" style={{ color: colors.accent }}>
             {selectedExpenses.size} selected
           </Text>
           <TouchableOpacity
             onPress={() => onSelectAll(filteredExpenses.map((e) => e.id))}
             className="rounded-lg px-3 py-1"
-            style={{ backgroundColor: colors.primary }}>
-            <Text className="text-sm font-medium text-white">
+            style={{ backgroundColor: colors.cta }}>
+            <Text className="text-sm font-medium" style={{ color: colors.onCta }}>
               {selectedExpenses.size === filteredExpenses.length ? 'Deselect All' : 'Select All'}
             </Text>
           </TouchableOpacity>
@@ -453,13 +455,13 @@ export default function ExpensesList({
                         }}
                         className="rounded-xl px-4 py-3"
                         style={{
-                          backgroundColor: !categoryFilter ? colors.primary : colors.background,
+                          backgroundColor: !categoryFilter ? colors.cta : colors.background,
                           borderWidth: 1,
-                          borderColor: !categoryFilter ? colors.primary : colors.border,
+                          borderColor: !categoryFilter ? colors.cta : colors.border,
                         }}>
                         <Text
                           className="font-medium"
-                          style={{ color: !categoryFilter ? colors.white : colors.text }}>
+                          style={{ color: !categoryFilter ? colors.onCta : colors.text }}>
                           All Categories
                         </Text>
                       </TouchableOpacity>
@@ -474,18 +476,18 @@ export default function ExpensesList({
                             }}
                             className="flex-row items-center rounded-xl px-4 py-3"
                             style={{
-                              backgroundColor: isSelected ? colors.primary : colors.background,
+                              backgroundColor: isSelected ? colors.cta : colors.background,
                               borderWidth: 1,
-                              borderColor: isSelected ? colors.primary : colors.border,
+                              borderColor: isSelected ? colors.cta : colors.border,
                             }}>
                             <MaterialCommunityIcons
                               name={cat.icon as any}
                               size={18}
-                              color={isSelected ? colors.white : colors.text}
+                              color={isSelected ? colors.onCta : colors.text}
                             />
                             <Text
                               className="ml-2 font-medium"
-                              style={{ color: isSelected ? colors.white : colors.text }}>
+                              style={{ color: isSelected ? colors.onCta : colors.text }}>
                               {cat.label}
                             </Text>
                           </TouchableOpacity>

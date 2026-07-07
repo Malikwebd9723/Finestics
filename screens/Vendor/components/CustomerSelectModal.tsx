@@ -136,17 +136,17 @@ export default function CustomerSelectModal({
                     style={{
                       backgroundColor: isSelected ? colors.primary + '14' : colors.background,
                       borderWidth: 1,
-                      borderColor: isSelected ? colors.primary : colors.border,
+                      borderColor: isSelected ? colors.accent : colors.border,
                     }}>
                     {/* Avatar */}
                     <View
                       className="mr-3 h-11 w-11 items-center justify-center rounded-full"
                       style={{
-                        backgroundColor: isSelected ? colors.primary : colors.primary + '14',
+                        backgroundColor: isSelected ? colors.cta : colors.primary + '14',
                       }}>
                       <Text
                         className="text-sm font-bold"
-                        style={{ color: isSelected ? colors.white : colors.primary }}>
+                        style={{ color: isSelected ? colors.onCta : colors.primary }}>
                         {item.businessName?.slice(0, 2).toUpperCase() || '??'}
                       </Text>
                     </View>
@@ -170,7 +170,7 @@ export default function CustomerSelectModal({
 
                     {/* Check Icon */}
                     {isSelected && (
-                      <MaterialCommunityIcons name="check-circle" size={22} color={colors.primary} />
+                      <MaterialCommunityIcons name="check-circle" size={22} color={colors.accent} />
                     )}
                   </TouchableOpacity>
                 );

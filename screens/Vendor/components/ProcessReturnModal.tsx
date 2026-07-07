@@ -280,7 +280,7 @@ export default function ProcessReturnModal({
                       style={{
                         backgroundColor: colors.background,
                         borderWidth: item.selected ? 2 : 1,
-                        borderColor: item.selected ? colors.primary : colors.border,
+                        borderColor: item.selected ? colors.accent : colors.border,
                       }}>
                       {/* Checkbox + Product Name */}
                       <TouchableOpacity
@@ -289,12 +289,12 @@ export default function ProcessReturnModal({
                         <View
                           className="h-6 w-6 items-center justify-center rounded-md mr-3"
                           style={{
-                            backgroundColor: item.selected ? colors.primary : 'transparent',
+                            backgroundColor: item.selected ? colors.cta : 'transparent',
                             borderWidth: item.selected ? 0 : 2,
                             borderColor: colors.border,
                           }}>
                           {item.selected && (
-                            <MaterialCommunityIcons name="check" size={16} color={colors.white} />
+                            <MaterialCommunityIcons name="check" size={16} color={colors.onCta} />
                           )}
                         </View>
                         <View className="flex-1">
@@ -519,15 +519,15 @@ export default function ProcessReturnModal({
                   className="flex-row items-center justify-center rounded-xl py-3.5"
                   style={{
                     backgroundColor:
-                      selectedItems.length === 0 ? colors.muted : colors.primary,
+                      selectedItems.length === 0 ? colors.muted : colors.cta,
                     opacity: returnMutation.isPending ? 0.7 : 1,
                   }}>
                   {returnMutation.isPending ? (
-                    <ActivityIndicator size="small" color={colors.white} />
+                    <ActivityIndicator size="small" color={colors.onCta} />
                   ) : (
                     <>
-                      <MaterialCommunityIcons name="arrow-u-left-top" size={20} color={colors.white} />
-                      <Text className="ml-2 text-base font-bold text-white">
+                      <MaterialCommunityIcons name="arrow-u-left-top" size={20} color={colors.onCta} />
+                      <Text className="ml-2 text-base font-bold" style={{ color: colors.onCta }}>
                         Process Return ({selectedItems.length} item{selectedItems.length !== 1 ? 's' : ''})
                       </Text>
                     </>

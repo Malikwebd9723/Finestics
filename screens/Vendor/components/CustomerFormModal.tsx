@@ -563,19 +563,19 @@ export default function CustomerFormModal({
                 disabled={isSubmitting}
                 className="flex-1 flex-row items-center justify-center rounded-xl py-3.5"
                 style={{
-                  backgroundColor: colors.primary,
+                  backgroundColor: colors.cta,
                   opacity: isSubmitting ? 0.7 : 1,
                 }}>
                 {isSubmitting ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={colors.onCta} />
                 ) : (
                   <>
                     <MaterialCommunityIcons
                       name={isEditMode ? 'check' : 'plus'}
                       size={18}
-                      color="#fff"
+                      color={colors.onCta}
                     />
-                    <Text className="ml-1 font-semibold text-white">
+                    <Text className="ml-1 font-semibold" style={{ color: colors.onCta }}>
                       {isEditMode ? 'Update' : 'Add'}
                     </Text>
                   </>

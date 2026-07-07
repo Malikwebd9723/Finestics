@@ -46,7 +46,9 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => opts?.onCancel?.(), 0);
   };
 
-  const confirmColor = opts?.destructive ? colors.error : colors.primary;
+  // Accent (not primary) for the confirm label — dark-mode primary is mid-zinc
+  // and reads as a disabled/faded button on the card surface.
+  const confirmColor = opts?.destructive ? colors.error : colors.accent;
 
   return (
     <DialogContext.Provider value={{ show }}>
@@ -80,7 +82,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
                   onPress={handleCancel}
                   activeOpacity={0.6}
                   style={styles.actionButton}>
-                  <Text style={[styles.actionLabel, { color: colors.muted }]}>
+                  <Text style={[styles.actionLabel, { color: colors.text }]}>
                     {opts?.cancelText ?? 'Cancel'}
                   </Text>
                 </TouchableOpacity>

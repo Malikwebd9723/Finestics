@@ -92,12 +92,12 @@ export default function VendorDetailScreen() {
             })
           }
           style={{
-            backgroundColor: colors.primary,
+            backgroundColor: colors.cta,
             borderRadius: 12,
             paddingVertical: 15,
             alignItems: 'center',
           }}>
-          <Text style={{ color: colors.white, fontWeight: '700', fontSize: 16 }}>
+          <Text style={{ color: colors.onCta, fontWeight: '700', fontSize: 16 }}>
             Browse Catalog
           </Text>
         </Pressable>
@@ -126,16 +126,16 @@ export default function VendorDetailScreen() {
         disabled={connectMutation.isPending}
         onPress={() => connectMutation.mutate()}
         style={{
-          backgroundColor: colors.primary,
+          backgroundColor: colors.cta,
           borderRadius: 12,
           paddingVertical: 15,
           alignItems: 'center',
           opacity: connectMutation.isPending ? 0.7 : 1,
         }}>
         {connectMutation.isPending ? (
-          <ActivityIndicator color={colors.white} />
+          <ActivityIndicator color={colors.onCta} />
         ) : (
-          <Text style={{ color: colors.white, fontWeight: '700', fontSize: 16 }}>
+          <Text style={{ color: colors.onCta, fontWeight: '700', fontSize: 16 }}>
             {status === 'rejected' ? 'Request Again' : 'Connect'}
           </Text>
         )}

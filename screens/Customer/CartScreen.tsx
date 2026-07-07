@@ -35,12 +35,12 @@ export default function CartScreen() {
             <Pressable
               onPress={() => navigation.goBack()}
               style={{
-                backgroundColor: colors.primary,
+                backgroundColor: colors.cta,
                 borderRadius: 12,
                 paddingHorizontal: 20,
                 paddingVertical: 12,
               }}>
-              <Text style={{ color: colors.white, fontWeight: '600' }}>Browse products</Text>
+              <Text style={{ color: colors.onCta, fontWeight: '600' }}>Browse products</Text>
             </Pressable>
           }
         />
@@ -131,12 +131,12 @@ export default function CartScreen() {
         <Pressable
           onPress={() => navigation.navigate('CheckoutScreen', { vendorId, vendorName })}
           style={{
-            backgroundColor: colors.primary,
+            backgroundColor: colors.cta,
             borderRadius: 12,
             paddingVertical: 15,
             alignItems: 'center',
           }}>
-          <Text style={{ color: colors.white, fontWeight: '700', fontSize: 16 }}>
+          <Text style={{ color: colors.onCta, fontWeight: '700', fontSize: 16 }}>
             Proceed to Checkout
           </Text>
         </Pressable>

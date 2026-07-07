@@ -190,7 +190,7 @@ export default function InvoiceModal({ visible, order, onClose }: Props) {
               disabled={saving}
               onPress={handleSave}
               style={{
-                backgroundColor: colors.primary,
+                backgroundColor: colors.cta,
                 borderRadius: 12,
                 paddingVertical: 15,
                 alignItems: 'center',
@@ -200,12 +200,12 @@ export default function InvoiceModal({ visible, order, onClose }: Props) {
                 opacity: saving ? 0.7 : 1,
               }}>
               {saving ? (
-                <ActivityIndicator color={colors.white} />
+                <ActivityIndicator color={colors.onCta} />
               ) : (
                 <>
-                  <MaterialCommunityIcons name="download-outline" size={20} color={colors.white} />
+                  <MaterialCommunityIcons name="download-outline" size={20} color={colors.onCta} />
                   <Text
-                    style={{ color: colors.white, fontWeight: '700', fontSize: 16, marginLeft: 8 }}>
+                    style={{ color: colors.onCta, fontWeight: '700', fontSize: 16, marginLeft: 8 }}>
                     Save to Gallery
                   </Text>
                 </>

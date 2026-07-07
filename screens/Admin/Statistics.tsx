@@ -75,12 +75,12 @@ export default function AdminStatistics() {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: radius.pill,
-    backgroundColor: selected ? colors.primary : colors.card,
+    backgroundColor: selected ? colors.cta : colors.card,
     borderWidth: 1,
-    borderColor: selected ? colors.primary : colors.border,
+    borderColor: selected ? colors.cta : colors.border,
   });
   const chipLabel = (selected: boolean) => ({
-    color: selected ? colors.white : colors.text,
+    color: selected ? colors.onCta : colors.text,
     fontSize: 13,
     fontWeight: '600' as const,
   });

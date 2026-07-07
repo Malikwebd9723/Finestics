@@ -255,14 +255,14 @@ export default function VanOrdersScreen({ navigation }: any) {
                 onPress={() => setSelectedVan(van)}
                 className="rounded-full px-4 py-2"
                 style={{
-                  backgroundColor: selectedVan === van ? colors.primary : colors.background,
+                  backgroundColor: selectedVan === van ? colors.cta : colors.background,
                   borderWidth: 1,
-                  borderColor: selectedVan === van ? colors.primary : colors.border,
+                  borderColor: selectedVan === van ? colors.cta : colors.border,
                 }}>
                 <Text
                   className="font-medium"
                   style={{
-                    color: selectedVan === van ? colors.white : colors.text,
+                    color: selectedVan === van ? colors.onCta : colors.text,
                   }}>
                   {van}
                 </Text>

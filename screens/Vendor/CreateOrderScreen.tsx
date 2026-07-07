@@ -438,7 +438,7 @@ export default function CreateOrderScreen() {
                   style={{
                     backgroundColor: colors.card,
                     borderWidth: 1,
-                    borderColor: selectedCustomer ? colors.primary : colors.border,
+                    borderColor: selectedCustomer ? colors.accent : colors.border,
                     opacity: isEditMode ? 0.7 : 1,
                   }}>
                   {selectedCustomer ? (
@@ -510,9 +510,9 @@ export default function CreateOrderScreen() {
                 onPress={() => setProductModalVisible(true)}
                 disabled={isSubmitting}
                 className="mb-4 flex-row items-center justify-center rounded-xl p-4"
-                style={{ backgroundColor: colors.primary, opacity: isSubmitting ? 0.5 : 1 }}>
-                <MaterialCommunityIcons name="cart-plus" size={20} color={colors.white} />
-                <Text className="ml-2 font-bold text-white">
+                style={{ backgroundColor: colors.cta, opacity: isSubmitting ? 0.5 : 1 }}>
+                <MaterialCommunityIcons name="cart-plus" size={20} color={colors.onCta} />
+                <Text className="ml-2 font-bold" style={{ color: colors.onCta }}>
                   {isEditMode ? 'Add More Items' : 'Add Items to Cart'}
                 </Text>
               </TouchableOpacity>
@@ -575,15 +575,15 @@ export default function CreateOrderScreen() {
                             className="rounded-lg px-4 py-2.5"
                             style={{
                               backgroundColor:
-                                paymentMethod === method.value ? colors.primary : colors.card,
+                                paymentMethod === method.value ? colors.cta : colors.card,
                               borderWidth: 1,
                               borderColor:
-                                paymentMethod === method.value ? colors.primary : colors.border,
+                                paymentMethod === method.value ? colors.cta : colors.border,
                             }}>
                             <Text
                               className="text-sm font-medium"
                               style={{
-                                color: paymentMethod === method.value ? colors.white : colors.text,
+                                color: paymentMethod === method.value ? colors.onCta : colors.text,
                               }}>
                               {method.label}
                             </Text>
@@ -690,13 +690,13 @@ export default function CreateOrderScreen() {
                           style={{
                             backgroundColor: colors.card,
                             borderWidth: 1,
-                            borderColor: vanName ? colors.primary : colors.border,
+                            borderColor: vanName ? colors.accent : colors.border,
                           }}>
                           <View className="flex-row items-center">
                             <MaterialCommunityIcons
                               name="truck-outline"
                               size={18}
-                              color={vanName ? colors.primary : colors.muted}
+                              color={vanName ? colors.accent : colors.muted}
                             />
                             <Text
                               className="ml-2"
@@ -847,17 +847,17 @@ export default function CreateOrderScreen() {
                     onPress={handleSubmit}
                     disabled={isSubmitting}
                     className="flex-1 flex-row items-center justify-center rounded-xl py-3.5"
-                    style={{ backgroundColor: colors.primary, opacity: isSubmitting ? 0.7 : 1 }}>
+                    style={{ backgroundColor: colors.cta, opacity: isSubmitting ? 0.7 : 1 }}>
                     {isSubmitting ? (
-                      <ActivityIndicator size="small" color={colors.white} />
+                      <ActivityIndicator size="small" color={colors.onCta} />
                     ) : (
                       <>
                         <MaterialCommunityIcons
                           name={isEditMode ? 'check' : 'send'}
                           size={18}
-                          color={colors.white}
+                          color={colors.onCta}
                         />
-                        <Text className="ml-1 font-bold text-white">
+                        <Text className="ml-1 font-bold" style={{ color: colors.onCta }}>
                           {isEditMode ? 'Update' : 'Create Order'}
                         </Text>
                       </>
@@ -1055,8 +1055,8 @@ function CartItemCard({
             onPress={() => onUpdateQuantity(item.quantity + 1)}
             disabled={disabled}
             className="h-8 w-8 items-center justify-center rounded-full"
-            style={{ backgroundColor: colors.primary }}>
-            <MaterialCommunityIcons name="plus" size={18} color={colors.white} />
+            style={{ backgroundColor: colors.cta }}>
+            <MaterialCommunityIcons name="plus" size={18} color={colors.onCta} />
           </TouchableOpacity>
         </View>
       </View>
@@ -1105,16 +1105,16 @@ function VanSelectModal({ visible, vans, selectedVan, onSelect, onClose, colors 
                 style={{
                   backgroundColor: !selectedVan ? colors.primary + '14' : colors.background,
                   borderWidth: 1,
-                  borderColor: !selectedVan ? colors.primary : colors.border,
+                  borderColor: !selectedVan ? colors.accent : colors.border,
                 }}>
                 <MaterialCommunityIcons
                   name={!selectedVan ? 'check-circle' : 'circle-outline'}
                   size={20}
-                  color={!selectedVan ? colors.primary : colors.muted}
+                  color={!selectedVan ? colors.accent : colors.muted}
                 />
                 <Text
                   className="ml-3 font-medium"
-                  style={{ color: !selectedVan ? colors.primary : colors.text }}>
+                  style={{ color: !selectedVan ? colors.accent : colors.text }}>
                   No Van Assigned
                 </Text>
               </TouchableOpacity>
@@ -1127,16 +1127,16 @@ function VanSelectModal({ visible, vans, selectedVan, onSelect, onClose, colors 
                     backgroundColor:
                       selectedVan === van ? colors.primary + '14' : colors.background,
                     borderWidth: 1,
-                    borderColor: selectedVan === van ? colors.primary : colors.border,
+                    borderColor: selectedVan === van ? colors.accent : colors.border,
                   }}>
                   <MaterialCommunityIcons
                     name={selectedVan === van ? 'check-circle' : 'truck-outline'}
                     size={20}
-                    color={selectedVan === van ? colors.primary : colors.muted}
+                    color={selectedVan === van ? colors.accent : colors.muted}
                   />
                   <Text
                     className="ml-3 font-medium"
-                    style={{ color: selectedVan === van ? colors.primary : colors.text }}>
+                    style={{ color: selectedVan === van ? colors.accent : colors.text }}>
                     {van}
                   </Text>
                 </TouchableOpacity>

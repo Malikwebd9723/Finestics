@@ -35,12 +35,12 @@ export default function CartsScreen() {
           onPress={() => navigation.navigate('MainTabs', { screen: 'My Vendors' })}
           style={{
             marginTop: 16,
-            backgroundColor: colors.primary,
+            backgroundColor: colors.cta,
             borderRadius: 10,
             paddingHorizontal: 20,
             paddingVertical: 12,
           }}>
-          <Text style={{ color: colors.white, fontWeight: '600' }}>Go to My Vendors</Text>
+          <Text style={{ color: colors.onCta, fontWeight: '600' }}>Go to My Vendors</Text>
         </Pressable>
       </View>
     );

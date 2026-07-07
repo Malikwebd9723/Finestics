@@ -223,11 +223,11 @@ export default function Statistics() {
               key={t.key}
               onPress={() => setActiveTab(t.key)}
               className="flex-1 flex-row items-center justify-center pb-3 pt-1"
-              style={{ borderBottomWidth: 2, borderBottomColor: active ? colors.primary : 'transparent' }}>
+              style={{ borderBottomWidth: 2, borderBottomColor: active ? colors.accent : 'transparent' }}>
               <MaterialCommunityIcons
                 name={t.icon}
                 size={16}
-                color={active ? colors.primary : colors.muted}
+                color={active ? colors.accent : colors.muted}
               />
               <Text
                 className="ml-1.5 text-sm font-semibold"

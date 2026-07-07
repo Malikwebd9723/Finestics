@@ -133,12 +133,14 @@ export default function Orders() {
       {isSelectionMode && (
         <View
           className="flex-row items-center justify-between px-4 py-3"
-          style={{ backgroundColor: colors.primary }}>
+          style={{ backgroundColor: colors.cta }}>
           <View className="flex-row items-center">
             <TouchableOpacity onPress={handleCancelSelection} className="mr-3">
-              <MaterialCommunityIcons name="close" size={24} color={colors.white} />
+              <MaterialCommunityIcons name="close" size={24} color={colors.onCta} />
             </TouchableOpacity>
-            <Text className="text-lg font-bold text-white">{selectedOrders.size} selected</Text>
+            <Text className="text-lg font-bold" style={{ color: colors.onCta }}>
+              {selectedOrders.size} selected
+            </Text>
           </View>
         </View>
       )}
@@ -234,14 +236,14 @@ export default function Orders() {
           onPress={handleCreateOrder}
           className="absolute bottom-6 right-6 h-14 w-14 items-center justify-center rounded-full shadow-lg"
           style={{
-            backgroundColor: colors.primary,
+            backgroundColor: colors.cta,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.3,
             shadowRadius: 6,
             elevation: 8,
           }}>
-          <MaterialCommunityIcons name="plus" size={28} color={colors.white} />
+          <MaterialCommunityIcons name="plus" size={28} color={colors.onCta} />
         </Pressable>
       )}
 

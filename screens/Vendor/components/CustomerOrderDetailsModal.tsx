@@ -183,15 +183,15 @@ export default function CustomerOrderDetailsModal({
               onPress={() => setStatusFilter(null)}
               className="rounded-full px-4 py-2"
               style={{
-                backgroundColor: !statusFilter ? colors.primary : colors.card,
+                backgroundColor: !statusFilter ? colors.cta : colors.card,
                 borderWidth: 1,
-                borderColor: !statusFilter ? colors.primary : colors.border,
+                borderColor: !statusFilter ? colors.cta : colors.border,
                 minWidth: 80,
                 alignItems: 'center',
               }}>
               <Text
                 className="text-sm font-medium"
-                style={{ color: !statusFilter ? colors.white : colors.text }}>
+                style={{ color: !statusFilter ? colors.onCta : colors.text }}>
                 All
               </Text>
             </TouchableOpacity>
@@ -305,7 +305,7 @@ function CustomerOrderCard({
       style={{
         backgroundColor: colors.card,
         borderWidth: isSelected ? 2 : 1,
-        borderColor: isSelected ? colors.primary : colors.border,
+        borderColor: isSelected ? colors.accent : colors.border,
       }}>
       {/* Header */}
       <View className="mb-2 flex-row items-center justify-between">

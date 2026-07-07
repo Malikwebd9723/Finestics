@@ -143,9 +143,9 @@ export default function ConnectionRequestsScreen() {
               paddingVertical: 11,
               borderRadius: 10,
               alignItems: 'center',
-              backgroundColor: colors.primary,
+              backgroundColor: colors.cta,
             }}>
-            <Text style={{ color: colors.white, fontWeight: '700' }}>Approve</Text>
+            <Text style={{ color: colors.onCta, fontWeight: '700' }}>Approve</Text>
           </Pressable>
         </View>
       </View>

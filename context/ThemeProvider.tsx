@@ -49,6 +49,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           muted: '#71717A',
           primary: '#52525B',
           accent: '#FAFAFA',
+          // Filled call-to-action surface + its label. In dark mode the zinc
+          // `primary` reads as a disabled button, so CTAs flip to near-white
+          // with dark text (classic monochrome dark treatment).
+          cta: '#FAFAFA',
+          onCta: '#09090B',
           white: '#ffffff',
           placeholder: '#52525B',
           gray: '#1F1F23',
@@ -63,6 +68,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           muted: '#94a3b8',
           primary: '#0F172A',
           accent: '#0F172A',
+          cta: '#0F172A',
+          onCta: '#FFFFFF',
           white: '#ffffff',
           placeholder: '#64748b',
           gray: '#f1f2f5ff',

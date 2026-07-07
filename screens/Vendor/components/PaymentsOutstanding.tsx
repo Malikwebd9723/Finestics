@@ -124,10 +124,10 @@ export default function PaymentsOutstandingTab({
                 key={mode}
                 onPress={() => setViewMode(mode)}
                 className="flex-1 items-center justify-center py-2"
-                style={{ backgroundColor: active ? colors.primary : 'transparent' }}>
+                style={{ backgroundColor: active ? colors.cta : 'transparent' }}>
                 <Text
                   className="text-xs font-semibold"
-                  style={{ color: active ? colors.white : colors.muted }}>
+                  style={{ color: active ? colors.onCta : colors.muted }}>
                   {mode === 'orders' ? 'Orders' : 'Aging Report'}
                 </Text>
               </TouchableOpacity>
@@ -176,18 +176,18 @@ export default function PaymentsOutstandingTab({
                       height: 28,
                       backgroundColor: active ? colors.primary + '15' : colors.card,
                       borderWidth: 1,
-                      borderColor: active ? colors.primary : colors.border,
+                      borderColor: active ? colors.accent : colors.border,
                     }}>
                     <Text
                       className="text-xs"
-                      style={{ color: active ? colors.primary : colors.muted }}>
+                      style={{ color: active ? colors.accent : colors.muted }}>
                       {opt.label}
                     </Text>
                     {active && (
                       <MaterialCommunityIcons
                         name={sortOrder === 'DESC' ? 'arrow-down' : 'arrow-up'}
                         size={12}
-                        color={colors.primary}
+                        color={colors.accent}
                       />
                     )}
                   </TouchableOpacity>

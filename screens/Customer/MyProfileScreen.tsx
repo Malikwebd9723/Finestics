@@ -239,7 +239,7 @@ function EditProfileModal({
             disabled={mutation.isPending || !canSave}
             onPress={() => mutation.mutate()}
             style={{
-              backgroundColor: colors.primary,
+              backgroundColor: colors.cta,
               borderRadius: 12,
               paddingVertical: 14,
               alignItems: 'center',
@@ -247,9 +247,9 @@ function EditProfileModal({
               opacity: mutation.isPending || !canSave ? 0.6 : 1,
             }}>
             {mutation.isPending ? (
-              <ActivityIndicator color={colors.white} />
+              <ActivityIndicator color={colors.onCta} />
             ) : (
-              <Text style={{ color: colors.white, fontWeight: '700', fontSize: 16 }}>
+              <Text style={{ color: colors.onCta, fontWeight: '700', fontSize: 16 }}>
                 Save Changes
               </Text>
             )}

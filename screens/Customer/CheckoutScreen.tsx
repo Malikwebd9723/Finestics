@@ -170,11 +170,11 @@ export default function CheckoutScreen() {
                     paddingHorizontal: 14,
                     paddingVertical: 9,
                     borderRadius: 999,
-                    backgroundColor: selected ? colors.primary : colors.background,
+                    backgroundColor: selected ? colors.cta : colors.background,
                     borderWidth: 1,
-                    borderColor: selected ? colors.primary : colors.border,
+                    borderColor: selected ? colors.cta : colors.border,
                   }}>
-                  <Text style={{ color: selected ? colors.white : colors.text, fontSize: 13 }}>
+                  <Text style={{ color: selected ? colors.onCta : colors.text, fontSize: 13 }}>
                     {opt.label}
                   </Text>
                 </Pressable>
@@ -201,17 +201,17 @@ export default function CheckoutScreen() {
                     borderRadius: 12,
                     alignItems: 'center',
                     borderWidth: 1,
-                    borderColor: selected ? colors.primary : colors.border,
+                    borderColor: selected ? colors.accent : colors.border,
                     backgroundColor: selected ? colors.primary + '12' : colors.card,
                   }}>
                   <MaterialCommunityIcons
                     name={m === 'cash' ? 'cash' : 'credit-card-outline'}
                     size={22}
-                    color={selected ? colors.primary : colors.muted}
+                    color={selected ? colors.accent : colors.muted}
                   />
                   <Text
                     style={{
-                      color: selected ? colors.primary : colors.text,
+                      color: selected ? colors.accent : colors.text,
                       fontWeight: '600',
                       marginTop: 4,
                     }}>
@@ -314,16 +314,16 @@ export default function CheckoutScreen() {
             placeMutation.mutate();
           }}
           style={{
-            backgroundColor: colors.primary,
+            backgroundColor: colors.cta,
             borderRadius: 12,
             paddingVertical: 15,
             alignItems: 'center',
             opacity: placeMutation.isPending ? 0.7 : 1,
           }}>
           {placeMutation.isPending ? (
-            <ActivityIndicator color={colors.white} />
+            <ActivityIndicator color={colors.onCta} />
           ) : (
-            <Text style={[typo.num, { color: colors.white, fontSize: 16 }]}>
+            <Text style={[typo.num, { color: colors.onCta, fontSize: 16 }]}>
               Place Order · {formatPrice(total)}
             </Text>
           )}
@@ -377,7 +377,7 @@ function AddressOption({ address, selected, onSelect, colors }: any) {
       <MaterialCommunityIcons
         name={selected ? 'radiobox-marked' : 'radiobox-blank'}
         size={20}
-        color={selected ? colors.primary : colors.muted}
+        color={selected ? colors.accent : colors.muted}
         style={{ marginTop: 2 }}
       />
       <View style={{ flex: 1, marginLeft: 10 }}>

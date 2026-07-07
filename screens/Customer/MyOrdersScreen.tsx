@@ -61,13 +61,13 @@ export default function MyOrdersScreen() {
                 paddingHorizontal: 14,
                 paddingVertical: 8,
                 borderRadius: 999,
-                backgroundColor: selected ? colors.primary : colors.card,
+                backgroundColor: selected ? colors.cta : colors.card,
                 borderWidth: 1,
-                borderColor: selected ? colors.primary : colors.border,
+                borderColor: selected ? colors.cta : colors.border,
               }}>
               <Text
                 style={{
-                  color: selected ? colors.white : colors.text,
+                  color: selected ? colors.onCta : colors.text,
                   fontWeight: '600',
                   fontSize: 13,
                 }}>

@@ -44,11 +44,11 @@ export default function Users() {
       onPress={onPress}
       className={`px-4 py-2.5 rounded-2xl mr-3 shadow-sm ${isActive ? '' : 'border border-gray-300'}`}
       style={{
-        backgroundColor: isActive ? colors.primary : colors.card,
+        backgroundColor: isActive ? colors.cta : colors.card,
         elevation: isActive ? 4 : 0,
       }}>
       <View className="flex-row items-center">
-        <Text className="text-sm font-bold" style={{ color: isActive ? colors.white : colors.text }}>
+        <Text className="text-sm font-bold" style={{ color: isActive ? colors.onCta : colors.text }}>
           {label}
         </Text>
       </View>

@@ -286,18 +286,18 @@ export default function ExpenseFormModal({
                             disabled={isSubmitting}
                             className="flex-row items-center rounded-xl px-3 py-2.5"
                             style={{
-                              backgroundColor: isSelected ? colors.primary : colors.background,
+                              backgroundColor: isSelected ? colors.cta : colors.background,
                               borderWidth: 1,
-                              borderColor: isSelected ? colors.primary : colors.border,
+                              borderColor: isSelected ? colors.cta : colors.border,
                             }}>
                             <MaterialCommunityIcons
                               name={getCategoryIcon(cat.value) as any}
                               size={18}
-                              color={isSelected ? colors.white : colors.text}
+                              color={isSelected ? colors.onCta : colors.text}
                             />
                             <Text
                               className="ml-2 text-sm font-medium"
-                              style={{ color: isSelected ? colors.white : colors.text }}>
+                              style={{ color: isSelected ? colors.onCta : colors.text }}>
                               {cat.label}
                             </Text>
                           </TouchableOpacity>
@@ -448,19 +448,19 @@ export default function ExpenseFormModal({
                 disabled={isSubmitting}
                 className="flex-1 flex-row items-center justify-center rounded-xl py-3.5"
                 style={{
-                  backgroundColor: colors.primary,
+                  backgroundColor: colors.cta,
                   opacity: isSubmitting ? 0.7 : 1,
                 }}>
                 {isSubmitting ? (
-                  <ActivityIndicator size="small" color={colors.white} />
+                  <ActivityIndicator size="small" color={colors.onCta} />
                 ) : (
                   <>
                     <MaterialCommunityIcons
                       name={isEditMode ? 'check' : 'plus'}
                       size={18}
-                      color={colors.white}
+                      color={colors.onCta}
                     />
-                    <Text className="ml-1 font-semibold text-white">
+                    <Text className="ml-1 font-semibold" style={{ color: colors.onCta }}>
                       {isEditMode ? 'Update' : 'Add'}
                     </Text>
                   </>

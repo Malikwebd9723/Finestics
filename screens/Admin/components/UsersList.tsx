@@ -172,8 +172,10 @@ export default function UsersList({ searchQuery, statusFilter, roleFilter }: Use
         <TouchableOpacity
           onPress={() => refetch()}
           className="mt-4 px-6 py-2 rounded-lg"
-          style={{ backgroundColor: colors.primary }}>
-          <Text className="text-white font-medium">Retry</Text>
+          style={{ backgroundColor: colors.cta }}>
+          <Text className="font-medium" style={{ color: colors.onCta }}>
+            Retry
+          </Text>
         </TouchableOpacity>
       </View>
     );

@@ -84,13 +84,13 @@ export default function MarketplaceScreen() {
                 paddingHorizontal: 13,
                 paddingVertical: 7,
                 borderRadius: 999,
-                backgroundColor: selected ? colors.primary : colors.card,
+                backgroundColor: selected ? colors.cta : colors.card,
                 borderWidth: 1,
-                borderColor: selected ? colors.primary : colors.border,
+                borderColor: selected ? colors.cta : colors.border,
               }}>
               <Text
                 style={{
-                  color: selected ? colors.white : colors.text,
+                  color: selected ? colors.onCta : colors.text,
                   fontSize: 13,
                   fontWeight: '600',
                 }}>

@@ -141,14 +141,14 @@ export function FormSelect({
               disabled={disabled}
               className="rounded-xl px-4 py-2.5"
               style={{
-                backgroundColor: isSelected ? colors.primary : colors.background,
+                backgroundColor: isSelected ? colors.cta : colors.background,
                 borderWidth: 1,
-                borderColor: isSelected ? colors.primary : colors.border,
+                borderColor: isSelected ? colors.cta : colors.border,
                 opacity: disabled ? 0.5 : 1,
               }}>
               <Text
                 className="text-sm font-medium"
-                style={{ color: isSelected ? '#fff' : colors.text }}>
+                style={{ color: isSelected ? colors.onCta : colors.text }}>
                 {option.label}
               </Text>
             </TouchableOpacity>

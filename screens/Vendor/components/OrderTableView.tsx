@@ -377,30 +377,30 @@ export function ViewToggle({ viewMode, onToggle }: ViewToggleProps) {
       <TouchableOpacity
         onPress={() => onToggle('card')}
         className="flex-row items-center rounded-md px-3 py-1.5"
-        style={{ backgroundColor: viewMode === 'card' ? colors.primary : 'transparent' }}>
+        style={{ backgroundColor: viewMode === 'card' ? colors.cta : 'transparent' }}>
         <MaterialCommunityIcons
           name="view-grid-outline"
           size={14}
-          color={viewMode === 'card' ? colors.white : colors.muted}
+          color={viewMode === 'card' ? colors.onCta : colors.muted}
         />
         <Text
           className="ml-1 text-xs font-medium"
-          style={{ color: viewMode === 'card' ? colors.white : colors.muted }}>
+          style={{ color: viewMode === 'card' ? colors.onCta : colors.muted }}>
           Cards
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => onToggle('table')}
         className="flex-row items-center rounded-md px-3 py-1.5"
-        style={{ backgroundColor: viewMode === 'table' ? colors.primary : 'transparent' }}>
+        style={{ backgroundColor: viewMode === 'table' ? colors.cta : 'transparent' }}>
         <MaterialCommunityIcons
           name="format-list-bulleted"
           size={14}
-          color={viewMode === 'table' ? colors.white : colors.muted}
+          color={viewMode === 'table' ? colors.onCta : colors.muted}
         />
         <Text
           className="ml-1 text-xs font-medium"
-          style={{ color: viewMode === 'table' ? colors.white : colors.muted }}>
+          style={{ color: viewMode === 'table' ? colors.onCta : colors.muted }}>
           Table
         </Text>
       </TouchableOpacity>

@@ -86,10 +86,10 @@ export default function PaymentsReportsTab({ startDate, endDate, isActive }: Pro
                 key={opt.key}
                 onPress={() => setReportType(opt.key)}
                 className="flex-1 items-center justify-center py-2"
-                style={{ backgroundColor: active ? colors.primary : 'transparent' }}>
+                style={{ backgroundColor: active ? colors.cta : 'transparent' }}>
                 <Text
                   className="text-xs font-semibold"
-                  style={{ color: active ? colors.white : colors.muted }}>
+                  style={{ color: active ? colors.onCta : colors.muted }}>
                   {opt.label}
                 </Text>
               </TouchableOpacity>
@@ -123,13 +123,13 @@ export default function PaymentsReportsTab({ startDate, endDate, isActive }: Pro
                     className="items-center justify-center rounded-full px-3.5"
                     style={{
                       height: 28,
-                      backgroundColor: active ? colors.primary : colors.card,
+                      backgroundColor: active ? colors.cta : colors.card,
                       borderWidth: 1,
-                      borderColor: active ? colors.primary : colors.border,
+                      borderColor: active ? colors.cta : colors.border,
                     }}>
                     <Text
                       className="text-xs font-medium"
-                      style={{ color: active ? colors.white : colors.muted }}>
+                      style={{ color: active ? colors.onCta : colors.muted }}>
                       {opt.label}
                     </Text>
                   </TouchableOpacity>

@@ -493,13 +493,13 @@ export default function VendorFormModal({ visible, onClose, mode, vendor }: Vend
                 disabled={isLoading}
                 className="py-4 rounded-2xl items-center justify-center"
                 style={{
-                  backgroundColor: colors.primary,
+                  backgroundColor: colors.cta,
                   opacity: isLoading ? 0.7 : 1,
                 }}>
                 {isLoading ? (
-                  <ActivityIndicator size="small" color={colors.white} />
+                  <ActivityIndicator size="small" color={colors.onCta} />
                 ) : (
-                  <Text className="text-base font-bold text-white">
+                  <Text className="text-base font-bold" style={{ color: colors.onCta }}>
                     {mode === 'create' ? 'Create Vendor' : 'Save Changes'}
                   </Text>
                 )}

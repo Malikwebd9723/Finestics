@@ -45,20 +45,20 @@ export default function Vendors() {
       onPress={onPress}
       className={`px-4 py-2.5 rounded-2xl mr-3 shadow-sm ${isActive ? '' : 'border border-gray-300'}`}
       style={{
-        backgroundColor: isActive ? colors.primary : colors.card,
+        backgroundColor: isActive ? colors.cta : colors.card,
         elevation: isActive ? 4 : 0,
       }}>
       <View className="flex-row items-center">
-        <Text className="text-sm font-bold" style={{ color: isActive ? colors.white : colors.text }}>
+        <Text className="text-sm font-bold" style={{ color: isActive ? colors.onCta : colors.text }}>
           {label}
         </Text>
         {count !== undefined && count > 0 && (
           <View
             className="ml-2 h-5 min-w-5 items-center justify-center rounded-full px-1"
-            style={{ backgroundColor: isActive ? colors.white + '4D' : colors.primary + '20' }}>
+            style={{ backgroundColor: isActive ? colors.onCta + '4D' : colors.primary + '20' }}>
             <Text
               className="text-xs font-bold"
-              style={{ color: isActive ? colors.white : colors.primary }}>
+              style={{ color: isActive ? colors.onCta : colors.primary }}>
               {count}
             </Text>
           </View>
@@ -77,8 +77,8 @@ export default function Vendors() {
         <Pressable
           onPress={() => setShowAddModal(true)}
           className="ml-2 h-12 w-12 items-center justify-center rounded-xl"
-          style={{ backgroundColor: colors.primary }}>
-          <MaterialCommunityIcons name="plus" size={24} color={colors.white} />
+          style={{ backgroundColor: colors.cta }}>
+          <MaterialCommunityIcons name="plus" size={24} color={colors.onCta} />
         </Pressable>
       </View>
 

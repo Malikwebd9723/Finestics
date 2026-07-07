@@ -41,7 +41,9 @@ export default function Input({
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: colors.background,
+          // Card fill so fields stand off background-colored screens
+          // (background-on-background left them border-only and "invisible").
+          backgroundColor: colors.card,
           borderRadius: 12,
           borderWidth: 1,
           borderColor: error ? colors.error : colors.border,

@@ -160,7 +160,7 @@ export default function ProductSelectModal({
                     style={{
                       backgroundColor: colors.background,
                       borderWidth: 1,
-                      borderColor: inCart ? colors.primary : colors.border,
+                      borderColor: inCart ? colors.accent : colors.border,
                     }}>
                     <View className="flex-row items-center justify-between">
                       {/* Product Info */}
@@ -220,16 +220,18 @@ export default function ProductSelectModal({
                           <TouchableOpacity
                             onPress={() => onUpdateQuantity(item.id, cartItem!.quantity + 1)}
                             className="h-8 w-8 items-center justify-center rounded-full"
-                            style={{ backgroundColor: colors.primary }}>
-                            <MaterialCommunityIcons name="plus" size={16} color={colors.white} />
+                            style={{ backgroundColor: colors.cta }}>
+                            <MaterialCommunityIcons name="plus" size={16} color={colors.onCta} />
                           </TouchableOpacity>
                         </View>
                       ) : (
                         <TouchableOpacity
                           onPress={() => onAddToCart(item)}
                           className="rounded-lg px-4 py-2"
-                          style={{ backgroundColor: colors.primary }}>
-                          <Text className="text-sm font-semibold text-white">Add</Text>
+                          style={{ backgroundColor: colors.cta }}>
+                          <Text className="text-sm font-semibold" style={{ color: colors.onCta }}>
+                            Add
+                          </Text>
                         </TouchableOpacity>
                       )}
                     </View>
@@ -245,9 +247,11 @@ export default function ProductSelectModal({
               <TouchableOpacity
                 onPress={onClose}
                 className="flex-row items-center justify-center rounded-xl py-3.5"
-                style={{ backgroundColor: colors.primary }}>
-                <MaterialCommunityIcons name="check" size={20} color={colors.white} />
-                <Text className="ml-2 font-bold text-white">Done ({cart.length} items)</Text>
+                style={{ backgroundColor: colors.cta }}>
+                <MaterialCommunityIcons name="check" size={20} color={colors.onCta} />
+                <Text className="ml-2 font-bold" style={{ color: colors.onCta }}>
+                  Done ({cart.length} items)
+                </Text>
               </TouchableOpacity>
             </View>
           )}

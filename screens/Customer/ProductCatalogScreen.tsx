@@ -104,7 +104,7 @@ export default function ProductCatalogScreen() {
             left: 16,
             right: 16,
             bottom: 20,
-            backgroundColor: colors.primary,
+            backgroundColor: colors.cta,
             borderRadius: 12,
             paddingVertical: 14,
             paddingHorizontal: 18,
@@ -117,12 +117,12 @@ export default function ProductCatalogScreen() {
             elevation: 5,
           }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <MaterialCommunityIcons name="cart" size={20} color={colors.white} />
-            <Text style={{ color: colors.white, fontWeight: '700', marginLeft: 8 }}>
+            <MaterialCommunityIcons name="cart" size={20} color={colors.onCta} />
+            <Text style={{ color: colors.onCta, fontWeight: '700', marginLeft: 8 }}>
               {count} item{count > 1 ? 's' : ''}
             </Text>
           </View>
-          <Text style={[typo.num, { color: colors.white }]}>
+          <Text style={[typo.num, { color: colors.onCta }]}>
             View Cart · {formatPrice(total)}
           </Text>
         </Pressable>

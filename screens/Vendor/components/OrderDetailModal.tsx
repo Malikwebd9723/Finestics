@@ -912,9 +912,11 @@ export default function OrderDetailModal({
                         setTimeout(() => onEdit(orderId!), 300);
                       }}
                       className="flex-1 flex-row items-center justify-center rounded-xl py-3"
-                      style={{ backgroundColor: colors.primary }}>
-                      <MaterialCommunityIcons name="pencil" size={18} color={colors.white} />
-                      <Text className="ml-2 text-sm font-bold text-white">Edit</Text>
+                      style={{ backgroundColor: colors.cta }}>
+                      <MaterialCommunityIcons name="pencil" size={18} color={colors.onCta} />
+                      <Text className="ml-2 text-sm font-bold" style={{ color: colors.onCta }}>
+                        Edit
+                      </Text>
                     </TouchableOpacity>
                   )}
 
