@@ -5,9 +5,9 @@ import {
   Text,
   Modal,
   TouchableOpacity,
+  Pressable,
   ScrollView,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   TextInput,
@@ -16,7 +16,7 @@ import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { productSchema } from 'validations/productValidation';
@@ -52,6 +52,9 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
   const queryClient = useQueryClient();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [customTagInput, setCustomTagInput] = useState('');
+  // "More options" disclosure — collapsed on create, expanded on edit so
+  // existing tags/status/description stay visible
+  const [showMore, setShowMore] = useState(false);
 
   const isEditMode = !!productId;
 
@@ -92,6 +95,7 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
       reset(DEFAULT_VALUES);
       setSelectedTags([]);
       setCustomTagInput('');
+      setShowMore(false);
       return;
     }
 
@@ -106,9 +110,11 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
         isActive: editingProduct.isActive ?? true,
       });
       setSelectedTags(editingProduct.tags || []);
+      setShowMore(true);
     } else if (!isEditMode) {
       reset(DEFAULT_VALUES);
       setSelectedTags([]);
+      setShowMore(false);
     }
   }, [visible, editingProduct, isEditMode, reset]);
 
@@ -182,10 +188,26 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
 
   const isSubmitting = addMutation.isPending || updateMutation.isPending;
 
-  const handleClose = () => {
+  const closeAndReset = () => {
     onClose();
     setSelectedTags([]);
     setCustomTagInput('');
+  };
+
+  const handleClose = () => {
+    if (isDirty && !isSubmitting) {
+      Dialog.confirm(
+        'Discard Changes?',
+        'You have unsaved changes. Are you sure you want to close?',
+        {
+          confirmText: 'Discard',
+          destructive: true,
+          onConfirm: closeAndReset,
+        }
+      );
+    } else {
+      closeAndReset();
+    }
   };
 
   const onSubmit = (formData: ProductFormData) => {
@@ -269,7 +291,7 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
                 disabled={isSubmitting}
                 className="h-10 w-10 items-center justify-center rounded-full"
                 style={{ backgroundColor: colors.background }}>
-                <MaterialIcons name="close" size={22} color={colors.text} />
+                <MaterialCommunityIcons name="close" size={22} color={colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -382,169 +404,195 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
                 </FormRow>
               </FormSection>
 
-              {/* Tags */}
-              <FormSection title="Tags (Optional)">
-                {/* Custom Tag Input */}
-                <View className="mb-3 flex-row gap-2">
-                  <TextInput
-                    value={customTagInput}
-                    onChangeText={setCustomTagInput}
-                    onSubmitEditing={addCustomTag}
-                    className="flex-1 rounded-xl px-4 py-3"
-                    style={{
-                      backgroundColor: colors.background,
-                      color: colors.text,
-                      borderWidth: 1,
-                      borderColor: colors.border,
-                    }}
-                    placeholder="Type a tag and press +"
-                    placeholderTextColor={colors.muted}
-                    editable={!isSubmitting}
-                  />
-                  <TouchableOpacity
-                    onPress={addCustomTag}
-                    disabled={!customTagInput.trim() || isSubmitting}
-                    className="items-center justify-center rounded-xl px-4"
-                    style={{
-                      backgroundColor: colors.primary,
-                      opacity: !customTagInput.trim() ? 0.5 : 1,
-                    }}>
-                    <MaterialIcons name="add" size={24} color="#fff" />
-                  </TouchableOpacity>
-                </View>
+              {/* More options: tags, status, description */}
+              <Pressable
+                onPress={() => setShowMore((prev) => !prev)}
+                className="mt-5 flex-row items-center justify-between rounded-xl px-4 py-3.5"
+                style={{
+                  backgroundColor: colors.background,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}>
+                <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+                  More options
+                </Text>
+                <MaterialCommunityIcons
+                  name={showMore ? 'chevron-up' : 'chevron-down'}
+                  size={22}
+                  color={colors.muted}
+                />
+              </Pressable>
 
-                {/* Selected Tags */}
-                {selectedTags.length > 0 && (
-                  <View className="mb-3">
-                    <Text className="mb-2 text-xs" style={{ color: colors.muted }}>
-                      Selected ({selectedTags.length}):
-                    </Text>
-                    <View className="flex-row flex-wrap gap-2">
-                      {selectedTags.map((tag, idx) => (
-                        <View
-                          key={idx}
-                          className="flex-row items-center rounded-lg px-3 py-2"
-                          style={{ backgroundColor: colors.primary }}>
-                          <Text className="mr-2 text-sm font-medium text-white">{tag}</Text>
-                          <TouchableOpacity
-                            onPress={() => removeTag(tag)}
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                            <MaterialIcons name="close" size={16} color="#fff" />
-                          </TouchableOpacity>
-                        </View>
-                      ))}
+              {showMore && (
+                <>
+                  {/* Tags */}
+                  <FormSection title="Tags (Optional)">
+                    {/* Custom Tag Input */}
+                    <View className="mb-3 flex-row gap-2">
+                      <TextInput
+                        value={customTagInput}
+                        onChangeText={setCustomTagInput}
+                        onSubmitEditing={addCustomTag}
+                        className="flex-1 rounded-xl px-4 py-3"
+                        style={{
+                          backgroundColor: colors.background,
+                          color: colors.text,
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                        }}
+                        placeholder="Type a tag and press +"
+                        placeholderTextColor={colors.muted}
+                        editable={!isSubmitting}
+                      />
+                      <TouchableOpacity
+                        onPress={addCustomTag}
+                        disabled={!customTagInput.trim() || isSubmitting}
+                        className="items-center justify-center rounded-xl px-4"
+                        style={{
+                          backgroundColor: colors.primary,
+                          opacity: !customTagInput.trim() ? 0.5 : 1,
+                        }}>
+                        <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+                      </TouchableOpacity>
                     </View>
-                  </View>
-                )}
 
-                {/* Existing Tags from API */}
-                {existingTags.length > 0 && (
-                  <>
-                    <Text className="mb-2 text-xs" style={{ color: colors.muted }}>
-                      Or select from existing:
-                    </Text>
-                    <View className="mb-4 flex-row flex-wrap gap-2">
-                      {existingTags
-                        .filter((tag) => !selectedTags.includes(tag))
-                        .map((tag, idx) => (
+                    {/* Selected Tags */}
+                    {selectedTags.length > 0 && (
+                      <View className="mb-3">
+                        <Text className="mb-2 text-xs" style={{ color: colors.muted }}>
+                          Selected ({selectedTags.length}):
+                        </Text>
+                        <View className="flex-row flex-wrap gap-2">
+                          {selectedTags.map((tag, idx) => (
+                            <View
+                              key={idx}
+                              className="flex-row items-center rounded-lg px-3 py-2"
+                              style={{ backgroundColor: colors.primary }}>
+                              <Text className="mr-2 text-sm font-medium text-white">{tag}</Text>
+                              <TouchableOpacity
+                                onPress={() => removeTag(tag)}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                                <MaterialCommunityIcons name="close" size={16} color="#fff" />
+                              </TouchableOpacity>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Existing Tags from API */}
+                    {existingTags.length > 0 && (
+                      <>
+                        <Text className="mb-2 text-xs" style={{ color: colors.muted }}>
+                          Or select from existing:
+                        </Text>
+                        <View className="mb-4 flex-row flex-wrap gap-2">
+                          {existingTags
+                            .filter((tag) => !selectedTags.includes(tag))
+                            .map((tag, idx) => (
+                              <TouchableOpacity
+                                key={idx}
+                                onPress={() => toggleTag(tag)}
+                                disabled={isSubmitting}
+                                className="rounded-lg px-3 py-2"
+                                style={{
+                                  backgroundColor: colors.background,
+                                  borderWidth: 1,
+                                  borderColor: colors.border,
+                                }}>
+                                <Text
+                                  className="text-sm font-medium"
+                                  style={{ color: colors.text }}>
+                                  {tag}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                        </View>
+                      </>
+                    )}
+                  </FormSection>
+
+                  {/* Status */}
+                  <FormSection title="Status">
+                    <Controller
+                      control={control}
+                      name="isActive"
+                      render={({ field }) => (
+                        <View className="flex-row gap-3">
                           <TouchableOpacity
-                            key={idx}
-                            onPress={() => toggleTag(tag)}
+                            onPress={() => field.onChange(true)}
                             disabled={isSubmitting}
-                            className="rounded-lg px-3 py-2"
+                            className="flex-1 flex-row items-center justify-center rounded-xl p-4"
                             style={{
-                              backgroundColor: colors.background,
+                              backgroundColor:
+                                field.value === true ? colors.success : colors.background,
                               borderWidth: 1,
-                              borderColor: colors.border,
+                              borderColor: field.value === true ? colors.success : colors.border,
                             }}>
-                            <Text className="text-sm font-medium" style={{ color: colors.text }}>
-                              {tag}
+                            <MaterialCommunityIcons
+                              name="check-circle"
+                              size={20}
+                              color={field.value === true ? '#fff' : colors.text}
+                            />
+                            <Text
+                              className="ml-2 font-semibold"
+                              style={{
+                                color: field.value === true ? '#fff' : colors.text,
+                              }}>
+                              Active
                             </Text>
                           </TouchableOpacity>
-                        ))}
-                    </View>
-                  </>
-                )}
-              </FormSection>
 
-              {/* Status */}
-              <FormSection title="Status">
-                <Controller
-                  control={control}
-                  name="isActive"
-                  render={({ field }) => (
-                    <View className="flex-row gap-3">
-                      <TouchableOpacity
-                        onPress={() => field.onChange(true)}
-                        disabled={isSubmitting}
-                        className="flex-1 flex-row items-center justify-center rounded-xl p-4"
-                        style={{
-                          backgroundColor:
-                            field.value === true ? colors.success : colors.background,
-                          borderWidth: 1,
-                          borderColor: field.value === true ? colors.success : colors.border,
-                        }}>
-                        <MaterialIcons
-                          name="check-circle"
-                          size={20}
-                          color={field.value === true ? '#fff' : colors.text}
-                        />
-                        <Text
-                          className="ml-2 font-semibold"
-                          style={{
-                            color: field.value === true ? '#fff' : colors.text,
-                          }}>
-                          Active
-                        </Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        onPress={() => field.onChange(false)}
-                        disabled={isSubmitting}
-                        className="flex-1 flex-row items-center justify-center rounded-xl p-4"
-                        style={{
-                          backgroundColor: field.value === false ? colors.error : colors.background,
-                          borderWidth: 1,
-                          borderColor: field.value === false ? colors.error : colors.border,
-                        }}>
-                        <MaterialIcons
-                          name="cancel"
-                          size={20}
-                          color={field.value === false ? '#fff' : colors.text}
-                        />
-                        <Text
-                          className="ml-2 font-semibold"
-                          style={{
-                            color: field.value === false ? '#fff' : colors.text,
-                          }}>
-                          Inactive
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                />
-              </FormSection>
-
-              {/* Description */}
-              <FormSection title="Additional Details">
-                <Controller
-                  control={control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormTextArea
-                      label="Description"
-                      value={field.value}
-                      onChangeText={field.onChange}
-                      onBlur={field.onBlur}
-                      placeholder="Additional notes about this product..."
-                      minHeight={80}
-                      numberOfLines={3}
-                      error={errors.description?.message}
-                      editable={!isSubmitting}
+                          <TouchableOpacity
+                            onPress={() => field.onChange(false)}
+                            disabled={isSubmitting}
+                            className="flex-1 flex-row items-center justify-center rounded-xl p-4"
+                            style={{
+                              backgroundColor:
+                                field.value === false ? colors.error : colors.background,
+                              borderWidth: 1,
+                              borderColor: field.value === false ? colors.error : colors.border,
+                            }}>
+                            <MaterialCommunityIcons
+                              name="cancel"
+                              size={20}
+                              color={field.value === false ? '#fff' : colors.text}
+                            />
+                            <Text
+                              className="ml-2 font-semibold"
+                              style={{
+                                color: field.value === false ? '#fff' : colors.text,
+                              }}>
+                              Inactive
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
                     />
-                  )}
-                />
-              </FormSection>
+                  </FormSection>
+
+                  {/* Description */}
+                  <FormSection title="Additional Details">
+                    <Controller
+                      control={control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormTextArea
+                          label="Description"
+                          value={field.value}
+                          onChangeText={field.onChange}
+                          onBlur={field.onBlur}
+                          placeholder="Additional notes about this product..."
+                          minHeight={80}
+                          numberOfLines={3}
+                          error={errors.description?.message}
+                          editable={!isSubmitting}
+                        />
+                      )}
+                    />
+                  </FormSection>
+                </>
+              )}
 
               {/* Spacer */}
               <View className="h-6" />
@@ -563,7 +611,7 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
                     backgroundColor: colors.error,
                     opacity: isSubmitting ? 0.5 : 1,
                   }}>
-                  <MaterialIcons name="delete" size={20} color="#fff" />
+                  <MaterialCommunityIcons name="delete" size={20} color="#fff" />
                 </TouchableOpacity>
               )}
 
@@ -594,7 +642,11 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
                   <>
-                    <MaterialIcons name={isEditMode ? 'check' : 'add'} size={18} color="#fff" />
+                    <MaterialCommunityIcons
+                      name={isEditMode ? 'check' : 'plus'}
+                      size={18}
+                      color="#fff"
+                    />
                     <Text className="ml-1 font-semibold text-white">
                       {isEditMode ? 'Update' : 'Add'}
                     </Text>

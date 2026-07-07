@@ -4,10 +4,10 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Pressable,
   FlatList,
   TextInput,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Modal,
@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -87,6 +87,10 @@ export default function CreateOrderScreen() {
   // Pending items
   const [includePendingItems, setIncludePendingItems] = useState(false);
 
+  // Footer "Optional details" disclosure — collapsed for new orders,
+  // expanded when editing so existing values stay visible
+  const [showOptionalDetails, setShowOptionalDetails] = useState(isEditMode);
+
   // Fetch vans
   const { data: vansData } = useQuery({
     queryKey: ['vans'],
@@ -154,6 +158,10 @@ export default function CreateOrderScreen() {
   const { subtotal, total } = useMemo(() => {
     return calculateCartTotal(cart, parseFloat(deliveryFee) || 0, parseFloat(discount) || 0);
   }, [cart, deliveryFee, discount]);
+
+  // Credit visibility for the selected customer
+  const customerBalance = parseFloat(String(selectedCustomer?.currentBalance ?? '')) || 0;
+  const customerCreditLimit = parseFloat(String(selectedCustomer?.creditLimit ?? '')) || 0;
 
   // Mutations
   const createMutation = useMutation({
@@ -421,7 +429,7 @@ export default function CreateOrderScreen() {
               {/* Customer Selection */}
               <View className="mb-4">
                 <Text className="mb-2 text-sm font-semibold" style={{ color: colors.text }}>
-                  Customer <Text style={{ color: '#ef4444' }}>*</Text>
+                  Customer <Text style={{ color: colors.error }}>*</Text>
                 </Text>
                 <TouchableOpacity
                   onPress={() => setCustomerModalVisible(true)}
@@ -441,6 +449,22 @@ export default function CreateOrderScreen() {
                       <Text className="mt-0.5 text-xs" style={{ color: colors.muted }}>
                         {selectedCustomer.contactPerson} • {selectedCustomer.phone}
                       </Text>
+                      {(customerBalance > 0 || customerCreditLimit > 0) && (
+                        <View className="mt-1 flex-row flex-wrap items-center">
+                          {customerBalance > 0 && (
+                            <Text
+                              className="mr-3 text-xs font-semibold"
+                              style={{ color: colors.error }}>
+                              Balance: {formatPrice(selectedCustomer.currentBalance)}
+                            </Text>
+                          )}
+                          {customerCreditLimit > 0 && (
+                            <Text className="text-xs" style={{ color: colors.muted }}>
+                              Credit limit: {formatPrice(selectedCustomer.creditLimit)}
+                            </Text>
+                          )}
+                        </View>
+                      )}
                     </View>
                   ) : (
                     <Text style={{ color: colors.placeholder }}>Select Customer</Text>
@@ -455,19 +479,23 @@ export default function CreateOrderScreen() {
               {hasPendingItems && !isEditMode && (
                 <View
                   className="mb-4 rounded-xl p-3"
-                  style={{ backgroundColor: '#3b82f620', borderWidth: 1, borderColor: '#3b82f6' }}>
+                  style={{
+                    backgroundColor: colors.primary + '14',
+                    borderWidth: 1,
+                    borderColor: colors.primary,
+                  }}>
                   <View className="flex-row items-center justify-between">
                     <View className="flex-row items-center flex-1">
-                      <MaterialIcons name="info" size={20} color="#3b82f6" />
+                      <MaterialCommunityIcons name="information" size={20} color={colors.primary} />
                       <Text className="ml-2 flex-1 text-sm" style={{ color: colors.text }}>
                         {pendingItemsCount} pending replacement item(s)
                       </Text>
                     </View>
                     <TouchableOpacity onPress={() => setIncludePendingItems(!includePendingItems)}>
-                      <MaterialIcons
-                        name={includePendingItems ? 'check-box' : 'check-box-outline-blank'}
+                      <MaterialCommunityIcons
+                        name={includePendingItems ? 'checkbox-marked' : 'checkbox-blank-outline'}
                         size={24}
-                        color="#3b82f6"
+                        color={colors.primary}
                       />
                     </TouchableOpacity>
                   </View>
@@ -529,133 +557,7 @@ export default function CreateOrderScreen() {
               <View className="mt-4 px-4">
                 {/* Order Details */}
                 <View className="mb-4">
-                  {/* Dates */}
-                  <View className="mb-3 flex-row gap-3">
-                    <View className="flex-1">
-                      <Text className="mb-2 text-sm font-semibold" style={{ color: colors.text }}>
-                        Order Date
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => setShowOrderDatePicker(true)}
-                        disabled={isSubmitting}
-                        className="flex-row items-center justify-between rounded-xl px-4 py-3"
-                        style={{
-                          backgroundColor: colors.card,
-                          borderWidth: 1,
-                          borderColor: colors.border,
-                        }}>
-                        <Text className="text-sm" style={{ color: colors.text }}>
-                          {orderDate.toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </Text>
-                        <Ionicons name="calendar-outline" size={18} color={colors.muted} />
-                      </TouchableOpacity>
-                    </View>
-                    <View className="flex-1">
-                      <Text className="mb-2 text-sm font-semibold" style={{ color: colors.text }}>
-                        Delivery Date
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => setShowDeliveryDatePicker(true)}
-                        disabled={isSubmitting}
-                        className="flex-row items-center justify-between rounded-xl px-4 py-3"
-                        style={{
-                          backgroundColor: colors.card,
-                          borderWidth: 1,
-                          borderColor: colors.border,
-                        }}>
-                        <Text
-                          className="text-sm"
-                          style={{ color: deliveryDate ? colors.text : colors.placeholder }}>
-                          {deliveryDate
-                            ? deliveryDate.toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })
-                            : 'Not set'}
-                        </Text>
-                        <Ionicons name="calendar-outline" size={18} color={colors.muted} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-
-                  {/* Van Selection */}
-                  <View className="mb-3">
-                    <Text className="mb-2 text-sm font-semibold" style={{ color: colors.text }}>
-                      Delivery Van
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => setVanModalVisible(true)}
-                      disabled={isSubmitting}
-                      className="flex-row items-center justify-between rounded-xl px-4 py-3"
-                      style={{
-                        backgroundColor: colors.card,
-                        borderWidth: 1,
-                        borderColor: vanName ? colors.primary : colors.border,
-                      }}>
-                      <View className="flex-row items-center">
-                        <Ionicons
-                          name="car-outline"
-                          size={18}
-                          color={vanName ? colors.primary : colors.muted}
-                        />
-                        <Text
-                          className="ml-2"
-                          style={{ color: vanName ? colors.text : colors.placeholder }}>
-                          {vanName || 'Select Van'}
-                        </Text>
-                      </View>
-                      <MaterialIcons name="arrow-drop-down" size={24} color={colors.muted} />
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Fees */}
-                  <View className="mb-3 flex-row gap-3">
-                    <View className="flex-1">
-                      <Text className="mb-2 text-sm font-semibold" style={{ color: colors.text }}>
-                        Delivery Fee
-                      </Text>
-                      <TextInput
-                        value={deliveryFee}
-                        onChangeText={setDeliveryFee}
-                        keyboardType="decimal-pad"
-                        editable={!isSubmitting}
-                        className="rounded-xl px-4 py-3"
-                        style={{
-                          backgroundColor: colors.card,
-                          color: colors.text,
-                          borderWidth: 1,
-                          borderColor: colors.border,
-                        }}
-                        placeholder="0"
-                        placeholderTextColor={colors.placeholder}
-                      />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="mb-2 text-sm font-semibold" style={{ color: colors.text }}>
-                        Discount
-                      </Text>
-                      <TextInput
-                        value={discount}
-                        onChangeText={setDiscount}
-                        keyboardType="decimal-pad"
-                        editable={!isSubmitting}
-                        className="rounded-xl px-4 py-3"
-                        style={{
-                          backgroundColor: colors.card,
-                          color: colors.text,
-                          borderWidth: 1,
-                          borderColor: colors.border,
-                        }}
-                        placeholder="0"
-                        placeholderTextColor={colors.placeholder}
-                      />
-                    </View>
-                  </View>
-
-                  {/* Payment Method (Create only) */}
+                  {/* Payment Method (Create only) — always visible */}
                   {!isEditMode && (
                     <View className="mb-3">
                       <Text className="mb-2 text-sm font-semibold" style={{ color: colors.text }}>
@@ -691,30 +593,187 @@ export default function CreateOrderScreen() {
                     </View>
                   )}
 
-                  {/* Notes */}
-                  <View>
-                    <Text className="mb-2 text-sm font-semibold" style={{ color: colors.text }}>
-                      Notes (Optional)
+                  {/* Optional details: dates, van, fees, notes */}
+                  <Pressable
+                    onPress={() => setShowOptionalDetails((prev) => !prev)}
+                    className="mb-3 flex-row items-center justify-between rounded-xl px-4 py-3.5"
+                    style={{
+                      backgroundColor: colors.card,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                    }}>
+                    <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+                      Optional details
                     </Text>
-                    <TextInput
-                      value={notes}
-                      onChangeText={setNotes}
-                      multiline
-                      numberOfLines={2}
-                      editable={!isSubmitting}
-                      className="rounded-xl px-4 py-3"
-                      style={{
-                        backgroundColor: colors.card,
-                        color: colors.text,
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                        minHeight: 60,
-                        textAlignVertical: 'top',
-                      }}
-                      placeholder="Order notes..."
-                      placeholderTextColor={colors.placeholder}
+                    <MaterialCommunityIcons
+                      name={showOptionalDetails ? 'chevron-up' : 'chevron-down'}
+                      size={22}
+                      color={colors.muted}
                     />
-                  </View>
+                  </Pressable>
+
+                  {showOptionalDetails && (
+                    <>
+                      {/* Dates */}
+                      <View className="mb-3 flex-row gap-3">
+                        <View className="flex-1">
+                          <Text
+                            className="mb-2 text-sm font-semibold"
+                            style={{ color: colors.text }}>
+                            Order Date
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => setShowOrderDatePicker(true)}
+                            disabled={isSubmitting}
+                            className="flex-row items-center justify-between rounded-xl px-4 py-3"
+                            style={{
+                              backgroundColor: colors.card,
+                              borderWidth: 1,
+                              borderColor: colors.border,
+                            }}>
+                            <Text className="text-sm" style={{ color: colors.text }}>
+                              {orderDate.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                              })}
+                            </Text>
+                            <Ionicons name="calendar-outline" size={18} color={colors.muted} />
+                          </TouchableOpacity>
+                        </View>
+                        <View className="flex-1">
+                          <Text
+                            className="mb-2 text-sm font-semibold"
+                            style={{ color: colors.text }}>
+                            Delivery Date
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => setShowDeliveryDatePicker(true)}
+                            disabled={isSubmitting}
+                            className="flex-row items-center justify-between rounded-xl px-4 py-3"
+                            style={{
+                              backgroundColor: colors.card,
+                              borderWidth: 1,
+                              borderColor: colors.border,
+                            }}>
+                            <Text
+                              className="text-sm"
+                              style={{ color: deliveryDate ? colors.text : colors.placeholder }}>
+                              {deliveryDate
+                                ? deliveryDate.toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })
+                                : 'Not set'}
+                            </Text>
+                            <Ionicons name="calendar-outline" size={18} color={colors.muted} />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      {/* Van Selection */}
+                      <View className="mb-3">
+                        <Text className="mb-2 text-sm font-semibold" style={{ color: colors.text }}>
+                          Delivery Van
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => setVanModalVisible(true)}
+                          disabled={isSubmitting}
+                          className="flex-row items-center justify-between rounded-xl px-4 py-3"
+                          style={{
+                            backgroundColor: colors.card,
+                            borderWidth: 1,
+                            borderColor: vanName ? colors.primary : colors.border,
+                          }}>
+                          <View className="flex-row items-center">
+                            <Ionicons
+                              name="car-outline"
+                              size={18}
+                              color={vanName ? colors.primary : colors.muted}
+                            />
+                            <Text
+                              className="ml-2"
+                              style={{ color: vanName ? colors.text : colors.placeholder }}>
+                              {vanName || 'Select Van'}
+                            </Text>
+                          </View>
+                          <MaterialIcons name="arrow-drop-down" size={24} color={colors.muted} />
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* Fees */}
+                      <View className="mb-3 flex-row gap-3">
+                        <View className="flex-1">
+                          <Text
+                            className="mb-2 text-sm font-semibold"
+                            style={{ color: colors.text }}>
+                            Delivery Fee
+                          </Text>
+                          <TextInput
+                            value={deliveryFee}
+                            onChangeText={setDeliveryFee}
+                            keyboardType="decimal-pad"
+                            editable={!isSubmitting}
+                            className="rounded-xl px-4 py-3"
+                            style={{
+                              backgroundColor: colors.card,
+                              color: colors.text,
+                              borderWidth: 1,
+                              borderColor: colors.border,
+                            }}
+                            placeholder="0"
+                            placeholderTextColor={colors.placeholder}
+                          />
+                        </View>
+                        <View className="flex-1">
+                          <Text
+                            className="mb-2 text-sm font-semibold"
+                            style={{ color: colors.text }}>
+                            Discount
+                          </Text>
+                          <TextInput
+                            value={discount}
+                            onChangeText={setDiscount}
+                            keyboardType="decimal-pad"
+                            editable={!isSubmitting}
+                            className="rounded-xl px-4 py-3"
+                            style={{
+                              backgroundColor: colors.card,
+                              color: colors.text,
+                              borderWidth: 1,
+                              borderColor: colors.border,
+                            }}
+                            placeholder="0"
+                            placeholderTextColor={colors.placeholder}
+                          />
+                        </View>
+                      </View>
+
+                      {/* Notes */}
+                      <View>
+                        <Text className="mb-2 text-sm font-semibold" style={{ color: colors.text }}>
+                          Notes (Optional)
+                        </Text>
+                        <TextInput
+                          value={notes}
+                          onChangeText={setNotes}
+                          multiline
+                          numberOfLines={2}
+                          editable={!isSubmitting}
+                          className="rounded-xl px-4 py-3"
+                          style={{
+                            backgroundColor: colors.card,
+                            color: colors.text,
+                            borderWidth: 1,
+                            borderColor: colors.border,
+                            minHeight: 60,
+                            textAlignVertical: 'top',
+                          }}
+                          placeholder="Order notes..."
+                          placeholderTextColor={colors.placeholder}
+                        />
+                      </View>
+                    </>
+                  )}
                 </View>
 
                 {/* Order Summary */}
@@ -743,7 +802,7 @@ export default function CreateOrderScreen() {
                     </View>
                     <View className="flex-row justify-between">
                       <Text style={{ color: colors.muted }}>Discount</Text>
-                      <Text className="font-medium" style={{ color: '#ef4444' }}>
+                      <Text className="font-medium" style={{ color: colors.error }}>
                         -{formatPrice(parseFloat(discount) || 0)}
                       </Text>
                     </View>
@@ -845,7 +904,7 @@ export default function CreateOrderScreen() {
         visible={vanModalVisible}
         vans={vans}
         selectedVan={vanName}
-        onSelect={(van) => {
+        onSelect={(van: string) => {
           setVanName(van);
           setVanModalVisible(false);
         }}

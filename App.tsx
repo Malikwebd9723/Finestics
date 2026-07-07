@@ -6,7 +6,6 @@ import './global.css';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { PaperProvider } from 'react-native-paper';
 import { AuthProvider } from 'context/AuthContext';
 import { SnackbarProvider } from 'context/SnackbarContext';
 import { ConfigProvider } from 'context/ConfigProvider';
@@ -39,10 +38,8 @@ function ThemedApp() {
   const { colors, theme } = useThemeContext();
 
   return (
-    <PaperProvider>
-      {/* ✅ FIX: Add StatusBar with dynamic style based on theme */}
-      {/* 'dark' style = light content (for dark backgrounds) */}
-      {/* 'light' style = dark content (for light backgrounds) */}
+    <>
+      {/* StatusBar style follows the theme: light content on dark backgrounds */}
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
 
       <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -64,7 +61,7 @@ function ThemedApp() {
           </NavigationContainer>
         </QueryClientProvider>
       </View>
-    </PaperProvider>
+    </>
   );
 }
 

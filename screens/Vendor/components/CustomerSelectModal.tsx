@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAllCustomers } from 'api/actions/customerActions';
 import { Customer } from 'types/customer.types';
+import { formatPrice } from 'types/order.types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface CustomerSelectModalProps {
@@ -127,6 +128,7 @@ export default function CustomerSelectModal({
               }
               renderItem={({ item }) => {
                 const isSelected = selectedCustomerId === item.id;
+                const balance = parseFloat(String(item.currentBalance ?? '')) || 0;
                 return (
                   <TouchableOpacity
                     onPress={() => handleSelect(item)}
@@ -157,6 +159,13 @@ export default function CustomerSelectModal({
                       <Text className="mt-0.5 text-xs" style={{ color: colors.muted }}>
                         {item.contactPerson} • {item.phone}
                       </Text>
+                      {balance > 0 && (
+                        <Text
+                          className="mt-0.5 text-xs font-semibold"
+                          style={{ color: colors.error }}>
+                          Owes {formatPrice(item.currentBalance)}
+                        </Text>
+                      )}
                     </View>
 
                     {/* Check Icon */}

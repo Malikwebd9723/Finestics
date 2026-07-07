@@ -1,5 +1,5 @@
 // screens/Vendor/components/CustomerFormModal.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -15,7 +14,7 @@ import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { customerSchema } from 'validations/customerValidation';
@@ -26,12 +25,7 @@ import {
   updateCustomer,
 } from 'api/actions/customerActions';
 import { FormInput, FormTextArea, FormSelect, FormRow, FormSection } from './FormInputFields';
-import {
-  CustomerFormData,
-  CustomerDetailResponse,
-  BUSINESS_TYPES,
-  PAYMENT_TERMS,
-} from 'types/customer.types';
+import { CustomerDetailResponse, BUSINESS_TYPES, PAYMENT_TERMS } from 'types/customer.types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface CustomerFormModalProps {
@@ -40,25 +34,37 @@ interface CustomerFormModalProps {
   customerId?: number | null;
 }
 
-const DEFAULT_VALUES: CustomerFormData = {
+// Local form shape — only the fields this quick-add form actually renders.
+interface CustomerFormValues {
+  businessName: string;
+  contactPerson: string;
+  phone: string;
+  alternatePhone: string;
+  email: string;
+  businessType: string;
+  creditLimit: string;
+  paymentTerms: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  notes: string;
+  deliveryInstructions: string;
+}
+
+const DEFAULT_VALUES: CustomerFormValues = {
   businessName: '',
   contactPerson: '',
   phone: '',
   alternatePhone: '',
   email: '',
+  businessType: 'other',
   creditLimit: '',
-  paymentTerms: '',
-  businessType: '',
-  notes: '',
-  deliveryInstructions: '',
-  type: 'delivery',
-  label: '',
+  paymentTerms: 'cash',
   street: '',
   city: '',
-  state: '',
   postalCode: '',
-  country: 'UK',
-  instructions: '',
+  notes: '',
+  deliveryInstructions: '',
 };
 
 export default function CustomerFormModal({
@@ -86,7 +92,7 @@ export default function CustomerFormModal({
     handleSubmit,
     reset,
     formState: { errors, isDirty },
-  } = useForm<CustomerFormData>({
+  } = useForm<CustomerFormValues>({
     resolver: yupResolver(customerSchema) as any,
     mode: 'onChange',
     defaultValues: DEFAULT_VALUES,
@@ -106,19 +112,14 @@ export default function CustomerFormModal({
         phone: editingCustomer.phone || '',
         alternatePhone: editingCustomer.alternatePhone || '',
         email: editingCustomer.email || '',
+        businessType: editingCustomer.businessType || 'other',
         creditLimit: editingCustomer.creditLimit?.toString() || '',
-        paymentTerms: editingCustomer.paymentTerms || '',
-        businessType: editingCustomer.businessType || '',
-        notes: editingCustomer.notes || '',
-        deliveryInstructions: editingCustomer.deliveryInstructions || '',
-        type: editingCustomer.address?.type || 'business',
-        label: editingCustomer.address?.label || '',
+        paymentTerms: editingCustomer.paymentTerms || 'cash',
         street: editingCustomer.address?.street || '',
         city: editingCustomer.address?.city || '',
-        state: editingCustomer.address?.state || '',
         postalCode: editingCustomer.address?.postalCode || '',
-        country: editingCustomer.address?.country || 'UK',
-        instructions: editingCustomer.address?.instructions || '',
+        notes: editingCustomer.notes || '',
+        deliveryInstructions: editingCustomer.deliveryInstructions || '',
       });
     } else if (!isEditMode) {
       reset(DEFAULT_VALUES);
@@ -126,32 +127,35 @@ export default function CustomerFormModal({
   }, [visible, editingCustomer, isEditMode, reset]);
 
   // Build API payload from form data
-  const buildPayload = (formData: CustomerFormData) => ({
+  const buildPayload = (formData: CustomerFormValues) => ({
     businessName: formData.businessName,
     contactPerson: formData.contactPerson,
     phone: formData.phone,
     alternatePhone: formData.alternatePhone || null,
     email: formData.email || null,
     creditLimit: formData.creditLimit ? parseFloat(formData.creditLimit) : 0,
-    paymentTerms: formData.paymentTerms,
-    businessType: formData.businessType,
+    paymentTerms: formData.paymentTerms || 'cash',
+    businessType: formData.businessType || 'other',
     notes: formData.notes || null,
     deliveryInstructions: formData.deliveryInstructions || null,
-    address: {
-      type: formData.type,
-      label: formData.label || null,
-      street: formData.street,
-      city: formData.city,
-      state: formData.state || null,
-      postalCode: formData.postalCode || null,
-      country: formData.country || 'UK',
-      instructions: formData.instructions || null,
-    },
+    // Address is optional (walk-in customers). When present, `type` and
+    // `country` are hardcoded constants the API expects.
+    ...(formData.street && formData.city
+      ? {
+          address: {
+            type: 'business',
+            street: formData.street,
+            city: formData.city,
+            postalCode: formData.postalCode || null,
+            country: 'UK',
+          },
+        }
+      : {}),
   });
 
   // Add mutation
   const addMutation = useMutation({
-    mutationFn: (formData: CustomerFormData) => addCustomer(buildPayload(formData)),
+    mutationFn: (formData: CustomerFormValues) => addCustomer(buildPayload(formData)),
     onSuccess: (response) => {
       if (!response.success) {
         Toast.error(response.message || 'Something went wrong');
@@ -169,7 +173,8 @@ export default function CustomerFormModal({
 
   // Update mutation
   const updateMutation = useMutation({
-    mutationFn: (formData: CustomerFormData) => updateCustomer(customerId!, buildPayload(formData)),
+    mutationFn: (formData: CustomerFormValues) =>
+      updateCustomer(customerId!, buildPayload(formData)),
     onSuccess: (response) => {
       if (!response.success) {
         Toast.error(response.message || 'Something went wrong');
@@ -221,7 +226,7 @@ export default function CustomerFormModal({
     }
   };
 
-  const onSubmit = (formData: CustomerFormData) => {
+  const onSubmit = (formData: CustomerFormValues) => {
     if (isEditMode) {
       updateMutation.mutate(formData);
     } else {
@@ -231,8 +236,8 @@ export default function CustomerFormModal({
 
   const confirmDelete = () => {
     Dialog.confirm(
-      'Delete Item?',
-      'Are you sure you want to delete this item? This action cannot be undone.',
+      'Delete Customer?',
+      'Are you sure you want to delete this customer? This action cannot be undone.',
       {
         confirmText: 'Delete',
         destructive: true,
@@ -279,7 +284,7 @@ export default function CustomerFormModal({
                 disabled={isSubmitting}
                 className="h-10 w-10 items-center justify-center rounded-full"
                 style={{ backgroundColor: colors.background }}>
-                <MaterialIcons name="close" size={22} color={colors.text} />
+                <MaterialCommunityIcons name="close" size={22} color={colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -288,8 +293,8 @@ export default function CustomerFormModal({
               className="px-5"
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled">
-              {/* Business Information */}
-              <FormSection title="Business Information">
+              {/* Required fields — enough to save */}
+              <View className="mt-5">
                 <Controller
                   control={control}
                   name="businessName"
@@ -309,11 +314,31 @@ export default function CustomerFormModal({
 
                 <Controller
                   control={control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormInput
+                      label="Phone"
+                      required
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      onBlur={field.onBlur}
+                      placeholder="07700 900000"
+                      keyboardType="phone-pad"
+                      error={errors.phone?.message}
+                      editable={!isSubmitting}
+                    />
+                  )}
+                />
+              </View>
+
+              {/* Everything else is optional */}
+              <FormSection title="More details">
+                <Controller
+                  control={control}
                   name="contactPerson"
                   render={({ field }) => (
                     <FormInput
                       label="Contact Person"
-                      required
                       value={field.value}
                       onChangeText={field.onChange}
                       onBlur={field.onBlur}
@@ -324,45 +349,22 @@ export default function CustomerFormModal({
                   )}
                 />
 
-                <FormRow>
-                  <View className="flex-1">
-                    <Controller
-                      control={control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormInput
-                          label="Phone"
-                          required
-                          value={field.value}
-                          onChangeText={field.onChange}
-                          onBlur={field.onBlur}
-                          placeholder="07700 900000"
-                          keyboardType="phone-pad"
-                          error={errors.phone?.message}
-                          editable={!isSubmitting}
-                        />
-                      )}
+                <Controller
+                  control={control}
+                  name="alternatePhone"
+                  render={({ field }) => (
+                    <FormInput
+                      label="Alt. Phone"
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      onBlur={field.onBlur}
+                      placeholder="Optional"
+                      keyboardType="phone-pad"
+                      error={errors.alternatePhone?.message}
+                      editable={!isSubmitting}
                     />
-                  </View>
-                  <View className="flex-1">
-                    <Controller
-                      control={control}
-                      name="alternatePhone"
-                      render={({ field }) => (
-                        <FormInput
-                          label="Alt. Phone"
-                          value={field.value}
-                          onChangeText={field.onChange}
-                          onBlur={field.onBlur}
-                          placeholder="Optional"
-                          keyboardType="phone-pad"
-                          error={errors.alternatePhone?.message}
-                          editable={!isSubmitting}
-                        />
-                      )}
-                    />
-                  </View>
-                </FormRow>
+                  )}
+                />
 
                 <Controller
                   control={control}
@@ -388,7 +390,6 @@ export default function CustomerFormModal({
                   render={({ field }) => (
                     <FormSelect
                       label="Business Type"
-                      required
                       options={[...BUSINESS_TYPES]}
                       value={field.value}
                       onChange={field.onChange}
@@ -397,10 +398,22 @@ export default function CustomerFormModal({
                     />
                   )}
                 />
-              </FormSection>
 
-              {/* Payment Information */}
-              <FormSection title="Payment Information">
+                <Controller
+                  control={control}
+                  name="paymentTerms"
+                  render={({ field }) => (
+                    <FormSelect
+                      label="Payment Terms"
+                      options={[...PAYMENT_TERMS]}
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={errors.paymentTerms?.message}
+                      disabled={isSubmitting}
+                    />
+                  )}
+                />
+
                 <Controller
                   control={control}
                   name="creditLimit"
@@ -420,30 +433,10 @@ export default function CustomerFormModal({
 
                 <Controller
                   control={control}
-                  name="paymentTerms"
-                  render={({ field }) => (
-                    <FormSelect
-                      label="Payment Terms"
-                      required
-                      options={[...PAYMENT_TERMS]}
-                      value={field.value}
-                      onChange={field.onChange}
-                      error={errors.paymentTerms?.message}
-                      disabled={isSubmitting}
-                    />
-                  )}
-                />
-              </FormSection>
-
-              {/* Address Information */}
-              <FormSection title="Address">
-                <Controller
-                  control={control}
                   name="street"
                   render={({ field }) => (
                     <FormInput
                       label="Street Address"
-                      required
                       value={field.value}
                       onChangeText={field.onChange}
                       onBlur={field.onBlur}
@@ -462,7 +455,6 @@ export default function CustomerFormModal({
                       render={({ field }) => (
                         <FormInput
                           label="City"
-                          required
                           value={field.value}
                           onChangeText={field.onChange}
                           onBlur={field.onBlur}
@@ -495,7 +487,7 @@ export default function CustomerFormModal({
 
                 <Controller
                   control={control}
-                  name="instructions"
+                  name="deliveryInstructions"
                   render={({ field }) => (
                     <FormTextArea
                       label="Delivery Instructions"
@@ -505,15 +497,12 @@ export default function CustomerFormModal({
                       placeholder="e.g., Side entrance, ring bell twice"
                       minHeight={60}
                       numberOfLines={2}
-                      error={errors.instructions?.message}
+                      error={errors.deliveryInstructions?.message}
                       editable={!isSubmitting}
                     />
                   )}
                 />
-              </FormSection>
 
-              {/* Additional Information */}
-              <FormSection title="Additional Notes">
                 <Controller
                   control={control}
                   name="notes"
@@ -527,24 +516,6 @@ export default function CustomerFormModal({
                       minHeight={70}
                       numberOfLines={3}
                       error={errors.notes?.message}
-                      editable={!isSubmitting}
-                    />
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="deliveryInstructions"
-                  render={({ field }) => (
-                    <FormTextArea
-                      label="Delivery Instructions"
-                      value={field.value}
-                      onChangeText={field.onChange}
-                      onBlur={field.onBlur}
-                      placeholder="Call before delivery"
-                      minHeight={70}
-                      numberOfLines={3}
-                      error={errors.deliveryInstructions?.message}
                       editable={!isSubmitting}
                     />
                   )}
@@ -568,7 +539,7 @@ export default function CustomerFormModal({
                     backgroundColor: colors.error,
                     opacity: isSubmitting ? 0.5 : 1,
                   }}>
-                  <MaterialIcons name="delete" size={20} color="#fff" />
+                  <MaterialCommunityIcons name="delete" size={20} color="#fff" />
                 </TouchableOpacity>
               )}
 
@@ -599,7 +570,11 @@ export default function CustomerFormModal({
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
                   <>
-                    <MaterialIcons name={isEditMode ? 'check' : 'add'} size={18} color="#fff" />
+                    <MaterialCommunityIcons
+                      name={isEditMode ? 'check' : 'plus'}
+                      size={18}
+                      color="#fff"
+                    />
                     <Text className="ml-1 font-semibold text-white">
                       {isEditMode ? 'Update' : 'Add'}
                     </Text>
