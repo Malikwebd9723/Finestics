@@ -7,14 +7,14 @@ import {
   TouchableOpacity,
   TextInput,
   RefreshControl,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
+import { typo } from 'constants/design';
 import { fetchAdminProfile, updateAdminProfile } from 'api/actions/adminActions';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'utils/Toast';
@@ -118,7 +118,7 @@ export default function AdminProfile() {
           <View className="mb-6 flex-row items-center justify-between">
             <View className="flex-row items-center">
               <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3 p-1">
-                <Ionicons name="arrow-back" size={24} color={colors.text} />
+                <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
               </TouchableOpacity>
               <View>
                 <Text className="text-2xl font-bold" style={{ color: colors.text }}>
@@ -134,7 +134,7 @@ export default function AdminProfile() {
                 onPress={handleEdit}
                 className="flex-row items-center rounded-lg px-4 py-2"
                 style={{ backgroundColor: colors.primary }}>
-                <MaterialIcons name="edit" size={16} color="#fff" />
+                <MaterialCommunityIcons name="pencil" size={16} color={colors.white} />
                 <Text className="ml-1 font-medium text-white">Edit</Text>
               </TouchableOpacity>
             ) : (
@@ -158,7 +158,7 @@ export default function AdminProfile() {
                     opacity: updateMutation.isPending ? 0.7 : 1,
                   }}>
                   {updateMutation.isPending ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={colors.white} />
                   ) : (
                     <Text className="font-medium text-white">Save</Text>
                   )}
@@ -171,7 +171,7 @@ export default function AdminProfile() {
           <View className="items-center mb-6">
             <View
               className="w-24 h-24 rounded-full items-center justify-center"
-              style={{ backgroundColor: colors.primary + '20' }}>
+              style={{ backgroundColor: colors.primary + '14' }}>
               <Text className="text-3xl font-bold" style={{ color: colors.primary }}>
                 {profile?.firstName?.charAt(0) || ''}
                 {profile?.lastName?.charAt(0) || ''}
@@ -182,8 +182,8 @@ export default function AdminProfile() {
             </Text>
             <View
               className="mt-2 px-3 py-1 rounded-full"
-              style={{ backgroundColor: '#8b5cf6' + '20' }}>
-              <Text className="text-sm font-semibold uppercase" style={{ color: '#8b5cf6' }}>
+              style={{ backgroundColor: colors.primary + '14' }}>
+              <Text className="text-sm font-semibold uppercase" style={{ color: colors.primary }}>
                 {profile?.role || 'Admin'}
               </Text>
             </View>
@@ -197,7 +197,7 @@ export default function AdminProfile() {
               borderWidth: 1,
               borderColor: colors.border,
             }}>
-            <Text className="mb-4 text-sm font-semibold" style={{ color: colors.muted }}>
+            <Text className="mb-4" style={[typo.eyebrow, { color: colors.muted }]}>
               PERSONAL INFORMATION
             </Text>
 
@@ -264,7 +264,7 @@ export default function AdminProfile() {
                 </Text>
                 {profile?.isEmailVerified && (
                   <View className="ml-2 flex-row items-center">
-                    <MaterialIcons name="verified" size={14} color={colors.success} />
+                    <MaterialCommunityIcons name="check-decagram" size={14} color={colors.success} />
                     <Text className="ml-0.5 text-xs" style={{ color: colors.success }}>
                       Verified
                     </Text>
@@ -309,7 +309,7 @@ export default function AdminProfile() {
               borderWidth: 1,
               borderColor: colors.border,
             }}>
-            <Text className="mb-4 text-sm font-semibold" style={{ color: colors.muted }}>
+            <Text className="mb-4" style={[typo.eyebrow, { color: colors.muted }]}>
               ACCOUNT INFORMATION
             </Text>
 
@@ -318,8 +318,8 @@ export default function AdminProfile() {
               <Text style={{ color: colors.muted }}>Role</Text>
               <View
                 className="px-3 py-1 rounded-full"
-                style={{ backgroundColor: '#8b5cf6' + '20' }}>
-                <Text className="text-sm font-medium uppercase" style={{ color: '#8b5cf6' }}>
+                style={{ backgroundColor: colors.primary + '14' }}>
+                <Text className="text-sm font-medium uppercase" style={{ color: colors.primary }}>
                   {profile?.role || 'Admin'}
                 </Text>
               </View>
@@ -332,7 +332,7 @@ export default function AdminProfile() {
                 className="px-3 py-1 rounded-full"
                 style={{
                   backgroundColor:
-                    profile?.accountStatus === 'active' ? colors.success + '20' : colors.error + '20',
+                    profile?.accountStatus === 'active' ? colors.success + '14' : colors.error + '14',
                 }}>
                 <Text
                   className="text-sm font-medium capitalize"
@@ -361,7 +361,7 @@ export default function AdminProfile() {
               borderWidth: 1,
               borderColor: colors.border,
             }}>
-            <Text className="mb-4 text-sm font-semibold" style={{ color: colors.muted }}>
+            <Text className="mb-4" style={[typo.eyebrow, { color: colors.muted }]}>
               DATES
             </Text>
 

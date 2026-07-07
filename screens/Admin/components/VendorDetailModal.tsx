@@ -125,11 +125,10 @@ export default function VendorDetailModal({
       case 'active':
         return colors.success;
       case 'pending':
-        return '#f59e0b';
+        return colors.muted;
       case 'suspended':
-        return colors.error;
       case 'rejected':
-        return '#6b7280';
+        return colors.error;
       default:
         return colors.muted;
     }

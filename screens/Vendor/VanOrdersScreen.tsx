@@ -10,14 +10,14 @@ import {
   Platform,
   Share,
 } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchVans } from 'api/actions/vendorActions';
 import { fetchOrdersByVan } from 'api/actions/orderActions';
-import { formatPrice, getStatusColor, getStatusLabel } from 'types/order.types';
-import OrderTableView, { ViewToggle } from './components/OrderTableView';
+import { typo } from 'constants/design';
+import { ViewToggle } from './components/OrderTableView';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'utils/Toast';
 
@@ -161,17 +161,17 @@ export default function VanOrdersScreen({ navigation }: any) {
     const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-    let text = `🚐 Van Orders Report\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    let text = `VAN ORDERS REPORT\n`;
+    text += `------------------------\n\n`;
 
-    text += `📅 Report Date: ${dateStr} , ${timeStr}\n`;
-    text += `🚐 Van: ${selectedVan}\n`;
-    text += `📦 Total Orders: ${totals.orders}\n`;
-    text += `📊 Total Products: ${totals.products}\n`;
-    text += `📈 Total Quantity: ${totals.quantity}\n\n`;
+    text += `Date: ${dateStr}, ${timeStr}\n`;
+    text += `Van: ${selectedVan}\n`;
+    text += `Orders: ${totals.orders}\n`;
+    text += `Products: ${totals.products}\n`;
+    text += `Quantity: ${totals.quantity}\n\n`;
 
     text += `PRODUCT BREAKDOWN\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    text += `------------------------\n\n`;
 
     aggregatedProducts.forEach((product, index) => {
       text += `${index + 1}. ${product.productName}\n`;
@@ -197,7 +197,7 @@ export default function VanOrdersScreen({ navigation }: any) {
         style={{ backgroundColor: colors.card, borderColor: colors.border }}>
         <View className="flex-row items-center flex-1">
           <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3 p-1">
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
           </TouchableOpacity>
           <View className="flex-1">
             <Text className="text-xl font-bold" style={{ color: colors.text }}>
@@ -216,7 +216,7 @@ export default function VanOrdersScreen({ navigation }: any) {
             disabled={!selectedVan || aggregatedProducts.length === 0}
             className="p-2"
             style={{ opacity: selectedVan && aggregatedProducts.length > 0 ? 1 : 0.5 }}>
-            <Ionicons name="share-outline" size={22} color={colors.primary} />
+            <MaterialCommunityIcons name="share-variant" size={22} color={colors.primary} />
           </TouchableOpacity>
 
           {/* Date Selector */}
@@ -224,7 +224,7 @@ export default function VanOrdersScreen({ navigation }: any) {
             onPress={() => setShowDatePicker(true)}
             className="flex-row items-center rounded-lg px-3 py-1.5"
             style={{ backgroundColor: colors.background }}>
-            <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+            <MaterialCommunityIcons name="calendar-outline" size={16} color={colors.primary} />
             <Text className="ml-1.5 text-sm font-medium" style={{ color: colors.text }}>
               {formatDisplayDate(selectedDate)}
             </Text>
@@ -262,7 +262,7 @@ export default function VanOrdersScreen({ navigation }: any) {
                 <Text
                   className="font-medium"
                   style={{
-                    color: selectedVan === van ? '#fff' : colors.text,
+                    color: selectedVan === van ? colors.white : colors.text,
                   }}>
                   {van}
                 </Text>
@@ -275,7 +275,7 @@ export default function VanOrdersScreen({ navigation }: any) {
       {/* Content */}
       {!selectedVan ? (
         <View className="flex-1 items-center justify-center px-8">
-          <Ionicons name="car-outline" size={64} color={colors.muted} />
+          <MaterialCommunityIcons name="truck-outline" size={64} color={colors.muted} />
           <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
             Select a Van
           </Text>
@@ -364,7 +364,7 @@ export default function VanOrdersScreen({ navigation }: any) {
               }>
               {aggregatedProducts.length === 0 ? (
                 <View className="items-center py-16">
-                  <MaterialIcons name="shopping-basket" size={48} color={colors.muted} />
+                  <MaterialCommunityIcons name="basket" size={48} color={colors.muted} />
                   <Text className="mt-4 text-center" style={{ color: colors.muted }}>
                     No products assigned to {selectedVan} for {formatDisplayDate(selectedDate)}
                   </Text>
@@ -470,7 +470,7 @@ function ProductCard({ product, index, colors, isExpanded, onToggle, orders, onV
 
         {/* Expand Indicator */}
         <View className="mt-2 flex-row items-center justify-center">
-          <Ionicons
+          <MaterialCommunityIcons
             name={isExpanded ? 'chevron-up' : 'chevron-down'}
             size={16}
             color={colors.muted}
@@ -481,7 +481,7 @@ function ProductCard({ product, index, colors, isExpanded, onToggle, orders, onV
       {/* Expanded Orders List */}
       {isExpanded && (
         <View className="border-t px-4 pb-4 pt-2" style={{ borderColor: colors.border }}>
-          <Text className="mb-3 text-xs font-semibold" style={{ color: colors.muted }}>
+          <Text className="mb-3" style={[typo.eyebrow, { color: colors.muted }]}>
             ORDERS ({orders.length})
           </Text>
           <View className="gap-2">
@@ -503,7 +503,7 @@ function ProductCard({ product, index, colors, isExpanded, onToggle, orders, onV
                   <Text className="text-sm font-bold" style={{ color: colors.primary }}>
                     {order.itemQuantity} {order.itemUnit}
                   </Text>
-                  <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+                  <MaterialCommunityIcons name="chevron-right" size={14} color={colors.primary} />
                 </View>
               </TouchableOpacity>
             ))}

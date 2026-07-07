@@ -10,9 +10,8 @@ import {
   Dimensions,
   ActivityIndicator,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchPendingItems, cancelPendingItem } from 'api/actions/returnActions';
@@ -142,14 +141,14 @@ export default function PendingItemsModal({
                 onPress={onClose}
                 className="h-10 w-10 items-center justify-center rounded-full"
                 style={{ backgroundColor: colors.background }}>
-                <MaterialIcons name="close" size={22} color={colors.text} />
+                <MaterialCommunityIcons name="close" size={22} color={colors.text} />
               </Pressable>
             </View>
             {totalPending > 0 && (
               <View className="mt-2 flex-row items-center rounded-lg px-3 py-1.5"
-                style={{ backgroundColor: '#f59e0b20' }}>
-                <MaterialIcons name="schedule" size={16} color="#f59e0b" />
-                <Text className="ml-1.5 text-sm font-semibold" style={{ color: '#f59e0b' }}>
+                style={{ backgroundColor: colors.muted + '14' }}>
+                <MaterialCommunityIcons name="clock-outline" size={16} color={colors.muted} />
+                <Text className="ml-1.5 text-sm font-semibold" style={{ color: colors.muted }}>
                   {totalPending} pending item{totalPending !== 1 ? 's' : ''}
                 </Text>
               </View>
@@ -166,14 +165,14 @@ export default function PendingItemsModal({
             </View>
           ) : error ? (
             <View className="flex-1 items-center justify-center px-6">
-              <MaterialIcons name="error-outline" size={64} color={colors.error} />
+              <MaterialCommunityIcons name="alert-circle-outline" size={64} color={colors.error} />
               <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
                 Failed to load items
               </Text>
             </View>
           ) : pendingItems.length === 0 ? (
             <View className="flex-1 items-center justify-center px-6">
-              <MaterialIcons name="check-circle-outline" size={64} color={colors.success} />
+              <MaterialCommunityIcons name="check-circle-outline" size={64} color={colors.success} />
               <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
                 No pending items
               </Text>
@@ -184,7 +183,7 @@ export default function PendingItemsModal({
           ) : (
             <ScrollView className="flex-1 px-5 py-4" showsVerticalScrollIndicator={false}>
               {pendingItems.map((item, index) => {
-                const statusColor = getPendingItemStatusColor(item.status);
+                const statusColor = getPendingItemStatusColor(item.status, colors);
                 const isPending = item.status === 'pending';
                 return (
                   <View
@@ -206,7 +205,7 @@ export default function PendingItemsModal({
                       </View>
                       <View
                         className="rounded-full px-2.5 py-1"
-                        style={{ backgroundColor: statusColor + '20' }}>
+                        style={{ backgroundColor: statusColor + '14' }}>
                         <Text className="text-xs font-bold" style={{ color: statusColor }}>
                           {getPendingItemStatusLabel(item.status)}
                         </Text>
@@ -238,7 +237,7 @@ export default function PendingItemsModal({
                         disabled={cancellingId === item.id}
                         className="mt-3 flex-row items-center justify-center rounded-lg py-2"
                         style={{
-                          backgroundColor: colors.error + '15',
+                          backgroundColor: colors.error + '14',
                           borderWidth: 1,
                           borderColor: colors.error,
                         }}>
@@ -246,7 +245,7 @@ export default function PendingItemsModal({
                           <ActivityIndicator size="small" color={colors.error} />
                         ) : (
                           <>
-                            <MaterialIcons name="cancel" size={16} color={colors.error} />
+                            <MaterialCommunityIcons name="cancel" size={16} color={colors.error} />
                             <Text
                               className="ml-1.5 text-sm font-semibold"
                               style={{ color: colors.error }}>

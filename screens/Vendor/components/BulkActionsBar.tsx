@@ -12,12 +12,13 @@ import {
 } from 'react-native';
 import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { bulkUpdateStatus, bulkAssignVan, bulkCancel } from 'api/actions/orderActions';
 import { fetchVans } from 'api/actions/vendorActions';
 import { ORDER_STATUSES, OrderStatus } from 'types/order.types';
+import { toneColor, toneTint } from 'utils/statusTones';
 import { useInvalidateStats } from 'hooks/useInvalidateStats';
 
 interface BulkActionsBarProps {
@@ -146,7 +147,7 @@ export default function BulkActionsBar({
           onPress={() => setStatusModalVisible(true)}
           disabled={isLoading}
           className="items-center px-4 py-2">
-          <MaterialIcons name="sync" size={22} color={colors.primary} />
+          <MaterialCommunityIcons name="sync" size={22} color={colors.primary} />
           <Text className="mt-1 text-xs font-medium" style={{ color: colors.text }}>
             Status
           </Text>
@@ -157,7 +158,7 @@ export default function BulkActionsBar({
           onPress={() => setVanModalVisible(true)}
           disabled={isLoading}
           className="items-center px-4 py-2">
-          <Ionicons name="car" size={22} color={colors.primary} />
+          <MaterialCommunityIcons name="truck-outline" size={22} color={colors.primary} />
           <Text className="mt-1 text-xs font-medium" style={{ color: colors.text }}>
             Assign Van
           </Text>
@@ -168,7 +169,7 @@ export default function BulkActionsBar({
           onPress={() => setCancelModalVisible(true)}
           disabled={isLoading}
           className="items-center px-4 py-2">
-          <MaterialIcons name="cancel" size={22} color={colors.error} />
+          <MaterialCommunityIcons name="close-circle" size={22} color={colors.error} />
           <Text className="mt-1 text-xs font-medium" style={{ color: colors.error }}>
             Cancel
           </Text>
@@ -179,7 +180,7 @@ export default function BulkActionsBar({
           onPress={onCancel}
           disabled={isLoading}
           className="items-center px-4 py-2">
-          <Ionicons name="close-circle-outline" size={22} color={colors.muted} />
+          <MaterialCommunityIcons name="close-circle-outline" size={22} color={colors.muted} />
           <Text className="mt-1 text-xs font-medium" style={{ color: colors.muted }}>
             Deselect
           </Text>
@@ -215,26 +216,29 @@ export default function BulkActionsBar({
               </View>
             ) : (
               <ScrollView className="max-h-80">
-                {ORDER_STATUSES.map((status) => (
-                  <TouchableOpacity
-                    key={status.value}
-                    onPress={() => handleStatusSelect(status.value as OrderStatus)}
-                    className="mx-4 mb-2 flex-row items-center rounded-xl px-4 py-3"
-                    style={{
-                      backgroundColor: status.color + '15',
-                      borderWidth: 1,
-                      borderColor: status.color + '30',
-                    }}>
-                    <View
-                      className="mr-3 h-3 w-3 rounded-full"
-                      style={{ backgroundColor: status.color }}
-                    />
-                    <Text className="flex-1 font-medium" style={{ color: colors.text }}>
-                      {status.label}
-                    </Text>
-                    <MaterialIcons name="chevron-right" size={20} color={colors.muted} />
-                  </TouchableOpacity>
-                ))}
+                {ORDER_STATUSES.map((status) => {
+                  const statusColor = toneColor(status.tone, colors);
+                  return (
+                    <TouchableOpacity
+                      key={status.value}
+                      onPress={() => handleStatusSelect(status.value as OrderStatus)}
+                      className="mx-4 mb-2 flex-row items-center rounded-xl px-4 py-3"
+                      style={{
+                        backgroundColor: toneTint(status.tone, colors),
+                        borderWidth: 1,
+                        borderColor: statusColor + '30',
+                      }}>
+                      <View
+                        className="mr-3 h-3 w-3 rounded-full"
+                        style={{ backgroundColor: statusColor }}
+                      />
+                      <Text className="flex-1 font-medium" style={{ color: colors.text }}>
+                        {status.label}
+                      </Text>
+                      <MaterialCommunityIcons name="chevron-right" size={20} color={colors.muted} />
+                    </TouchableOpacity>
+                  );
+                })}
               </ScrollView>
             )}
 
@@ -279,7 +283,7 @@ export default function BulkActionsBar({
               </View>
             ) : vans.length === 0 ? (
               <View className="items-center py-8">
-                <Ionicons name="car-outline" size={48} color={colors.muted} />
+                <MaterialCommunityIcons name="truck-outline" size={48} color={colors.muted} />
                 <Text className="mt-2 px-8 text-center" style={{ color: colors.muted }}>
                   No vans available. Add vans in Business Profile.
                 </Text>
@@ -296,11 +300,11 @@ export default function BulkActionsBar({
                       borderWidth: 1,
                       borderColor: colors.border,
                     }}>
-                    <Ionicons name="car" size={20} color={colors.primary} />
+                    <MaterialCommunityIcons name="truck-outline" size={20} color={colors.primary} />
                     <Text className="ml-3 flex-1 font-medium" style={{ color: colors.text }}>
                       {van}
                     </Text>
-                    <MaterialIcons name="chevron-right" size={20} color={colors.muted} />
+                    <MaterialCommunityIcons name="chevron-right" size={20} color={colors.muted} />
                   </TouchableOpacity>
                 ))}
               </ScrollView>

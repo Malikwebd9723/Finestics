@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import {
@@ -20,7 +20,8 @@ import {
   CustomerDetailSummary,
   LedgerData,
 } from 'api/actions/paymentActions';
-import { formatPrice, formatShortDate, formatDate, getPaymentStatusColor } from 'types/order.types';
+import { formatPrice, formatShortDate } from 'types/order.types';
+import { typo } from 'constants/design';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { height } = Dimensions.get('window');
@@ -120,7 +121,7 @@ export default function CustomerPaymentModal({
               onPress={onClose}
               className="h-10 w-10 items-center justify-center rounded-full"
               style={{ backgroundColor: colors.background }}>
-              <MaterialIcons name="close" size={22} color={colors.text} />
+              <MaterialCommunityIcons name="close" size={22} color={colors.text} />
             </Pressable>
           </View>
 
@@ -138,8 +139,8 @@ export default function CustomerPaymentModal({
                 <View className="flex-row items-center">
                   <View
                     className="h-14 w-14 items-center justify-center rounded-full"
-                    style={{ backgroundColor: colors.primary + '15' }}>
-                    <MaterialIcons name="person" size={28} color={colors.primary} />
+                    style={{ backgroundColor: colors.primary + '14' }}>
+                    <MaterialCommunityIcons name="account" size={28} color={colors.primary} />
                   </View>
                   <View className="ml-4 flex-1">
                     <Text className="text-lg font-bold" style={{ color: colors.text }}>
@@ -162,7 +163,7 @@ export default function CustomerPaymentModal({
                 <View
                   className="flex-1 rounded-xl p-3"
                   style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-                  <Text className="text-lg font-bold" style={{ color: colors.text }}>
+                  <Text className="text-lg" style={[typo.num, { color: colors.text }]}>
                     {formatPrice(detail.summary.totalAmount)}
                   </Text>
                   <Text className="text-xs" style={{ color: colors.muted }}>
@@ -172,7 +173,7 @@ export default function CustomerPaymentModal({
                 <View
                   className="flex-1 rounded-xl p-3"
                   style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-                  <Text className="text-lg font-bold" style={{ color: colors.success }}>
+                  <Text className="text-lg" style={[typo.num, { color: colors.success }]}>
                     {formatPrice(detail.summary.totalPaid)}
                   </Text>
                   <Text className="text-xs" style={{ color: colors.muted }}>
@@ -189,7 +190,7 @@ export default function CustomerPaymentModal({
                     borderWidth: 1,
                     borderColor: colors.error + '30',
                   }}>
-                  <Text className="text-lg font-bold" style={{ color: colors.error }}>
+                  <Text className="text-lg" style={[typo.num, { color: colors.error }]}>
                     {formatPrice(detail.summary.totalBalance)}
                   </Text>
                   <Text className="text-xs" style={{ color: colors.muted }}>
@@ -212,19 +213,19 @@ export default function CustomerPaymentModal({
               <View
                 className="mb-4 rounded-xl p-4"
                 style={{ backgroundColor: colors.background }}>
-                <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
+                <Text className="mb-3" style={[typo.eyebrow, { color: colors.muted }]}>
                   PAYMENT STATUS
                 </Text>
                 <View className="flex-row gap-3">
                   {[
                     { key: 'paid' as const, label: 'Paid', color: colors.success },
-                    { key: 'partial' as const, label: 'Partial', color: '#f59e0b' },
+                    { key: 'partial' as const, label: 'Partial', color: colors.muted },
                     { key: 'unpaid' as const, label: 'Unpaid', color: colors.error },
                   ].map((status) => (
                     <View
                       key={status.key}
                       className="flex-1 items-center rounded-lg p-2"
-                      style={{ backgroundColor: status.color + '15' }}>
+                      style={{ backgroundColor: status.color + '14' }}>
                       <Text className="text-lg font-bold" style={{ color: status.color }}>
                         {detail.byPaymentStatus[status.key]?.count || 0}
                       </Text>
@@ -241,7 +242,7 @@ export default function CustomerPaymentModal({
                 <View
                   className="mb-4 rounded-xl p-4"
                   style={{ backgroundColor: colors.background }}>
-                  <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
+                  <Text className="mb-3" style={[typo.eyebrow, { color: colors.muted }]}>
                     UNPAID ORDERS
                   </Text>
                   {detail.recentUnpaidOrders.map((order, idx) => (
@@ -273,7 +274,7 @@ export default function CustomerPaymentModal({
               {/* Ledger */}
               {ledger && (
                 <View className="mb-4 rounded-xl p-4" style={{ backgroundColor: colors.background }}>
-                  <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
+                  <Text className="mb-3" style={[typo.eyebrow, { color: colors.muted }]}>
                     LEDGER
                   </Text>
 
@@ -383,7 +384,7 @@ export default function CustomerPaymentModal({
                 <View
                   className="mb-4 rounded-xl p-4"
                   style={{ backgroundColor: colors.background }}>
-                  <Text className="mb-2 text-sm font-semibold" style={{ color: colors.muted }}>
+                  <Text className="mb-2" style={[typo.eyebrow, { color: colors.muted }]}>
                     CREDIT INFO
                   </Text>
                   <View className="flex-row items-center justify-between">
@@ -398,7 +399,7 @@ export default function CustomerPaymentModal({
                           detail.customer.creditUtilization > 80
                             ? colors.error
                             : detail.customer.creditUtilization > 50
-                              ? '#f59e0b'
+                              ? colors.muted
                               : colors.success,
                       }}>
                       {detail.customer.creditUtilization}% used
@@ -415,7 +416,7 @@ export default function CustomerPaymentModal({
                           detail.customer.creditUtilization > 80
                             ? colors.error
                             : detail.customer.creditUtilization > 50
-                              ? '#f59e0b'
+                              ? colors.muted
                               : colors.success,
                       }}
                     />
@@ -427,7 +428,7 @@ export default function CustomerPaymentModal({
             </ScrollView>
           ) : (
             <View className="flex-1 items-center justify-center px-6">
-              <MaterialIcons name="error-outline" size={64} color={colors.muted} />
+              <MaterialCommunityIcons name="alert-circle-outline" size={64} color={colors.muted} />
               <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
                 No data available
               </Text>

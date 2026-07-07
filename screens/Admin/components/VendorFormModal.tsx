@@ -13,9 +13,10 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
+import { typo } from 'constants/design';
 import { createVendor, updateVendor, Vendor } from 'api/actions/adminActions';
 import Toast from 'utils/Toast';
 
@@ -228,7 +229,7 @@ export default function VendorFormModal({ visible, onClose, mode, vendor }: Vend
                 onPress={onClose}
                 className="w-10 h-10 rounded-full items-center justify-center"
                 style={{ backgroundColor: colors.background }}>
-                <MaterialIcons name="close" size={24} color={colors.text} />
+                <MaterialCommunityIcons name="close" size={24} color={colors.text} />
               </Pressable>
             </View>
 
@@ -240,7 +241,7 @@ export default function VendorFormModal({ visible, onClose, mode, vendor }: Vend
               {/* User Info Section (only for create) */}
               {mode === 'create' && (
                 <View className="mb-4">
-                  <Text className="text-sm font-semibold mb-3" style={{ color: colors.muted }}>
+                  <Text className="mb-3" style={[typo.eyebrow, { color: colors.muted }]}>
                     USER INFORMATION
                   </Text>
 
@@ -368,7 +369,7 @@ export default function VendorFormModal({ visible, onClose, mode, vendor }: Vend
 
               {/* Business Info Section */}
               <View className="mb-4">
-                <Text className="text-sm font-semibold mb-3" style={{ color: colors.muted }}>
+                <Text className="mb-3" style={[typo.eyebrow, { color: colors.muted }]}>
                   BUSINESS INFORMATION
                 </Text>
 
@@ -496,7 +497,7 @@ export default function VendorFormModal({ visible, onClose, mode, vendor }: Vend
                   opacity: isLoading ? 0.7 : 1,
                 }}>
                 {isLoading ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={colors.white} />
                 ) : (
                   <Text className="text-base font-bold text-white">
                     {mode === 'create' ? 'Create Vendor' : 'Save Changes'}

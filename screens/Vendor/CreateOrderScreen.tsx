@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
-import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -408,7 +408,7 @@ export default function CreateOrderScreen() {
           className="flex-row items-center border-b px-4 py-3"
           style={{ borderColor: colors.border }}>
           <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3 p-1">
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text className="text-xl font-bold" style={{ color: colors.text }}>
             {isEditMode ? 'Edit Order' : 'New Order'}
@@ -470,7 +470,7 @@ export default function CreateOrderScreen() {
                     <Text style={{ color: colors.placeholder }}>Select Customer</Text>
                   )}
                   {!isEditMode && (
-                    <MaterialIcons name="arrow-drop-down" size={24} color={colors.muted} />
+                    <MaterialCommunityIcons name="menu-down" size={24} color={colors.muted} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -511,7 +511,7 @@ export default function CreateOrderScreen() {
                 disabled={isSubmitting}
                 className="mb-4 flex-row items-center justify-center rounded-xl p-4"
                 style={{ backgroundColor: colors.primary, opacity: isSubmitting ? 0.5 : 1 }}>
-                <MaterialIcons name="add-shopping-cart" size={20} color="#fff" />
+                <MaterialCommunityIcons name="cart-plus" size={20} color={colors.white} />
                 <Text className="ml-2 font-bold text-white">
                   {isEditMode ? 'Add More Items' : 'Add Items to Cart'}
                 </Text>
@@ -532,12 +532,12 @@ export default function CreateOrderScreen() {
           }
           ListEmptyComponent={
             <View className="items-center justify-center px-4 py-16">
-              <MaterialIcons name="shopping-cart" size={64} color={colors.muted} />
+              <MaterialCommunityIcons name="cart-outline" size={64} color={colors.muted} />
               <Text className="mt-4 text-center text-base" style={{ color: colors.text }}>
                 No items in cart
               </Text>
               <Text className="mt-2 text-center text-sm" style={{ color: colors.muted }}>
-                Tap "Add Items to Cart" to get started
+                Tap {'“'}Add Items to Cart{'”'} to get started
               </Text>
             </View>
           }
@@ -583,7 +583,7 @@ export default function CreateOrderScreen() {
                             <Text
                               className="text-sm font-medium"
                               style={{
-                                color: paymentMethod === method.value ? '#fff' : colors.text,
+                                color: paymentMethod === method.value ? colors.white : colors.text,
                               }}>
                               {method.label}
                             </Text>
@@ -637,7 +637,11 @@ export default function CreateOrderScreen() {
                                 day: 'numeric',
                               })}
                             </Text>
-                            <Ionicons name="calendar-outline" size={18} color={colors.muted} />
+                            <MaterialCommunityIcons
+                              name="calendar-outline"
+                              size={18}
+                              color={colors.muted}
+                            />
                           </TouchableOpacity>
                         </View>
                         <View className="flex-1">
@@ -665,7 +669,11 @@ export default function CreateOrderScreen() {
                                 })
                                 : 'Not set'}
                             </Text>
-                            <Ionicons name="calendar-outline" size={18} color={colors.muted} />
+                            <MaterialCommunityIcons
+                              name="calendar-outline"
+                              size={18}
+                              color={colors.muted}
+                            />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -685,8 +693,8 @@ export default function CreateOrderScreen() {
                             borderColor: vanName ? colors.primary : colors.border,
                           }}>
                           <View className="flex-row items-center">
-                            <Ionicons
-                              name="car-outline"
+                            <MaterialCommunityIcons
+                              name="truck-outline"
                               size={18}
                               color={vanName ? colors.primary : colors.muted}
                             />
@@ -696,7 +704,7 @@ export default function CreateOrderScreen() {
                               {vanName || 'Select Van'}
                             </Text>
                           </View>
-                          <MaterialIcons name="arrow-drop-down" size={24} color={colors.muted} />
+                          <MaterialCommunityIcons name="menu-down" size={24} color={colors.muted} />
                         </TouchableOpacity>
                       </View>
 
@@ -841,13 +849,13 @@ export default function CreateOrderScreen() {
                     className="flex-1 flex-row items-center justify-center rounded-xl py-3.5"
                     style={{ backgroundColor: colors.primary, opacity: isSubmitting ? 0.7 : 1 }}>
                     {isSubmitting ? (
-                      <ActivityIndicator size="small" color="#fff" />
+                      <ActivityIndicator size="small" color={colors.white} />
                     ) : (
                       <>
-                        <MaterialIcons
+                        <MaterialCommunityIcons
                           name={isEditMode ? 'check' : 'send'}
                           size={18}
-                          color="#fff"
+                          color={colors.white}
                         />
                         <Text className="ml-1 font-bold text-white">
                           {isEditMode ? 'Update' : 'Create Order'}
@@ -982,7 +990,7 @@ function CartItemCard({
             {!item.isOriginal && isEditMode && (
               <View
                 className="ml-2 rounded-full px-2 py-0.5"
-                style={{ backgroundColor: colors.primary + '20' }}>
+                style={{ backgroundColor: colors.primary + '14' }}>
                 <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
                   NEW
                 </Text>
@@ -994,7 +1002,7 @@ function CartItemCard({
           </Text>
         </View>
         <TouchableOpacity onPress={onRemove} disabled={disabled} className="p-1">
-          <Ionicons name="trash-outline" size={18} color="#ef4444" />
+          <MaterialCommunityIcons name="delete-outline" size={18} color={colors.error} />
         </TouchableOpacity>
       </View>
 
@@ -1025,7 +1033,7 @@ function CartItemCard({
             disabled={disabled}
             className="h-8 w-8 items-center justify-center rounded-full"
             style={{ backgroundColor: colors.background }}>
-            <Ionicons name="remove" size={18} color={colors.primary} />
+            <MaterialCommunityIcons name="minus" size={18} color={colors.primary} />
           </TouchableOpacity>
           <TextInput
             value={qtyText}
@@ -1048,7 +1056,7 @@ function CartItemCard({
             disabled={disabled}
             className="h-8 w-8 items-center justify-center rounded-full"
             style={{ backgroundColor: colors.primary }}>
-            <Ionicons name="add" size={18} color="#fff" />
+            <MaterialCommunityIcons name="plus" size={18} color={colors.white} />
           </TouchableOpacity>
         </View>
       </View>
@@ -1084,7 +1092,7 @@ function VanSelectModal({ visible, vans, selectedVan, onSelect, onClose, colors 
           </Text>
           {vans.length === 0 ? (
             <View className="items-center py-6">
-              <Ionicons name="car-outline" size={40} color={colors.muted} />
+              <MaterialCommunityIcons name="truck-outline" size={40} color={colors.muted} />
               <Text className="mt-2 text-center text-sm" style={{ color: colors.muted }}>
                 No vans available.{'\n'}Add vans in your profile settings.
               </Text>
@@ -1095,12 +1103,12 @@ function VanSelectModal({ visible, vans, selectedVan, onSelect, onClose, colors 
                 onPress={() => onSelect('')}
                 className="flex-row items-center rounded-lg p-3"
                 style={{
-                  backgroundColor: !selectedVan ? colors.primary + '20' : colors.background,
+                  backgroundColor: !selectedVan ? colors.primary + '14' : colors.background,
                   borderWidth: 1,
                   borderColor: !selectedVan ? colors.primary : colors.border,
                 }}>
-                <Ionicons
-                  name={!selectedVan ? 'checkmark-circle' : 'ellipse-outline'}
+                <MaterialCommunityIcons
+                  name={!selectedVan ? 'check-circle' : 'circle-outline'}
                   size={20}
                   color={!selectedVan ? colors.primary : colors.muted}
                 />
@@ -1117,12 +1125,12 @@ function VanSelectModal({ visible, vans, selectedVan, onSelect, onClose, colors 
                   className="flex-row items-center rounded-lg p-3"
                   style={{
                     backgroundColor:
-                      selectedVan === van ? colors.primary + '20' : colors.background,
+                      selectedVan === van ? colors.primary + '14' : colors.background,
                     borderWidth: 1,
                     borderColor: selectedVan === van ? colors.primary : colors.border,
                   }}>
-                  <Ionicons
-                    name={selectedVan === van ? 'checkmark-circle' : 'car-outline'}
+                  <MaterialCommunityIcons
+                    name={selectedVan === van ? 'check-circle' : 'truck-outline'}
                     size={20}
                     color={selectedVan === van ? colors.primary : colors.muted}
                   />

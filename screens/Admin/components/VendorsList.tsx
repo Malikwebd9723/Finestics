@@ -142,11 +142,10 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
       case 'active':
         return colors.success;
       case 'pending':
-        return '#f59e0b';
+        return colors.muted;
       case 'suspended':
-        return colors.error;
       case 'rejected':
-        return '#6b7280';
+        return colors.error;
       default:
         return colors.muted;
     }
@@ -248,7 +247,7 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
               backgroundColor: colors.card,
               elevation: 2,
               borderLeftWidth: item.status === 'pending' ? 3 : 0,
-              borderLeftColor: '#f59e0b',
+              borderLeftColor: colors.primary,
             }}>
             <View className="flex-row items-start justify-between">
               <View className="flex-row items-center flex-1">

@@ -8,7 +8,7 @@ import {
     ScrollView,
     ActivityIndicator,
 } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchOrderDetails } from 'api/actions/orderActions';
@@ -20,6 +20,7 @@ import {
     getPaymentStatusColor,
     getPaymentStatusLabel,
 } from 'types/order.types';
+import { typo } from 'constants/design';
 import OrderDetailModal from './OrderDetailModal';
 import PaymentModal from './PaymentModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -99,7 +100,7 @@ export default function VanOrderDetailsModal({
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}>
                     <View className="flex-row items-center flex-1">
                         <TouchableOpacity onPress={onClose} className="mr-3 p-1">
-                            <Ionicons name="arrow-back" size={24} color={colors.text} />
+                            <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
                         </TouchableOpacity>
                         <View className="flex-1">
                             <Text className="text-xl font-bold" style={{ color: colors.text }}>
@@ -121,7 +122,7 @@ export default function VanOrderDetailsModal({
                             borderWidth: 1,
                             borderColor: colors.border,
                         }}>
-                        <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
+                        <Text className="mb-3" style={[typo.eyebrow, { color: colors.muted }]}>
                             CUSTOMER
                         </Text>
                         <Text className="text-lg font-bold" style={{ color: colors.text }}>
@@ -135,7 +136,7 @@ export default function VanOrderDetailsModal({
                         </Text>
                         {order?.deliveryAddress && (
                             <View className="mt-3 flex-row items-start">
-                                <Ionicons name="location-outline" size={16} color={colors.primary} />
+                                <MaterialCommunityIcons name="map-marker-outline" size={16} color={colors.primary} />
                                 <Text className="ml-2 flex-1 text-sm" style={{ color: colors.text }}>
                                     {order.deliveryAddress}
                                 </Text>
@@ -158,10 +159,10 @@ export default function VanOrderDetailsModal({
                             <View className="mt-2 flex-row items-center">
                                 <View
                                     className="rounded-full px-2 py-1"
-                                    style={{ backgroundColor: getStatusColor(order?.status) + '20' }}>
+                                    style={{ backgroundColor: getStatusColor(order?.status, colors) + '14' }}>
                                     <Text
                                         className="text-xs font-bold"
-                                        style={{ color: getStatusColor(order?.status) }}>
+                                        style={{ color: getStatusColor(order?.status, colors) }}>
                                         {getStatusLabel(order?.status)}
                                     </Text>
                                 </View>
@@ -208,7 +209,7 @@ export default function VanOrderDetailsModal({
                                 borderWidth: 1,
                                 borderColor: colors.border,
                             }}>
-                            <Text className="mb-3 text-sm font-semibold" style={{ color: colors.muted }}>
+                            <Text className="mb-3" style={[typo.eyebrow, { color: colors.muted }]}>
                                 ITEMS ({order.items.length})
                             </Text>
                             <View className="gap-2">
@@ -251,7 +252,7 @@ export default function VanOrderDetailsModal({
                             <Text className="text-xs" style={{ color: colors.muted }}>
                                 Total Amount
                             </Text>
-                            <Text className="mt-2 text-lg font-bold" style={{ color: colors.primary }}>
+                            <Text className="mt-2 text-lg" style={[typo.num, { color: colors.primary }]}>
                                 {formatPrice(order?.totalAmount)}
                             </Text>
                         </View>
@@ -268,10 +269,10 @@ export default function VanOrderDetailsModal({
                             <View className="mt-2">
                                 <View
                                     className="rounded-md px-2 py-1"
-                                    style={{ backgroundColor: getPaymentStatusColor(order?.paymentStatus) + '15' }}>
+                                    style={{ backgroundColor: getPaymentStatusColor(order?.paymentStatus, colors) + '14' }}>
                                     <Text
                                         className="text-xs font-semibold"
-                                        style={{ color: getPaymentStatusColor(order?.paymentStatus) }}>
+                                        style={{ color: getPaymentStatusColor(order?.paymentStatus, colors) }}>
                                         {getPaymentStatusLabel(order?.paymentStatus)}
                                     </Text>
                                 </View>
@@ -284,20 +285,20 @@ export default function VanOrderDetailsModal({
                         <View
                             className="mb-4 rounded-xl p-4"
                             style={{
-                                backgroundColor: '#f59e0b' + '10',
+                                backgroundColor: colors.error + '10',
                                 borderWidth: 1,
-                                borderColor: '#f59e0b',
+                                borderColor: colors.error,
                             }}>
                             <View className="flex-row items-center justify-between">
                                 <View>
                                     <Text className="text-sm" style={{ color: colors.muted }}>
                                         Amount Due
                                     </Text>
-                                    <Text className="mt-1 text-2xl font-bold" style={{ color: '#f59e0b' }}>
+                                    <Text className="mt-1 text-2xl" style={[typo.num, { color: colors.error }]}>
                                         {formatPrice(order?.balanceAmount)}
                                     </Text>
                                 </View>
-                                <MaterialIcons name="payments" size={32} color="#f59e0b" />
+                                <MaterialCommunityIcons name="cash-multiple" size={32} color={colors.error} />
                             </View>
                         </View>
                     )}
@@ -308,8 +309,8 @@ export default function VanOrderDetailsModal({
                             onPress={handleOpenOrderDetail}
                             className="flex-row items-center justify-center rounded-xl py-3"
                             style={{ backgroundColor: colors.primary }}>
-                            <MaterialIcons name="receipt-long" size={20} color="#fff" />
-                            <Text className="ml-2 font-semibold" style={{ color: '#fff' }}>
+                            <MaterialCommunityIcons name="receipt" size={20} color={colors.white} />
+                            <Text className="ml-2 font-semibold" style={{ color: colors.white }}>
                                 Full Order Details
                             </Text>
                         </TouchableOpacity>
@@ -317,9 +318,9 @@ export default function VanOrderDetailsModal({
                             <TouchableOpacity
                                 onPress={() => handleRecordPayment(orderId!)}
                                 className="flex-row items-center justify-center rounded-xl py-3"
-                                style={{ backgroundColor: '#f59e0b', opacity: 0.8 }}>
-                                <MaterialIcons name="payments" size={20} color="#fff" />
-                                <Text className="ml-2 font-semibold" style={{ color: '#fff' }}>
+                                style={{ backgroundColor: colors.success }}>
+                                <MaterialCommunityIcons name="cash" size={20} color={colors.white} />
+                                <Text className="ml-2 font-semibold" style={{ color: colors.white }}>
                                     Record Payment
                                 </Text>
                             </TouchableOpacity>

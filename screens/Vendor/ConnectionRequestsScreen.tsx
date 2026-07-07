@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
@@ -95,7 +95,7 @@ export default function ConnectionRequestsScreen() {
               width: 48,
               height: 48,
               borderRadius: 24,
-              backgroundColor: colors.primary + '20',
+              backgroundColor: colors.primary + '14',
               alignItems: 'center',
               justifyContent: 'center',
             }}>
@@ -145,7 +145,7 @@ export default function ConnectionRequestsScreen() {
               alignItems: 'center',
               backgroundColor: colors.primary,
             }}>
-            <Text style={{ color: '#fff', fontWeight: '700' }}>Approve</Text>
+            <Text style={{ color: colors.white, fontWeight: '700' }}>Approve</Text>
           </Pressable>
         </View>
       </View>
@@ -211,7 +211,7 @@ export default function ConnectionRequestsScreen() {
                 Reject Request
               </Text>
               <Pressable onPress={() => setRejectOpen(false)} hitSlop={10}>
-                <Ionicons name="close" size={22} color={colors.muted} />
+                <MaterialCommunityIcons name="close" size={22} color={colors.muted} />
               </Pressable>
             </View>
             <Text style={{ color: colors.muted, fontSize: 13, marginBottom: 12 }}>
@@ -246,9 +246,9 @@ export default function ConnectionRequestsScreen() {
                 opacity: rejectMutation.isPending ? 0.7 : 1,
               }}>
               {rejectMutation.isPending ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={colors.white} />
               ) : (
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
+                <Text style={{ color: colors.white, fontWeight: '700', fontSize: 16 }}>
                   Confirm Reject
                 </Text>
               )}

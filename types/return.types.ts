@@ -1,5 +1,7 @@
 // types/return.types.ts
 
+import { StatusTone, statusTone, toneColor } from 'utils/statusTones';
+
 // ==================== ENUMS ====================
 
 export type ReturnAction = 'credit' | 'refund' | 'replace_next_order';
@@ -177,28 +179,42 @@ export interface ReturnsQueryParams {
 
 // ==================== CONSTANTS ====================
 
+/** Return action → tone (approved/processed → positive, refund → negative, in-progress → active). */
+export const RETURN_ACTION_TONES: Record<string, StatusTone> = {
+  credit: 'positive',
+  refund: 'negative',
+  replace_next_order: 'active',
+};
+
+/** Pending replacement item status → tone. */
+export const PENDING_ITEM_STATUS_TONES: Record<string, StatusTone> = {
+  pending: 'neutral',
+  added_to_order: 'positive',
+  cancelled: 'negative',
+};
+
 export const RETURN_ACTIONS: {
   label: string;
   value: ReturnAction;
-  color: string;
+  tone: StatusTone;
   description: string;
 }[] = [
   {
     label: 'Credit',
     value: 'credit',
-    color: '#10b981',
+    tone: 'positive',
     description: 'Reduce customer balance (credit for future orders)',
   },
   {
     label: 'Refund',
     value: 'refund',
-    color: '#ef4444',
+    tone: 'negative',
     description: 'Cash refund (money returned to customer)',
   },
   {
     label: 'Replace',
     value: 'replace_next_order',
-    color: '#3b82f6',
+    tone: 'active',
     description: 'Free replacement in next order',
   },
 ];
@@ -206,11 +222,11 @@ export const RETURN_ACTIONS: {
 export const PENDING_ITEM_STATUSES: {
   label: string;
   value: PendingItemStatus;
-  color: string;
+  tone: StatusTone;
 }[] = [
-  { label: 'Pending', value: 'pending', color: '#f59e0b' },
-  { label: 'Added to Order', value: 'added_to_order', color: '#10b981' },
-  { label: 'Cancelled', value: 'cancelled', color: '#ef4444' },
+  { label: 'Pending', value: 'pending', tone: 'neutral' },
+  { label: 'Added to Order', value: 'added_to_order', tone: 'positive' },
+  { label: 'Cancelled', value: 'cancelled', tone: 'negative' },
 ];
 
 // ==================== HELPER FUNCTIONS ====================
@@ -220,10 +236,11 @@ export const getReturnActionLabel = (action: ReturnAction): string => {
   return found?.label || action;
 };
 
-export const getReturnActionColor = (action: ReturnAction): string => {
-  const found = RETURN_ACTIONS.find((a) => a.value === action);
-  return found?.color || '#6b7280';
-};
+/** Resolve a return action to a theme color (tone-based; dark-mode safe). */
+export const getReturnActionColor = (
+  action: ReturnAction | string | null | undefined,
+  colors: Record<string, string>
+): string => toneColor(statusTone(RETURN_ACTION_TONES, action), colors);
 
 export const getReturnActionDescription = (action: ReturnAction): string => {
   const found = RETURN_ACTIONS.find((a) => a.value === action);
@@ -235,10 +252,11 @@ export const getPendingItemStatusLabel = (status: PendingItemStatus): string => 
   return found?.label || status;
 };
 
-export const getPendingItemStatusColor = (status: PendingItemStatus): string => {
-  const found = PENDING_ITEM_STATUSES.find((s) => s.value === status);
-  return found?.color || '#6b7280';
-};
+/** Resolve a pending replacement item status to a theme color (tone-based; dark-mode safe). */
+export const getPendingItemStatusColor = (
+  status: PendingItemStatus | string | null | undefined,
+  colors: Record<string, string>
+): string => toneColor(statusTone(PENDING_ITEM_STATUS_TONES, status), colors);
 
 export const canProcessReturn = (status: string): boolean => {
   return status === 'delivered' || status === 'completed';

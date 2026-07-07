@@ -29,7 +29,7 @@ export default function CartsScreen() {
         <Text
           className="mt-1.5 text-center text-[13px] font-medium"
           style={{ color: colors.muted }}>
-          Browse a connected vendor's catalog and add products to get started.
+          Browse a connected vendor{'’'}s catalog and add products to get started.
         </Text>
         <Pressable
           onPress={() => navigation.navigate('MainTabs', { screen: 'My Vendors' })}

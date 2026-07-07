@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -15,7 +14,7 @@ import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { expenseSchema, ExpenseFormData } from 'validations/expenseValidation';
@@ -31,7 +30,6 @@ import {
   ExpenseDetailResponse,
   EXPENSE_CATEGORIES,
   getCategoryIcon,
-  getCategoryColor,
 } from 'types/expense.types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -263,7 +261,7 @@ export default function ExpenseFormModal({
                 disabled={isSubmitting}
                 className="h-10 w-10 items-center justify-center rounded-full"
                 style={{ backgroundColor: colors.background }}>
-                <MaterialIcons name="close" size={22} color={colors.text} />
+                <MaterialCommunityIcons name="close" size={22} color={colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -281,7 +279,6 @@ export default function ExpenseFormModal({
                     <View className="flex-row flex-wrap gap-2">
                       {allCategories.map((cat) => {
                         const isSelected = field.value.toLowerCase() === cat.value.toLowerCase();
-                        const catColor = getCategoryColor(cat.value);
                         return (
                           <TouchableOpacity
                             key={cat.value}
@@ -289,18 +286,18 @@ export default function ExpenseFormModal({
                             disabled={isSubmitting}
                             className="flex-row items-center rounded-xl px-3 py-2.5"
                             style={{
-                              backgroundColor: isSelected ? catColor : colors.background,
+                              backgroundColor: isSelected ? colors.primary : colors.background,
                               borderWidth: 1,
-                              borderColor: isSelected ? catColor : colors.border,
+                              borderColor: isSelected ? colors.primary : colors.border,
                             }}>
                             <MaterialCommunityIcons
                               name={getCategoryIcon(cat.value) as any}
                               size={18}
-                              color={isSelected ? '#fff' : colors.text}
+                              color={isSelected ? colors.white : colors.text}
                             />
                             <Text
                               className="ml-2 text-sm font-medium"
-                              style={{ color: isSelected ? '#fff' : colors.text }}>
+                              style={{ color: isSelected ? colors.white : colors.text }}>
                               {cat.label}
                             </Text>
                           </TouchableOpacity>
@@ -358,7 +355,7 @@ export default function ExpenseFormModal({
                         year: 'numeric',
                       })}
                     </Text>
-                    <MaterialIcons name="chevron-right" size={20} color={colors.muted} />
+                    <MaterialCommunityIcons name="chevron-right" size={20} color={colors.muted} />
                   </TouchableOpacity>
                 </View>
 
@@ -427,7 +424,7 @@ export default function ExpenseFormModal({
                     backgroundColor: colors.error,
                     opacity: isSubmitting ? 0.5 : 1,
                   }}>
-                  <MaterialIcons name="delete" size={20} color="#fff" />
+                  <MaterialCommunityIcons name="delete-outline" size={20} color={colors.white} />
                 </TouchableOpacity>
               )}
 
@@ -455,10 +452,14 @@ export default function ExpenseFormModal({
                   opacity: isSubmitting ? 0.7 : 1,
                 }}>
                 {isSubmitting ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={colors.white} />
                 ) : (
                   <>
-                    <MaterialIcons name={isEditMode ? 'check' : 'add'} size={18} color="#fff" />
+                    <MaterialCommunityIcons
+                      name={isEditMode ? 'check' : 'plus'}
+                      size={18}
+                      color={colors.white}
+                    />
                     <Text className="ml-1 font-semibold text-white">
                       {isEditMode ? 'Update' : 'Add'}
                     </Text>

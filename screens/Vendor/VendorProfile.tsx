@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   RefreshControl,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -15,8 +14,9 @@ import {
 import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
+import { typo } from 'constants/design';
 import {
   fetchVendorProfile,
   updateVendorProfile,
@@ -180,7 +180,7 @@ export default function VendorProfile() {
               <TouchableOpacity
                 onPress={() => navigation.goBack()}
                 className="mr-3 p-1">
-                <Ionicons name="arrow-back" size={24} color={colors.text} />
+                <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
               </TouchableOpacity>
               <View>
                 <Text className="text-2xl font-bold" style={{ color: colors.text }}>
@@ -196,7 +196,7 @@ export default function VendorProfile() {
                 onPress={handleEdit}
                 className="flex-row items-center rounded-lg px-4 py-2"
                 style={{ backgroundColor: colors.primary }}>
-                <MaterialIcons name="edit" size={16} color="#fff" />
+                <MaterialCommunityIcons name="pencil" size={16} color={colors.white} />
                 <Text className="ml-1 font-medium text-white">Edit</Text>
               </TouchableOpacity>
             ) : (
@@ -220,7 +220,7 @@ export default function VendorProfile() {
                     opacity: updateMutation.isPending ? 0.7 : 1,
                   }}>
                   {updateMutation.isPending ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={colors.white} />
                   ) : (
                     <Text className="font-medium text-white">Save</Text>
                   )}
@@ -237,7 +237,7 @@ export default function VendorProfile() {
               borderWidth: 1,
               borderColor: colors.border,
             }}>
-            <Text className="mb-4 text-sm font-semibold" style={{ color: colors.muted }}>
+            <Text className="mb-4" style={[typo.eyebrow, { color: colors.muted }]}>
               BUSINESS INFORMATION
             </Text>
 
@@ -414,13 +414,15 @@ export default function VendorProfile() {
               borderColor: colors.border,
             }}>
             <View className="mb-4 flex-row items-center justify-between">
-              <Text className="text-sm font-semibold" style={{ color: colors.muted }}>
-                DELIVERY VANS
-              </Text>
+              <Text style={[typo.eyebrow, { color: colors.muted }]}>DELIVERY VANS</Text>
               <TouchableOpacity
                 onPress={() => setShowAddVan(!showAddVan)}
                 className="flex-row items-center">
-                <Ionicons name={showAddVan ? 'close' : 'add'} size={20} color={colors.primary} />
+                <MaterialCommunityIcons
+                  name={showAddVan ? 'close' : 'plus'}
+                  size={20}
+                  color={colors.primary}
+                />
                 <Text className="ml-1 text-sm font-medium" style={{ color: colors.primary }}>
                   {showAddVan ? 'Cancel' : 'Add Van'}
                 </Text>
@@ -452,9 +454,9 @@ export default function VendorProfile() {
                   className="items-center justify-center rounded-lg px-4"
                   style={{ backgroundColor: colors.primary }}>
                   {addVanMutation.isPending ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={colors.white} />
                   ) : (
-                    <Ionicons name="checkmark" size={20} color="#fff" />
+                    <MaterialCommunityIcons name="check" size={20} color={colors.white} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -463,7 +465,7 @@ export default function VendorProfile() {
             {/* Vans List */}
             {vans.length === 0 ? (
               <View className="items-center py-6">
-                <Ionicons name="car-outline" size={32} color={colors.muted} />
+                <MaterialCommunityIcons name="truck-outline" size={32} color={colors.muted} />
                 <Text className="mt-2 text-sm" style={{ color: colors.muted }}>
                   No vans added yet
                 </Text>
@@ -478,8 +480,8 @@ export default function VendorProfile() {
                     <View className="flex-row items-center">
                       <View
                         className="mr-3 h-8 w-8 items-center justify-center rounded-full"
-                        style={{ backgroundColor: colors.primary + '20' }}>
-                        <Ionicons name="car" size={16} color={colors.primary} />
+                        style={{ backgroundColor: colors.primary + '14' }}>
+                        <MaterialCommunityIcons name="truck" size={16} color={colors.primary} />
                       </View>
                       <Text className="font-medium" style={{ color: colors.text }}>
                         {van}
@@ -489,7 +491,7 @@ export default function VendorProfile() {
                       onPress={() => handleRemoveVan(van)}
                       disabled={removeVanMutation.isPending}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                      <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                      <MaterialCommunityIcons name="delete-outline" size={18} color={colors.error} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -505,7 +507,7 @@ export default function VendorProfile() {
               borderWidth: 1,
               borderColor: colors.border,
             }}>
-            <Text className="mb-4 text-sm font-semibold" style={{ color: colors.muted }}>
+            <Text className="mb-4" style={[typo.eyebrow, { color: colors.muted }]}>
               ACCOUNT STATUS
             </Text>
             <View className="flex-row items-center justify-between">
@@ -513,12 +515,13 @@ export default function VendorProfile() {
               <View
                 className="rounded-full px-3 py-1"
                 style={{
-                  backgroundColor: profile?.status === 'active' ? '#d1fae5' : '#fef3c7',
+                  backgroundColor:
+                    profile?.status === 'active' ? colors.success + '14' : colors.muted + '14',
                 }}>
                 <Text
                   className="text-sm font-medium capitalize"
                   style={{
-                    color: profile?.status === 'active' ? '#059669' : '#d97706',
+                    color: profile?.status === 'active' ? colors.success : colors.muted,
                   }}>
                   {profile?.status || 'Unknown'}
                 </Text>

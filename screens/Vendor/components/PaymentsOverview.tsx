@@ -1,7 +1,7 @@
 // screens/Vendor/components/PaymentsOverview.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { MaterialCommunityIcons, MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchPaymentOverview, PaymentOverview } from 'api/actions/paymentActions';
@@ -36,7 +36,7 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
   if (error) {
     return (
       <View className="items-center py-16 px-6">
-        <MaterialIcons name="error-outline" size={40} color={colors.error} />
+        <MaterialCommunityIcons name="alert-circle-outline" size={40} color={colors.error} />
         <Text className="mt-3 text-sm" style={{ color: colors.muted }}>
           Failed to load overview
         </Text>
@@ -70,7 +70,7 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
         onPress={handleCopy}
         className="mb-3 flex-row items-center self-end rounded-full px-3"
         style={{ height: 28, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-        <Ionicons name="copy-outline" size={13} color={colors.muted} />
+        <MaterialCommunityIcons name="content-copy" size={13} color={colors.muted} />
         <Text className="ml-1.5 text-xs" style={{ color: colors.muted }}>Copy</Text>
       </TouchableOpacity>
 
@@ -92,7 +92,7 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
 
       {/* Profit row */}
       <View className="mb-3 flex-row gap-3">
-        <View className="flex-1 rounded-2xl p-4" style={{ backgroundColor: '#8b5cf6' }}>
+        <View className="flex-1 rounded-2xl p-4" style={{ backgroundColor: colors.primary }}>
           <Text className="text-2xl font-bold text-white">
             {formatPrice(overview.grossProfit)}
           </Text>
@@ -157,13 +157,13 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
       <View className="mb-4 flex-row gap-2">
         {([
           { key: 'paid' as const, label: 'Paid', color: colors.success },
-          { key: 'partial' as const, label: 'Partial', color: '#f59e0b' },
+          { key: 'partial' as const, label: 'Partial', color: colors.muted },
           { key: 'unpaid' as const, label: 'Unpaid', color: colors.error },
         ]).map((s) => (
           <View
             key={s.key}
             className="flex-1 items-center rounded-xl p-3"
-            style={{ backgroundColor: s.color + '12' }}>
+            style={{ backgroundColor: s.color + '14' }}>
             <Text className="text-lg font-bold" style={{ color: s.color }}>
               {statuses[s.key]?.count || 0}
             </Text>
@@ -182,7 +182,7 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
           style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center">
-              <Ionicons name="arrow-up-circle" size={16} color={colors.error} />
+              <MaterialCommunityIcons name="arrow-up-circle" size={16} color={colors.error} />
               <Text className="ml-2 text-sm" style={{ color: colors.text }}>
                 Expenses
               </Text>

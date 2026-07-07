@@ -1,7 +1,7 @@
 // screens/Vendor/components/PaymentsOutstanding.tsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { MaterialIcons, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import {
@@ -10,7 +10,8 @@ import {
   OutstandingOrder,
   AgingData,
 } from 'api/actions/paymentActions';
-import { formatPrice, formatShortDate, getPaymentStatusColor } from 'types/order.types';
+import { formatPrice, formatShortDate } from 'types/order.types';
+import { typo } from 'constants/design';
 import { copyToClipboard, formatOutstandingText, formatAgingText } from 'utils/paymentClipboard';
 
 type ViewMode = 'orders' | 'aging';
@@ -30,11 +31,20 @@ const SORT_OPTIONS: { key: SortField; label: string }[] = [
   { key: 'orderDate', label: 'Date' },
 ];
 
-const AGING_COLORS: Record<string, string> = {
-  '0-7': '#10b981',
-  '8-15': '#f59e0b',
-  '16-30': '#f97316',
-  '30+': '#ef4444',
+// Aging severity ramp resolved from theme tokens (dark-mode safe).
+const agingColor = (key: string, colors: Record<string, string>): string => {
+  switch (key) {
+    case '0-7':
+      return colors.success;
+    case '8-15':
+      return colors.muted;
+    case '16-30':
+      return colors.primary;
+    case '30+':
+      return colors.error;
+    default:
+      return colors.muted;
+  }
 };
 
 const AGING_LABELS: Record<string, string> = {
@@ -117,7 +127,7 @@ export default function PaymentsOutstandingTab({
                 style={{ backgroundColor: active ? colors.primary : 'transparent' }}>
                 <Text
                   className="text-xs font-semibold"
-                  style={{ color: active ? '#fff' : colors.muted }}>
+                  style={{ color: active ? colors.white : colors.muted }}>
                   {mode === 'orders' ? 'Orders' : 'Aging Report'}
                 </Text>
               </TouchableOpacity>
@@ -128,7 +138,7 @@ export default function PaymentsOutstandingTab({
           onPress={handleCopy}
           className="flex-row items-center rounded-full px-3"
           style={{ height: 30, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-          <Ionicons name="copy-outline" size={13} color={colors.muted} />
+          <MaterialCommunityIcons name="content-copy" size={13} color={colors.muted} />
         </TouchableOpacity>
       </View>
 
@@ -142,7 +152,7 @@ export default function PaymentsOutstandingTab({
               <Text className="text-sm" style={{ color: colors.text }}>
                 {summary.totalOrders} unpaid order{summary.totalOrders !== 1 ? 's' : ''}
               </Text>
-              <Text className="text-lg font-bold" style={{ color: colors.error }}>
+              <Text className="text-lg" style={[typo.num, { color: colors.error }]}>
                 {formatPrice(summary.totalOutstanding)}
               </Text>
             </View>
@@ -174,8 +184,8 @@ export default function PaymentsOutstandingTab({
                       {opt.label}
                     </Text>
                     {active && (
-                      <MaterialIcons
-                        name={sortOrder === 'DESC' ? 'arrow-downward' : 'arrow-upward'}
+                      <MaterialCommunityIcons
+                        name={sortOrder === 'DESC' ? 'arrow-down' : 'arrow-up'}
                         size={12}
                         color={colors.primary}
                       />
@@ -212,7 +222,7 @@ export default function PaymentsOutstandingTab({
                       </Text>
                     </View>
                     <View className="items-end">
-                      <Text className="text-base font-bold" style={{ color: colors.error }}>
+                      <Text className="text-base" style={[typo.num, { color: colors.error }]}>
                         {formatPrice(item.balanceAmount)}
                       </Text>
                       <Text
@@ -233,7 +243,7 @@ export default function PaymentsOutstandingTab({
                     onPress={() => setPage(Math.max(1, page - 1))}
                     disabled={page === 1}
                     style={{ opacity: page === 1 ? 0.4 : 1 }}>
-                    <MaterialIcons name="chevron-left" size={26} color={colors.text} />
+                    <MaterialCommunityIcons name="chevron-left" size={26} color={colors.text} />
                   </TouchableOpacity>
                   <Text className="text-xs" style={{ color: colors.muted }}>
                     {page} / {pagination.totalPages}
@@ -242,7 +252,7 @@ export default function PaymentsOutstandingTab({
                     onPress={() => setPage(Math.min(pagination.totalPages, page + 1))}
                     disabled={page === pagination.totalPages}
                     style={{ opacity: page === pagination.totalPages ? 0.4 : 1 }}>
-                    <MaterialIcons name="chevron-right" size={26} color={colors.text} />
+                    <MaterialCommunityIcons name="chevron-right" size={26} color={colors.text} />
                   </TouchableOpacity>
                 </View>
               )}
@@ -259,7 +269,7 @@ export default function PaymentsOutstandingTab({
               <Text className="text-xs" style={{ color: colors.muted }}>
                 Total Outstanding · {aging.totalOrdersOutstanding} orders
               </Text>
-              <Text className="text-xl font-bold" style={{ color: colors.error }}>
+              <Text className="text-xl" style={[typo.num, { color: colors.error }]}>
                 {formatPrice(aging.totalOutstanding)}
               </Text>
             </View>
@@ -274,7 +284,7 @@ export default function PaymentsOutstandingTab({
                     key={key}
                     style={{
                       width: `${bucket.percentage}%`,
-                      backgroundColor: AGING_COLORS[key] || colors.muted,
+                      backgroundColor: agingColor(key, colors),
                       minWidth: bucket.percentage > 0 ? 3 : 0,
                     }}
                   />
@@ -285,7 +295,7 @@ export default function PaymentsOutstandingTab({
                   <View className="flex-row items-center">
                     <View
                       className="mr-2 h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: AGING_COLORS[key] || colors.muted }}
+                      style={{ backgroundColor: agingColor(key, colors) }}
                     />
                     <Text className="text-xs" style={{ color: colors.text }}>
                       {AGING_LABELS[key] || key}
@@ -295,7 +305,7 @@ export default function PaymentsOutstandingTab({
                     <Text className="text-xs" style={{ color: colors.muted }}>
                       {bucket.count}
                     </Text>
-                    <Text className="text-sm font-bold" style={{ color: AGING_COLORS[key] }}>
+                    <Text className="text-sm" style={[typo.num, { color: agingColor(key, colors) }]}>
                       {formatPrice(bucket.amount)}
                     </Text>
                   </View>
@@ -315,7 +325,7 @@ export default function PaymentsOutstandingTab({
                     <Text className="text-sm font-semibold" style={{ color: colors.text }}>
                       {customer.businessName}
                     </Text>
-                    <Text className="text-sm font-bold" style={{ color: colors.error }}>
+                    <Text className="text-sm" style={[typo.num, { color: colors.error }]}>
                       {formatPrice(customer.total)}
                     </Text>
                   </View>
@@ -327,7 +337,7 @@ export default function PaymentsOutstandingTab({
                           key={key}
                           style={{
                             width: `${pct}%`,
-                            backgroundColor: AGING_COLORS[key] || colors.muted,
+                            backgroundColor: agingColor(key, colors),
                             minWidth: pct > 0 ? 2 : 0,
                           }}
                         />

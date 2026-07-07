@@ -13,7 +13,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchOrderDetails } from 'api/actions/orderActions';
@@ -231,7 +231,7 @@ export default function ProcessReturnModal({
               onPress={onClose}
               className="h-10 w-10 items-center justify-center rounded-full"
               style={{ backgroundColor: colors.background }}>
-              <MaterialIcons name="close" size={22} color={colors.text} />
+              <MaterialCommunityIcons name="close" size={22} color={colors.text} />
             </Pressable>
           </View>
 
@@ -244,7 +244,7 @@ export default function ProcessReturnModal({
             </View>
           ) : !order ? (
             <View className="flex-1 items-center justify-center px-6">
-              <MaterialIcons name="error-outline" size={64} color={colors.error} />
+              <MaterialCommunityIcons name="alert-circle-outline" size={64} color={colors.error} />
               <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
                 Failed to load order
               </Text>
@@ -267,7 +267,7 @@ export default function ProcessReturnModal({
                 {/* Items */}
                 {returnItems.length === 0 ? (
                   <View className="items-center py-8">
-                    <MaterialIcons name="check-circle" size={48} color={colors.success} />
+                    <MaterialCommunityIcons name="check-circle" size={48} color={colors.success} />
                     <Text className="mt-3 text-sm" style={{ color: colors.muted }}>
                       No returnable items on this order
                     </Text>
@@ -294,7 +294,7 @@ export default function ProcessReturnModal({
                             borderColor: colors.border,
                           }}>
                           {item.selected && (
-                            <MaterialIcons name="check" size={16} color="#fff" />
+                            <MaterialCommunityIcons name="check" size={16} color={colors.white} />
                           )}
                         </View>
                         <View className="flex-1">
@@ -343,12 +343,12 @@ export default function ProcessReturnModal({
                             <View className="gap-2">
                               {RETURN_ACTIONS.map((action) => {
                                 const isActive = item.action === action.value;
-                                const actionColor = getReturnActionColor(action.value);
+                                const actionColor = getReturnActionColor(action.value, colors);
                                 const icon =
                                   action.value === 'credit'
-                                    ? 'account-balance-wallet'
+                                    ? 'wallet-outline'
                                     : action.value === 'refund'
-                                    ? 'payments'
+                                    ? 'cash-refund'
                                     : 'autorenew';
                                 return (
                                   <TouchableOpacity
@@ -363,7 +363,7 @@ export default function ProcessReturnModal({
                                     <View
                                       className="h-9 w-9 items-center justify-center rounded-full mr-3"
                                       style={{ backgroundColor: isActive ? actionColor + '25' : colors.background }}>
-                                      <MaterialIcons
+                                      <MaterialCommunityIcons
                                         name={icon}
                                         size={18}
                                         color={isActive ? actionColor : colors.muted}
@@ -382,7 +382,7 @@ export default function ProcessReturnModal({
                                       </Text>
                                     </View>
                                     {isActive && (
-                                      <MaterialIcons name="check-circle" size={20} color={actionColor} />
+                                      <MaterialCommunityIcons name="check-circle" size={20} color={actionColor} />
                                     )}
                                   </TouchableOpacity>
                                 );
@@ -443,7 +443,7 @@ export default function ProcessReturnModal({
                   <View
                     className="mb-4 rounded-2xl overflow-hidden"
                     style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
-                    <View className="px-4 py-3" style={{ backgroundColor: '#f59e0b15' }}>
+                    <View className="px-4 py-3" style={{ backgroundColor: colors.muted + '14' }}>
                       <Text className="text-sm font-bold" style={{ color: colors.text }}>
                         Return Summary
                       </Text>
@@ -470,12 +470,12 @@ export default function ProcessReturnModal({
                       {replaceCount > 0 && (
                         <View className="flex-row items-center justify-between">
                           <View className="flex-row items-center">
-                            <MaterialIcons name="autorenew" size={14} color="#3b82f6" />
+                            <MaterialCommunityIcons name="autorenew" size={14} color={colors.primary} />
                             <Text className="ml-1 text-sm" style={{ color: colors.muted }}>
                               Free replacements
                             </Text>
                           </View>
-                          <Text className="text-sm font-semibold" style={{ color: '#3b82f6' }}>
+                          <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
                             {replaceCount} item{replaceCount !== 1 ? 's' : ''} in next order
                           </Text>
                         </View>
@@ -519,14 +519,14 @@ export default function ProcessReturnModal({
                   className="flex-row items-center justify-center rounded-xl py-3.5"
                   style={{
                     backgroundColor:
-                      selectedItems.length === 0 ? colors.muted : '#f59e0b',
+                      selectedItems.length === 0 ? colors.muted : colors.primary,
                     opacity: returnMutation.isPending ? 0.7 : 1,
                   }}>
                   {returnMutation.isPending ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={colors.white} />
                   ) : (
                     <>
-                      <MaterialIcons name="assignment-return" size={20} color="#fff" />
+                      <MaterialCommunityIcons name="arrow-u-left-top" size={20} color={colors.white} />
                       <Text className="ml-2 text-base font-bold text-white">
                         Process Return ({selectedItems.length} item{selectedItems.length !== 1 ? 's' : ''})
                       </Text>

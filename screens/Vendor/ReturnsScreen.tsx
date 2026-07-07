@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeContext } from 'context/ThemeProvider';
@@ -23,6 +23,7 @@ import {
   getReturnActionColor,
   getReturnActionLabel,
 } from 'types/return.types';
+import { typo } from 'constants/design';
 import ReturnDetailModal from './components/ReturnDetailModal';
 import SearchBar from 'components/SearchBar';
 
@@ -90,7 +91,7 @@ export default function ReturnsScreen() {
           }}>
           <View className="mb-2 flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
-              <MaterialIcons name="assignment-return" size={16} color={colors.primary} />
+              <MaterialCommunityIcons name="arrow-u-left-top" size={16} color={colors.primary} />
               <Text className="text-sm font-bold" style={{ color: colors.primary }}>
                 {item.order?.orderNumber || `Return #${item.id}`}
               </Text>
@@ -110,12 +111,12 @@ export default function ReturnsScreen() {
           {uniqueActions.length > 0 && (
             <View className="mb-2 flex-row flex-wrap gap-1.5">
               {uniqueActions.map((action) => {
-                const actionColor = getReturnActionColor(action);
+                const actionColor = getReturnActionColor(action, colors);
                 return (
                   <View
                     key={action}
                     className="rounded-full px-2.5 py-0.5"
-                    style={{ backgroundColor: actionColor + '20' }}>
+                    style={{ backgroundColor: actionColor + '14' }}>
                     <Text className="text-xs font-semibold" style={{ color: actionColor }}>
                       {getReturnActionLabel(action)}
                     </Text>
@@ -129,12 +130,12 @@ export default function ReturnsScreen() {
             className="flex-row items-center justify-between border-t pt-3"
             style={{ borderColor: colors.border }}>
             <View className="flex-row items-center">
-              <MaterialIcons name="inventory" size={14} color={colors.muted} />
+              <MaterialCommunityIcons name="package-variant" size={14} color={colors.muted} />
               <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
                 {itemCount} item{itemCount !== 1 ? 's' : ''} returned
               </Text>
             </View>
-            <Text className="text-lg font-bold" style={{ color: colors.text }}>
+            <Text className="text-lg" style={[typo.num, { color: colors.text }]}>
               {formatPrice(item.totalRefundAmount)}
             </Text>
           </View>
@@ -148,7 +149,7 @@ export default function ReturnsScreen() {
     if (isLoading) return null;
     return (
       <View className="flex-1 items-center justify-center px-6 py-20">
-        <MaterialIcons name="assignment-return" size={64} color={colors.muted} />
+        <MaterialCommunityIcons name="arrow-u-left-top" size={64} color={colors.muted} />
         <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
           No returns found
         </Text>
@@ -195,7 +196,7 @@ export default function ReturnsScreen() {
           {expireMutation.isPending ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : (
-            <MaterialIcons name="timer-off" size={16} color={colors.primary} />
+            <MaterialCommunityIcons name="timer-off" size={16} color={colors.primary} />
           )}
           <Text className="ml-1.5 text-sm font-medium" style={{ color: colors.text }}>
             Expire Old Items

@@ -10,7 +10,7 @@ import {
   FlatList,
   ScrollView,
 } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchOrdersByCustomer } from 'api/actions/orderActions';
@@ -22,6 +22,7 @@ import {
   getPaymentStatusColor,
   getPaymentStatusLabel,
 } from 'types/order.types';
+import { typo } from 'constants/design';
 import { Customer } from 'types/customer.types';
 import OrderDetailModal from './OrderDetailModal';
 import PaymentModal from './PaymentModal';
@@ -109,7 +110,7 @@ export default function CustomerOrderDetailsModal({
           style={{ backgroundColor: colors.card, borderColor: colors.border }}>
           <View className="flex-row items-center flex-1">
             <TouchableOpacity onPress={handleClose} className="mr-3 p-1">
-              <Ionicons name="arrow-back" size={24} color={colors.text} />
+              <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
             </TouchableOpacity>
             <View className="flex-1">
               <Text className="text-xl font-bold" style={{ color: colors.text }}>
@@ -149,7 +150,7 @@ export default function CustomerOrderDetailsModal({
               <Text className="text-xs" style={{ color: colors.muted }}>
                 Total Spent
               </Text>
-              <Text className="text-lg font-bold" style={{ color: colors.primary }}>
+              <Text className="text-lg" style={[typo.num, { color: colors.primary }]}>
                 {formatPrice(stats.totalSpent)}
               </Text>
             </View>
@@ -164,8 +165,8 @@ export default function CustomerOrderDetailsModal({
                 Balance
               </Text>
               <Text
-                className="text-lg font-bold"
-                style={{ color: stats.totalBalance > 0 ? colors.error : colors.success }}>
+                className="text-lg"
+                style={[typo.num, { color: stats.totalBalance > 0 ? colors.error : colors.success }]}>
                 {formatPrice(stats.totalBalance)}
               </Text>
             </View>
@@ -190,12 +191,12 @@ export default function CustomerOrderDetailsModal({
               }}>
               <Text
                 className="text-sm font-medium"
-                style={{ color: !statusFilter ? '#fff' : colors.text }}>
+                style={{ color: !statusFilter ? colors.white : colors.text }}>
                 All
               </Text>
             </TouchableOpacity>
             {['pending', 'confirmed', 'delivered', 'completed'].map((status) => {
-              const color = getStatusColor(status as any);
+              const color = getStatusColor(status, colors);
               return (
                 <TouchableOpacity
                   key={status}
@@ -210,8 +211,8 @@ export default function CustomerOrderDetailsModal({
                   }}>
                   <Text
                     className="text-sm font-medium"
-                    style={{ color: statusFilter === status ? '#fff' : colors.text }}>
-                    {getStatusLabel(status as any)}
+                    style={{ color: statusFilter === status ? colors.white : colors.text }}>
+                    {getStatusLabel(status)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -242,7 +243,7 @@ export default function CustomerOrderDetailsModal({
             }
             ListEmptyComponent={
               <View className="items-center py-16">
-                <MaterialIcons name="receipt-long" size={48} color={colors.muted} />
+                <MaterialCommunityIcons name="receipt" size={48} color={colors.muted} />
                 <Text className="mt-4 text-center" style={{ color: colors.muted }}>
                   No orders found for this customer
                 </Text>
@@ -292,8 +293,8 @@ function CustomerOrderCard({
   isSelected,
   onPress,
 }: CustomerOrderCardProps) {
-  const statusColor = getStatusColor(order.status);
-  const paymentColor = getPaymentStatusColor(order.paymentStatus);
+  const statusColor = getStatusColor(order.status, colors);
+  const paymentColor = getPaymentStatusColor(order.paymentStatus, colors);
   const itemCount = order.items?.length || 0;
 
   return (
@@ -311,7 +312,7 @@ function CustomerOrderCard({
         <Text className="font-bold" style={{ color: colors.primary }}>
           {order.orderNumber}
         </Text>
-        <View className="rounded-full px-2 py-1" style={{ backgroundColor: statusColor + '20' }}>
+        <View className="rounded-full px-2 py-1" style={{ backgroundColor: statusColor + '14' }}>
           <Text className="text-xs font-bold" style={{ color: statusColor }}>
             {getStatusLabel(order.status)}
           </Text>
@@ -321,21 +322,21 @@ function CustomerOrderCard({
       {/* Order Details */}
       <View className="mb-2 flex-row items-center gap-4">
         <View className="flex-row items-center">
-          <MaterialIcons name="event" size={14} color={colors.muted} />
+          <MaterialCommunityIcons name="calendar" size={14} color={colors.muted} />
           <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
             {formatShortDate(order.orderDate)}
           </Text>
         </View>
         {order.deliveryDate && (
           <View className="flex-row items-center">
-            <MaterialIcons name="local-shipping" size={14} color={colors.muted} />
+            <MaterialCommunityIcons name="truck-outline" size={14} color={colors.muted} />
             <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
               {formatShortDate(order.deliveryDate)}
             </Text>
           </View>
         )}
         <View className="flex-row items-center">
-          <MaterialIcons name="shopping-basket" size={14} color={colors.muted} />
+          <MaterialCommunityIcons name="basket" size={14} color={colors.muted} />
           <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
             {itemCount} item{itemCount !== 1 ? 's' : ''}
           </Text>
@@ -368,7 +369,7 @@ function CustomerOrderCard({
         className="flex-row items-center justify-between border-t pt-2"
         style={{ borderColor: colors.border }}>
         <View className="flex-row items-center gap-2">
-          <View className="rounded-md px-2 py-1" style={{ backgroundColor: paymentColor + '15' }}>
+          <View className="rounded-md px-2 py-1" style={{ backgroundColor: paymentColor + '14' }}>
             <Text className="text-xs font-semibold" style={{ color: paymentColor }}>
               {getPaymentStatusLabel(order.paymentStatus)}
             </Text>
@@ -379,7 +380,7 @@ function CustomerOrderCard({
             </Text>
           )}
         </View>
-        <Text className="font-bold" style={{ color: colors.text }}>
+        <Text style={[typo.num, { color: colors.text }]}>
           {formatPrice(order.totalAmount)}
         </Text>
       </View>

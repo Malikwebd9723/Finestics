@@ -1,7 +1,7 @@
 // screens/Vendor/components/PaymentsReports.tsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import {
@@ -89,7 +89,7 @@ export default function PaymentsReportsTab({ startDate, endDate, isActive }: Pro
                 style={{ backgroundColor: active ? colors.primary : 'transparent' }}>
                 <Text
                   className="text-xs font-semibold"
-                  style={{ color: active ? '#fff' : colors.muted }}>
+                  style={{ color: active ? colors.white : colors.muted }}>
                   {opt.label}
                 </Text>
               </TouchableOpacity>
@@ -100,7 +100,7 @@ export default function PaymentsReportsTab({ startDate, endDate, isActive }: Pro
           onPress={handleCopy}
           className="flex-row items-center rounded-full px-3"
           style={{ height: 30, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-          <Ionicons name="copy-outline" size={13} color={colors.muted} />
+          <MaterialCommunityIcons name="content-copy" size={13} color={colors.muted} />
         </TouchableOpacity>
       </View>
 
@@ -129,7 +129,7 @@ export default function PaymentsReportsTab({ startDate, endDate, isActive }: Pro
                     }}>
                     <Text
                       className="text-xs font-medium"
-                      style={{ color: active ? '#fff' : colors.muted }}>
+                      style={{ color: active ? colors.white : colors.muted }}>
                       {opt.label}
                     </Text>
                   </TouchableOpacity>
@@ -206,8 +206,8 @@ export default function PaymentsReportsTab({ startDate, endDate, isActive }: Pro
                     style={{
                       backgroundColor:
                         (salesReport.summary.netMargin || 0) >= 0
-                          ? colors.success + '15'
-                          : colors.error + '15',
+                          ? colors.success + '14'
+                          : colors.error + '14',
                     }}>
                     <Text
                       className="text-sm font-bold"
@@ -323,7 +323,7 @@ export default function PaymentsReportsTab({ startDate, endDate, isActive }: Pro
                         </Text>
                       )}
                     </View>
-                    <Text className="text-sm font-medium" style={{ color: '#f59e0b' }}>
+                    <Text className="text-sm font-medium" style={{ color: colors.muted }}>
                       -{formatPrice(pnlCurrent.revenue?.returns || 0)}
                     </Text>
                   </View>
@@ -468,7 +468,7 @@ export default function PaymentsReportsTab({ startDate, endDate, isActive }: Pro
                         <Text className="text-xs" style={{ color: colors.muted }}>
                           {formatPrice(row.previous)}
                         </Text>
-                        <Ionicons name="arrow-forward" size={10} color={colors.muted} />
+                        <MaterialCommunityIcons name="arrow-right" size={10} color={colors.muted} />
                         <Text className="text-xs font-bold" style={{ color: colors.text }}>
                           {formatPrice(row.current)}
                         </Text>
@@ -498,7 +498,7 @@ function ChangeChip({ value, colors }: { value: number | undefined; colors: any 
   const isPositive = value >= 0;
   return (
     <View className="flex-row items-center">
-      <Ionicons
+      <MaterialCommunityIcons
         name={isPositive ? 'arrow-up' : 'arrow-down'}
         size={10}
         color={isPositive ? colors.success : colors.error}

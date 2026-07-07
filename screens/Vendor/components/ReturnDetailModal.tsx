@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchReturnDetail, undoReturn } from 'api/actions/returnActions';
@@ -25,6 +25,7 @@ import {
   getReturnActionColor,
   getReturnActionLabel,
 } from 'types/return.types';
+import { typo } from 'constants/design';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { height } = Dimensions.get('window');
@@ -126,7 +127,7 @@ export default function ReturnDetailModal({
               onPress={onClose}
               className="h-10 w-10 items-center justify-center rounded-full"
               style={{ backgroundColor: colors.background }}>
-              <MaterialIcons name="close" size={22} color={colors.text} />
+              <MaterialCommunityIcons name="close" size={22} color={colors.text} />
             </Pressable>
           </View>
 
@@ -139,7 +140,7 @@ export default function ReturnDetailModal({
             </View>
           ) : error || !returnData ? (
             <View className="flex-1 items-center justify-center px-6">
-              <MaterialIcons name="error-outline" size={64} color={colors.error} />
+              <MaterialCommunityIcons name="alert-circle-outline" size={64} color={colors.error} />
               <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
                 Failed to load return
               </Text>
@@ -150,9 +151,9 @@ export default function ReturnDetailModal({
               {/* Return Info Card */}
               <View className="mb-4 rounded-2xl p-4" style={{ backgroundColor: colors.background }}>
                 <View className="mb-3 flex-row items-center">
-                  <MaterialIcons name="assignment-return" size={18} color={colors.primary} />
-                  <Text className="ml-2 text-base font-bold" style={{ color: colors.text }}>
-                    Return Info
+                  <MaterialCommunityIcons name="arrow-u-left-top" size={18} color={colors.primary} />
+                  <Text className="ml-2" style={[typo.eyebrow, { color: colors.muted }]}>
+                    RETURN INFO
                   </Text>
                 </View>
                 <View className="gap-2">
@@ -164,7 +165,7 @@ export default function ReturnDetailModal({
                   </View>
                   <View className="flex-row justify-between">
                     <Text className="text-sm" style={{ color: colors.muted }}>Total Refund</Text>
-                    <Text className="text-sm font-bold" style={{ color: colors.primary }}>
+                    <Text className="text-sm" style={[typo.num, { color: colors.primary }]}>
                       {formatPrice(returnData.totalRefundAmount)}
                     </Text>
                   </View>
@@ -217,9 +218,9 @@ export default function ReturnDetailModal({
               {returnData.order && (
                 <View className="mb-4 rounded-2xl p-4" style={{ backgroundColor: colors.background }}>
                   <View className="mb-3 flex-row items-center">
-                    <MaterialIcons name="receipt" size={18} color={colors.primary} />
-                    <Text className="ml-2 text-base font-bold" style={{ color: colors.text }}>
-                      Order Info
+                    <MaterialCommunityIcons name="receipt" size={18} color={colors.primary} />
+                    <Text className="ml-2" style={[typo.eyebrow, { color: colors.muted }]}>
+                      ORDER INFO
                     </Text>
                   </View>
                   <View className="gap-2">
@@ -258,13 +259,13 @@ export default function ReturnDetailModal({
               {/* Return Items Card */}
               <View className="mb-4 rounded-2xl p-4" style={{ backgroundColor: colors.background }}>
                 <View className="mb-3 flex-row items-center">
-                  <MaterialIcons name="inventory" size={18} color={colors.primary} />
-                  <Text className="ml-2 text-base font-bold" style={{ color: colors.text }}>
-                    Returned Items ({returnData.items?.length || 0})
+                  <MaterialCommunityIcons name="package-variant" size={18} color={colors.primary} />
+                  <Text className="ml-2" style={[typo.eyebrow, { color: colors.muted }]}>
+                    RETURNED ITEMS ({returnData.items?.length || 0})
                   </Text>
                 </View>
                 {returnData.items?.map((item, index) => {
-                  const actionColor = getReturnActionColor(item.action);
+                  const actionColor = getReturnActionColor(item.action, colors);
                   return (
                     <View
                       key={item.id}
@@ -280,12 +281,12 @@ export default function ReturnDetailModal({
                           </Text>
                         </View>
                         <View className="items-end">
-                          <Text className="font-bold" style={{ color: colors.text }}>
+                          <Text style={[typo.num, { color: colors.text }]}>
                             {formatPrice(item.refundAmount)}
                           </Text>
                           <View
                             className="mt-1 rounded px-1.5 py-0.5"
-                            style={{ backgroundColor: actionColor + '20' }}>
+                            style={{ backgroundColor: actionColor + '14' }}>
                             <Text className="text-xs font-semibold" style={{ color: actionColor }}>
                               {getReturnActionLabel(item.action)}
                             </Text>
@@ -337,7 +338,7 @@ export default function ReturnDetailModal({
                   <ActivityIndicator size="small" color={colors.error} />
                 ) : (
                   <View className="flex-row items-center">
-                    <MaterialIcons name="undo" size={18} color={colors.error} />
+                    <MaterialCommunityIcons name="undo" size={18} color={colors.error} />
                     <Text className="ml-2 text-sm font-bold" style={{ color: colors.error }}>
                       Undo Return
                     </Text>

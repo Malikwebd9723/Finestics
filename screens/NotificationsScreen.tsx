@@ -132,7 +132,7 @@ export default function NotificationsScreen() {
               <MaterialCommunityIcons name="bell-outline" size={30} color={colors.muted} />
             </View>
             <Text style={[typo.title, { color: colors.text, fontSize: 18 }]}>
-              You're all caught up
+              You{'’'}re all caught up
             </Text>
             <Text className="mt-1 text-center text-sm" style={{ color: colors.muted }}>
               Order updates and connection activity will land here.

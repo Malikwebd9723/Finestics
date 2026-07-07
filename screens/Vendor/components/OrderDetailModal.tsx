@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import {
@@ -42,6 +42,7 @@ import {
   canDeleteOrder,
 } from 'types/order.types';
 import { canProcessReturn, getReturnActionColor, getReturnActionLabel } from 'types/return.types';
+import { typo } from 'constants/design';
 import ProcessReturnModal from './ProcessReturnModal';
 import ReturnDetailModal from './ReturnDetailModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -118,12 +119,12 @@ const generateInvoiceHTML = (order: any, vendor: any) => {
       const ri = returnInfoByItemId[item.id];
       const returnLabel = ri
         ? `<div style="font-size: 11px; margin-top: 3px;">
-            <span style="color: #f59e0b; font-weight: bold;">Returned: ${escapeHtml(ri.returnedQty)} ${escapeHtml(item.unit)}</span>
+            <span style="color: #4b5563; font-weight: bold;">Returned: ${escapeHtml(ri.returnedQty)} ${escapeHtml(item.unit)}</span>
             ${ri.actions
-              .map((a: string) => {
-                const color = a === 'Credit' ? '#10b981' : a === 'Refund' ? '#ef4444' : '#3b82f6';
-                return `<span style="background: ${color}20; color: ${color}; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; margin-left: 4px;">${escapeHtml(a)}</span>`;
-              })
+              .map(
+                (a: string) =>
+                  `<span style="background: #f3f4f6; color: #374151; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; margin-left: 4px;">${escapeHtml(a)}</span>`
+              )
               .join('')}
           </div>`
         : '';
@@ -234,7 +235,7 @@ const generateInvoiceHTML = (order: any, vendor: any) => {
             <span>${formatPrice(toNumber(order.deliveryFee))}</span>
           </div>
           ${discount > 0 ? `<div class="summary-row"><span>Discount</span><span>-${formatPrice(discount)}</span></div>` : ''}
-          ${returnsValue > 0 ? `<div class="summary-row"><span>Returns / Refunds</span><span style="color: #ef4444;">-${formatPrice(returnsValue)}</span></div>` : ''}
+          ${returnsValue > 0 ? `<div class="summary-row"><span>Returns / Refunds</span><span style="font-weight: bold;">-${formatPrice(returnsValue)}</span></div>` : ''}
           <div class="summary-row total">
             <span>TOTAL</span>
             <span>${formatPrice(toNumber(order.totalAmount))}</span>
@@ -245,11 +246,11 @@ const generateInvoiceHTML = (order: any, vendor: any) => {
           <div class="summary" style="border-top: 1px solid #e5e7eb; padding-top: 15px;">
             <div class="summary-row">
               <span>Paid Amount</span>
-              <span style="color: #10b981;">${formatPrice(toNumber(order.paidAmount))}</span>
+              <span>${formatPrice(toNumber(order.paidAmount))}</span>
             </div>
             <div class="summary-row">
               <span>Balance Due</span>
-              <span style="color: #ef4444;">${formatPrice(toNumber(order.balanceAmount))}</span>
+              <span style="font-weight: bold;">${formatPrice(toNumber(order.balanceAmount))}</span>
             </div>
           </div>
         ` : ''}
@@ -421,8 +422,8 @@ export default function OrderDetailModal({
 
   if (!visible) return null;
 
-  const statusColor = order ? getStatusColor(order.status) : '#6b7280';
-  const paymentColor = order ? getPaymentStatusColor(order.paymentStatus) : '#6b7280';
+  const statusColor = order ? getStatusColor(order.status, colors) : colors.muted;
+  const paymentColor = order ? getPaymentStatusColor(order.paymentStatus, colors) : colors.muted;
 
   // Get available statuses (all except current)
   const availableStatuses = order ? getNextStatuses(order.status) : [];
@@ -457,7 +458,7 @@ export default function OrderDetailModal({
               onPress={onClose}
               className="h-10 w-10 items-center justify-center rounded-full"
               style={{ backgroundColor: colors.background }}>
-              <MaterialIcons name="close" size={22} color={colors.text} />
+              <MaterialCommunityIcons name="close" size={22} color={colors.text} />
             </Pressable>
           </View>
 
@@ -471,7 +472,7 @@ export default function OrderDetailModal({
             </View>
           ) : error || !order ? (
             <View className="flex-1 items-center justify-center px-6">
-              <MaterialIcons name="error-outline" size={64} color={colors.error} />
+              <MaterialCommunityIcons name="alert-circle-outline" size={64} color={colors.error} />
               <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
                 Failed to load order
               </Text>
@@ -490,11 +491,11 @@ export default function OrderDetailModal({
                     <TouchableOpacity
                       onPress={() => setStatusMenuVisible(!statusMenuVisible)}
                       className="flex-row items-center rounded-full px-3 py-1.5"
-                      style={{ backgroundColor: statusColor + '20' }}>
+                      style={{ backgroundColor: statusColor + '14' }}>
                       <Text className="text-sm font-bold" style={{ color: statusColor }}>
                         {getStatusLabel(order.status)}
                       </Text>
-                      <MaterialIcons name="arrow-drop-down" size={18} color={statusColor} />
+                      <MaterialCommunityIcons name="menu-down" size={18} color={statusColor} />
                     </TouchableOpacity>
                   </View>
 
@@ -513,14 +514,14 @@ export default function OrderDetailModal({
                         {isCancelled ? 'Reopen Order As:' : 'Change Status To:'}
                       </Text>
                       {availableStatuses.map((status) => {
-                        const color = getStatusColor(status);
+                        const color = getStatusColor(status, colors);
                         return (
                           <TouchableOpacity
                             key={status}
                             onPress={() => statusMutation.mutate({ status })}
                             disabled={statusMutation.isPending}
                             className="mb-1 flex-row items-center rounded-lg px-3 py-2.5"
-                            style={{ backgroundColor: color + '15' }}>
+                            style={{ backgroundColor: color + '14' }}>
                             <View
                               className="mr-2 h-3 w-3 rounded-full"
                               style={{ backgroundColor: color }}
@@ -547,7 +548,7 @@ export default function OrderDetailModal({
                       className="mb-3 rounded-lg p-3"
                       style={{ backgroundColor: colors.error + '10' }}>
                       <View className="flex-row items-center">
-                        <MaterialIcons name="cancel" size={16} color={colors.error} />
+                        <MaterialCommunityIcons name="close-circle" size={16} color={colors.error} />
                         <Text
                           className="ml-2 text-sm font-semibold"
                           style={{ color: colors.error }}>
@@ -584,7 +585,7 @@ export default function OrderDetailModal({
 
                   {order.vanName && (
                     <View className="mt-3 flex-row items-center">
-                      <MaterialIcons name="local-shipping" size={16} color={colors.muted} />
+                      <MaterialCommunityIcons name="truck-outline" size={16} color={colors.muted} />
                       <Text className="ml-2 text-sm" style={{ color: colors.text }}>
                         {order.vanName}
                       </Text>
@@ -597,9 +598,9 @@ export default function OrderDetailModal({
                   className="mb-4 rounded-2xl p-4"
                   style={{ backgroundColor: colors.background }}>
                   <View className="mb-3 flex-row items-center">
-                    <Ionicons name="person" size={18} color={colors.primary} />
-                    <Text className="ml-2 text-base font-bold" style={{ color: colors.text }}>
-                      Customer
+                    <MaterialCommunityIcons name="account" size={18} color={colors.primary} />
+                    <Text className="ml-2" style={[typo.eyebrow, { color: colors.muted }]}>
+                      CUSTOMER
                     </Text>
                   </View>
                   <Text className="text-base font-semibold" style={{ color: colors.text }}>
@@ -610,7 +611,7 @@ export default function OrderDetailModal({
                   </Text>
                   {order.deliveryAddress && (
                     <View className="mt-2 flex-row items-start">
-                      <MaterialIcons name="location-on" size={14} color={colors.muted} />
+                      <MaterialCommunityIcons name="map-marker" size={14} color={colors.muted} />
                       <Text className="ml-1 flex-1 text-xs" style={{ color: colors.muted }}>
                         {order.deliveryAddress}
                       </Text>
@@ -624,14 +625,14 @@ export default function OrderDetailModal({
                   style={{ backgroundColor: colors.background }}>
                   <View className="mb-3 flex-row items-center justify-between">
                     <View className="flex-row items-center">
-                      <MaterialIcons name="payment" size={18} color={colors.primary} />
-                      <Text className="ml-2 text-base font-bold" style={{ color: colors.text }}>
-                        Payment
+                      <MaterialCommunityIcons name="credit-card-outline" size={18} color={colors.primary} />
+                      <Text className="ml-2" style={[typo.eyebrow, { color: colors.muted }]}>
+                        PAYMENT
                       </Text>
                     </View>
                     <View
                       className="rounded-full px-2.5 py-1"
-                      style={{ backgroundColor: paymentColor + '20' }}>
+                      style={{ backgroundColor: paymentColor + '14' }}>
                       <Text className="text-xs font-bold" style={{ color: paymentColor }}>
                         {getPaymentStatusLabel(order.paymentStatus)}
                       </Text>
@@ -663,7 +664,7 @@ export default function OrderDetailModal({
                       <Text className="text-base font-bold" style={{ color: colors.text }}>
                         Total
                       </Text>
-                      <Text className="text-base font-bold" style={{ color: colors.primary }}>
+                      <Text className="text-base" style={[typo.num, { color: colors.primary }]}>
                         {formatPrice(order.totalAmount)}
                       </Text>
                     </View>
@@ -721,14 +722,14 @@ export default function OrderDetailModal({
                   className="mb-4 rounded-2xl p-4"
                   style={{ backgroundColor: colors.background }}>
                   <View className="mb-3 flex-row items-center">
-                    <MaterialIcons name="shopping-basket" size={18} color={colors.primary} />
-                    <Text className="ml-2 text-base font-bold" style={{ color: colors.text }}>
-                      Items ({order.items?.length || 0})
+                    <MaterialCommunityIcons name="basket" size={18} color={colors.primary} />
+                    <Text className="ml-2" style={[typo.eyebrow, { color: colors.muted }]}>
+                      ITEMS ({order.items?.length || 0})
                     </Text>
                   </View>
 
                   {order.items?.map((item, index) => {
-                    const itemStatusColor = getItemStatusColor(item.status);
+                    const itemStatusColor = getItemStatusColor(item.status, colors);
                     return (
                       <View
                         key={item.id}
@@ -742,14 +743,14 @@ export default function OrderDetailModal({
                             <Text className="mt-0.5 text-xs" style={{ color: colors.muted }}>
                               {formatPrice(item.sellingPrice)} × {item.orderedQuantity} {item.unit}
                             </Text>
-                            {item.deliveredQuantity > 0 &&
+                            {parseFloat(String(item.deliveredQuantity || 0)) > 0 &&
                               item.deliveredQuantity !== item.orderedQuantity && (
                                 <Text className="mt-0.5 text-xs" style={{ color: colors.muted }}>
                                   Delivered: {item.deliveredQuantity} {item.unit}
                                 </Text>
                               )}
                             {parseFloat(String(item.returnedQuantity || 0)) > 0 && (
-                              <Text className="mt-0.5 text-xs" style={{ color: '#f59e0b' }}>
+                              <Text className="mt-0.5 text-xs" style={{ color: colors.error }}>
                                 Returned: {item.returnedQuantity} {item.unit}
                               </Text>
                             )}
@@ -759,18 +760,18 @@ export default function OrderDetailModal({
                                 (ri) => ri.orderItemId === item.id && ri.action === 'replace_next_order'
                               )
                             ) && (
-                              <Text className="mt-0.5 text-xs" style={{ color: '#3b82f6' }}>
+                              <Text className="mt-0.5 text-xs" style={{ color: colors.primary }}>
                                 Replacement scheduled for next order
                               </Text>
                             )}
                           </View>
                           <View className="items-end">
-                            <Text className="font-bold" style={{ color: colors.text }}>
+                            <Text style={[typo.num, { color: colors.text }]}>
                               {formatPrice(item.subtotal)}
                             </Text>
                             <View
                               className="mt-1 rounded px-1.5 py-0.5"
-                              style={{ backgroundColor: itemStatusColor + '20' }}>
+                              style={{ backgroundColor: itemStatusColor + '14' }}>
                               <Text
                                 className="text-xs font-semibold"
                                 style={{ color: itemStatusColor }}>
@@ -795,9 +796,9 @@ export default function OrderDetailModal({
                     className="mb-4 rounded-2xl p-4"
                     style={{ backgroundColor: colors.background }}>
                     <View className="mb-3 flex-row items-center">
-                      <MaterialIcons name="assignment-return" size={18} color="#f59e0b" />
-                      <Text className="ml-2 text-base font-bold" style={{ color: colors.text }}>
-                        Returns ({order.returns.length})
+                      <MaterialCommunityIcons name="arrow-u-left-top" size={18} color={colors.primary} />
+                      <Text className="ml-2" style={[typo.eyebrow, { color: colors.muted }]}>
+                        RETURNS ({order.returns.length})
                       </Text>
                     </View>
                     {order.returns.map((ret) => (
@@ -821,12 +822,12 @@ export default function OrderDetailModal({
                         {ret.items && ret.items.length > 0 && (
                           <View className="mt-1.5 gap-1">
                             {ret.items.map((ri) => {
-                              const actionColor = getReturnActionColor(ri.action);
+                              const actionColor = getReturnActionColor(ri.action, colors);
                               return (
                                 <View key={ri.id} className="flex-row items-center">
                                   <View
                                     className="rounded px-1.5 py-0.5 mr-1.5"
-                                    style={{ backgroundColor: actionColor + '20' }}>
+                                    style={{ backgroundColor: actionColor + '14' }}>
                                     <Text className="text-xs font-semibold" style={{ color: actionColor }}>
                                       {getReturnActionLabel(ri.action)}
                                     </Text>
@@ -860,9 +861,9 @@ export default function OrderDetailModal({
                     className="mb-4 rounded-2xl p-4"
                     style={{ backgroundColor: colors.background }}>
                     <View className="mb-2 flex-row items-center">
-                      <MaterialIcons name="notes" size={18} color={colors.primary} />
-                      <Text className="ml-2 text-base font-bold" style={{ color: colors.text }}>
-                        Notes
+                      <MaterialCommunityIcons name="note-text-outline" size={18} color={colors.primary} />
+                      <Text className="ml-2" style={[typo.eyebrow, { color: colors.muted }]}>
+                        NOTES
                       </Text>
                     </View>
                     <Text className="text-sm" style={{ color: colors.text }}>
@@ -886,7 +887,7 @@ export default function OrderDetailModal({
                     onPress={() => onRecordPayment(orderId!)}
                     className="flex-1 flex-row items-center justify-center rounded-xl py-3"
                     style={{ backgroundColor: colors.success }}>
-                    <MaterialIcons name="payment" size={18} color="#fff" />
+                    <MaterialCommunityIcons name="credit-card-outline" size={18} color={colors.white} />
                     <Text className="ml-2 text-sm font-bold text-white">
                       {order.paymentStatus === 'paid' ? 'Adjust' : 'Record'}
                     </Text>
@@ -897,8 +898,8 @@ export default function OrderDetailModal({
                     <TouchableOpacity
                       onPress={() => setReturnModalVisible(true)}
                       className="flex-1 flex-row items-center justify-center rounded-xl py-3"
-                      style={{ backgroundColor: '#f59e0b' }}>
-                      <MaterialIcons name="assignment-return" size={18} color="#fff" />
+                      style={{ backgroundColor: colors.muted }}>
+                      <MaterialCommunityIcons name="arrow-u-left-top" size={18} color={colors.white} />
                       <Text className="ml-2 text-sm font-bold text-white">Return</Text>
                     </TouchableOpacity>
                   )}
@@ -912,7 +913,7 @@ export default function OrderDetailModal({
                       }}
                       className="flex-1 flex-row items-center justify-center rounded-xl py-3"
                       style={{ backgroundColor: colors.primary }}>
-                      <MaterialIcons name="edit" size={18} color="#fff" />
+                      <MaterialCommunityIcons name="pencil" size={18} color={colors.white} />
                       <Text className="ml-2 text-sm font-bold text-white">Edit</Text>
                     </TouchableOpacity>
                   )}
@@ -922,7 +923,7 @@ export default function OrderDetailModal({
                     onPress={() => handleGenerateAndShareInvoice(order, vendor)}
                     className="items-center justify-center rounded-xl py-3 px-3"
                     style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
-                    <MaterialIcons name="receipt-long" size={20} color={colors.text} />
+                    <MaterialCommunityIcons name="receipt" size={20} color={colors.text} />
                   </TouchableOpacity>
                 </View>
 
@@ -943,7 +944,7 @@ export default function OrderDetailModal({
                       <ActivityIndicator size="small" color={colors.primary} />
                     ) : (
                       <>
-                        <MaterialIcons name="content-copy" size={16} color={colors.text} />
+                        <MaterialCommunityIcons name="content-copy" size={16} color={colors.text} />
                         <Text
                           className="ml-1.5 text-sm font-semibold"
                           style={{ color: colors.text }}>
@@ -963,7 +964,7 @@ export default function OrderDetailModal({
                         borderWidth: 1,
                         borderColor: colors.error,
                       }}>
-                      <MaterialIcons name="cancel" size={16} color={colors.error} />
+                      <MaterialCommunityIcons name="close-circle" size={16} color={colors.error} />
                       <Text
                         className="ml-1.5 text-sm font-semibold"
                         style={{ color: colors.error }}>
@@ -983,7 +984,7 @@ export default function OrderDetailModal({
                           borderWidth: 1,
                           borderColor: colors.error,
                         }}>
-                        <MaterialIcons name="cancel" size={16} color={colors.error} />
+                        <MaterialCommunityIcons name="close-circle" size={16} color={colors.error} />
                         <Text
                           className="ml-1.5 text-sm font-semibold"
                           style={{ color: colors.error }}>
@@ -996,7 +997,7 @@ export default function OrderDetailModal({
                         style={{
                           backgroundColor: colors.error,
                         }}>
-                        <MaterialIcons name="delete" size={16} color="#fff" />
+                        <MaterialCommunityIcons name="delete" size={16} color={colors.white} />
                         <Text className="ml-1.5 text-sm font-semibold text-white">Delete</Text>
                       </TouchableOpacity>
                     </>
@@ -1010,7 +1011,7 @@ export default function OrderDetailModal({
                       style={{
                         backgroundColor: colors.error,
                       }}>
-                      <MaterialIcons name="delete" size={16} color="#fff" />
+                      <MaterialCommunityIcons name="delete" size={16} color={colors.white} />
                       <Text className="ml-1.5 text-sm font-semibold text-white">Delete</Text>
                     </TouchableOpacity>
                   )}
@@ -1019,7 +1020,7 @@ export default function OrderDetailModal({
                 {/* Reopen hint for cancelled orders - separate row if needed */}
                 {isCancelled && (
                   <View className="mt-3 flex-row items-center justify-center">
-                    <Ionicons name="information-circle-outline" size={14} color={colors.muted} />
+                    <MaterialCommunityIcons name="information-outline" size={14} color={colors.muted} />
                     <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
                       Use status dropdown above to reopen this order
                     </Text>

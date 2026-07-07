@@ -153,17 +153,6 @@ export const getCategoryLabel = (category: string): string => {
   return found?.label || category.charAt(0).toUpperCase() + category.slice(1);
 };
 
-export const getCategoryColor = (category: string): string => {
-  const colors: Record<string, string> = {
-    gas: '#f59e0b',
-    labor: '#3b82f6',
-    tickets: '#ef4444',
-    forklift: '#8b5cf6',
-    maintenance: '#10b981',
-    utilities: '#06b6d4',
-    rent: '#ec4899',
-    packaging: '#84cc16',
-    other: '#6b7280',
-  };
-  return colors[category.toLowerCase()] || '#6b7280';
-};
+// Category differentiation is carried by the icon (getCategoryIcon) + label;
+// chips/tiles use the single theme accent. The old per-category color rainbow
+// was removed as part of the design-system migration.

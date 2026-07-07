@@ -1,9 +1,9 @@
 // screens/Vendor/ExpensesScreen.tsx
 import React, { useState } from 'react';
-import { View, Text, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { bulkDeleteExpenses } from 'api/actions/expensesActions';
@@ -171,10 +171,10 @@ export default function ExpensesScreen() {
             className="flex-row items-center rounded-xl px-4 py-2"
             style={{ backgroundColor: colors.error }}>
             {bulkDeleteMutation.isPending ? (
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color={colors.white} />
             ) : (
               <>
-                <MaterialIcons name="delete" size={20} color="#fff" />
+                <MaterialCommunityIcons name="delete-outline" size={20} color={colors.white} />
                 <Text className="ml-2 font-semibold text-white">Delete</Text>
               </>
             )}
@@ -185,7 +185,7 @@ export default function ExpensesScreen() {
             onPress={exitSelectionMode}
             disabled={bulkDeleteMutation.isPending}
             className="items-center px-4 py-2">
-            <Ionicons name="close-circle-outline" size={22} color={colors.muted} />
+            <MaterialCommunityIcons name="close-circle-outline" size={22} color={colors.muted} />
             <Text className="mt-1 text-xs font-medium" style={{ color: colors.muted }}>
               Cancel
             </Text>

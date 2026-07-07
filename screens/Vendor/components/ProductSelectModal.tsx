@@ -9,7 +9,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAllProducts } from 'api/actions/productActions';
@@ -90,7 +90,7 @@ export default function ProductSelectModal({
               onPress={onClose}
               className="h-10 w-10 items-center justify-center rounded-full"
               style={{ backgroundColor: colors.background }}>
-              <MaterialIcons name="close" size={22} color={colors.text} />
+              <MaterialCommunityIcons name="close" size={22} color={colors.text} />
             </TouchableOpacity>
           </View>
 
@@ -103,7 +103,7 @@ export default function ProductSelectModal({
                 borderWidth: 1,
                 borderColor: colors.border,
               }}>
-              <Ionicons name="search" size={18} color={colors.muted} />
+              <MaterialCommunityIcons name="magnify" size={18} color={colors.muted} />
               <TextInput
                 value={search}
                 onChangeText={setSearch}
@@ -114,7 +114,7 @@ export default function ProductSelectModal({
               />
               {search.length > 0 && (
                 <TouchableOpacity onPress={() => setSearch('')}>
-                  <Ionicons name="close-circle" size={18} color={colors.muted} />
+                  <MaterialCommunityIcons name="close-circle" size={18} color={colors.muted} />
                 </TouchableOpacity>
               )}
             </View>
@@ -144,7 +144,7 @@ export default function ProductSelectModal({
               }
               ListEmptyComponent={
                 <View className="items-center py-12">
-                  <MaterialIcons name="inventory-2" size={48} color={colors.muted} />
+                  <MaterialCommunityIcons name="package-variant" size={48} color={colors.muted} />
                   <Text className="mt-4 text-center" style={{ color: colors.muted }}>
                     {search ? 'No products match your search' : 'No products available'}
                   </Text>
@@ -177,7 +177,7 @@ export default function ProductSelectModal({
                         {/* Tags */}
                         {item.tags && item.tags.length > 0 && (
                           <View className="mt-1.5 flex-row flex-wrap gap-1">
-                            {item.tags.slice(0, 2).map((tag, idx) => (
+                            {item.tags.slice(0, 2).map((tag: string, idx: number) => (
                               <View
                                 key={idx}
                                 className="rounded px-1.5 py-0.5"
@@ -203,9 +203,9 @@ export default function ProductSelectModal({
                               }
                             }}
                             className="h-8 w-8 items-center justify-center rounded-full"
-                            style={{ backgroundColor: colors.primary + '20' }}>
-                            <Ionicons
-                              name={cartItem!.quantity <= 1 ? 'trash' : 'remove'}
+                            style={{ backgroundColor: colors.primary + '14' }}>
+                            <MaterialCommunityIcons
+                              name={cartItem!.quantity <= 1 ? 'delete-outline' : 'minus'}
                               size={16}
                               color={colors.primary}
                             />
@@ -221,7 +221,7 @@ export default function ProductSelectModal({
                             onPress={() => onUpdateQuantity(item.id, cartItem!.quantity + 1)}
                             className="h-8 w-8 items-center justify-center rounded-full"
                             style={{ backgroundColor: colors.primary }}>
-                            <Ionicons name="add" size={16} color="#fff" />
+                            <MaterialCommunityIcons name="plus" size={16} color={colors.white} />
                           </TouchableOpacity>
                         </View>
                       ) : (
@@ -246,7 +246,7 @@ export default function ProductSelectModal({
                 onPress={onClose}
                 className="flex-row items-center justify-center rounded-xl py-3.5"
                 style={{ backgroundColor: colors.primary }}>
-                <MaterialIcons name="check" size={20} color="#fff" />
+                <MaterialCommunityIcons name="check" size={20} color={colors.white} />
                 <Text className="ml-2 font-bold text-white">Done ({cart.length} items)</Text>
               </TouchableOpacity>
             </View>

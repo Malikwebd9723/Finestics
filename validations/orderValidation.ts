@@ -8,8 +8,8 @@ export const createOrderSchema = yup.object({
   discount: yup.number().min(0, 'Discount cannot be negative').default(0),
   paymentMethod: yup
     .string()
-    .oneOf(['cash', 'bank_transfer', 'upi', 'cheque', 'credit', null, ''])
-    .nullable(),
+    .nullable()
+    .oneOf(['cash', 'bank_transfer', 'upi', 'cheque', 'credit', null, '']),
   notes: yup.string().trim().nullable(),
   deliveryAddress: yup.string().trim().nullable(),
   vanName: yup.string().trim().nullable(),
@@ -44,8 +44,8 @@ export const recordPaymentSchema = yup.object({
     .test('non-zero', 'Amount cannot be zero', (value) => value !== 0),
   paymentMethod: yup
     .string()
-    .oneOf(['cash', 'bank_transfer', 'upi', 'cheque', null, ''])
-    .nullable(),
+    .nullable()
+    .oneOf(['cash', 'bank_transfer', 'upi', 'cheque', null, '']),
   isAdjustment: yup.boolean().default(false), // NEW: flag for refunds/adjustments
   notes: yup.string().trim().nullable(), // NEW: payment notes
 });

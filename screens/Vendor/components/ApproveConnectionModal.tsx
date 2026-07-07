@@ -231,7 +231,7 @@ export default function ApproveConnectionModal({
                       borderWidth: 1,
                       borderColor: selected ? colors.primary : colors.border,
                     }}>
-                    <Text style={{ color: selected ? '#fff' : colors.text, fontSize: 13 }}>
+                    <Text style={{ color: selected ? colors.white : colors.text, fontSize: 13 }}>
                       {term}
                     </Text>
                   </Pressable>
@@ -270,9 +270,9 @@ export default function ApproveConnectionModal({
                 opacity: submitting ? 0.7 : 1,
               }}>
               {submitting ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={colors.white} />
               ) : (
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
+                <Text style={{ color: colors.white, fontWeight: '700', fontSize: 16 }}>
                   Approve & Set Terms
                 </Text>
               )}

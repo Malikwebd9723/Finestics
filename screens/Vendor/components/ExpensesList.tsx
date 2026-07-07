@@ -11,7 +11,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { MaterialCommunityIcons, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAllExpenses, fetchExpenseSummary } from 'api/actions/expensesActions';
 import {
@@ -22,7 +22,6 @@ import {
   formatPrice,
   formatDate,
   getCategoryIcon,
-  getCategoryColor,
   getCategoryLabel,
 } from 'types/expense.types';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -165,7 +164,6 @@ export default function ExpensesList({
   // Render expense card
   const renderExpenseCard = ({ item }: { item: Expense }) => {
     const isSelected = selectedExpenses.has(item.id);
-    const categoryColor = getCategoryColor(item.category);
 
     return (
       <TouchableOpacity
@@ -188,18 +186,18 @@ export default function ExpensesList({
                 borderWidth: isSelected ? 0 : 2,
                 borderColor: colors.border,
               }}>
-              {isSelected && <Ionicons name="checkmark" size={16} color="#fff" />}
+              {isSelected && <MaterialCommunityIcons name="check" size={16} color={colors.white} />}
             </View>
           )}
 
           {/* Category Icon */}
           <View
             className="mr-3 h-12 w-12 items-center justify-center rounded-xl"
-            style={{ backgroundColor: categoryColor + '20' }}>
+            style={{ backgroundColor: colors.primary + '14' }}>
             <MaterialCommunityIcons
               name={getCategoryIcon(item.category) as any}
               size={24}
-              color={categoryColor}
+              color={colors.primary}
             />
           </View>
 
@@ -247,15 +245,22 @@ export default function ExpensesList({
       }}>
       <Text
         className="text-sm font-medium"
-        style={{ color: isActive ? '#fff' : colors.text }}>
+        style={{ color: isActive ? colors.white : colors.text }}>
         {label}
       </Text>
       {isActive && onClear && (
         <TouchableOpacity onPress={onClear} className="ml-1.5">
-          <Ionicons name="close-circle" size={16} color="#fff" />
+          <MaterialCommunityIcons name="close-circle" size={16} color={colors.white} />
         </TouchableOpacity>
       )}
-      {!isActive && <Ionicons name="chevron-down" size={14} color={colors.muted} className="ml-1" />}
+      {!isActive && (
+        <MaterialCommunityIcons
+          name="chevron-down"
+          size={14}
+          color={colors.muted}
+          className="ml-1"
+        />
+      )}
     </TouchableOpacity>
   );
 
@@ -349,7 +354,7 @@ export default function ExpensesList({
             }}
             className="mr-2 flex-row items-center rounded-lg px-2 py-1"
             style={{ backgroundColor: colors.card }}>
-            <MaterialIcons name="sort" size={16} color={colors.muted} />
+            <MaterialCommunityIcons name="sort" size={16} color={colors.muted} />
             <Text className="ml-1 text-xs capitalize" style={{ color: colors.muted }}>
               {sortBy}
             </Text>
@@ -358,8 +363,8 @@ export default function ExpensesList({
             onPress={() => setSortOrder(sortOrder === 'DESC' ? 'ASC' : 'DESC')}
             className="rounded-lg p-1"
             style={{ backgroundColor: colors.card }}>
-            <MaterialIcons
-              name={sortOrder === 'DESC' ? 'arrow-downward' : 'arrow-upward'}
+            <MaterialCommunityIcons
+              name={sortOrder === 'DESC' ? 'arrow-down' : 'arrow-up'}
               size={16}
               color={colors.muted}
             />
@@ -371,7 +376,7 @@ export default function ExpensesList({
       {isSelectionMode && (
         <View
           className="mx-4 mb-3 flex-row items-center justify-between rounded-xl p-3"
-          style={{ backgroundColor: colors.primary + '15' }}>
+          style={{ backgroundColor: colors.primary + '14' }}>
           <Text className="font-medium" style={{ color: colors.primary }}>
             {selectedExpenses.size} selected
           </Text>
@@ -454,13 +459,12 @@ export default function ExpensesList({
                         }}>
                         <Text
                           className="font-medium"
-                          style={{ color: !categoryFilter ? '#fff' : colors.text }}>
+                          style={{ color: !categoryFilter ? colors.white : colors.text }}>
                           All Categories
                         </Text>
                       </TouchableOpacity>
                       {EXPENSE_CATEGORIES.map((cat) => {
                         const isSelected = categoryFilter === cat.value;
-                        const catColor = getCategoryColor(cat.value);
                         return (
                           <TouchableOpacity
                             key={cat.value}
@@ -470,18 +474,18 @@ export default function ExpensesList({
                             }}
                             className="flex-row items-center rounded-xl px-4 py-3"
                             style={{
-                              backgroundColor: isSelected ? catColor : colors.background,
+                              backgroundColor: isSelected ? colors.primary : colors.background,
                               borderWidth: 1,
-                              borderColor: isSelected ? catColor : colors.border,
+                              borderColor: isSelected ? colors.primary : colors.border,
                             }}>
                             <MaterialCommunityIcons
                               name={cat.icon as any}
                               size={18}
-                              color={isSelected ? '#fff' : colors.text}
+                              color={isSelected ? colors.white : colors.text}
                             />
                             <Text
                               className="ml-2 font-medium"
-                              style={{ color: isSelected ? '#fff' : colors.text }}>
+                              style={{ color: isSelected ? colors.white : colors.text }}>
                               {cat.label}
                             </Text>
                           </TouchableOpacity>
@@ -520,7 +524,7 @@ export default function ExpensesList({
                         <TouchableOpacity
                           onPress={clearDateRange}
                           className="items-center rounded-xl py-3"
-                          style={{ backgroundColor: colors.error + '15' }}>
+                          style={{ backgroundColor: colors.error + '14' }}>
                           <Text className="font-medium" style={{ color: colors.error }}>
                             Clear Date Range
                           </Text>

@@ -1,6 +1,14 @@
 // types/order.types.ts
 
 import type { VendorReturn } from './return.types';
+import {
+  StatusTone,
+  statusTone,
+  toneColor,
+  VENDOR_ORDER_STATUS_TONES,
+  PAYMENT_STATUS_TONES,
+  ITEM_STATUS_TONES,
+} from 'utils/statusTones';
 
 // ==================== ORDER ====================
 
@@ -118,19 +126,19 @@ export type DateFilterField = 'orderDate' | 'deliveryDate';
 
 // ==================== CONSTANTS ====================
 
-export const ORDER_STATUSES: { label: string; value: OrderStatus; color: string }[] = [
-  { label: 'Pending', value: 'pending', color: '#f59e0b' },
-  { label: 'Confirmed', value: 'confirmed', color: '#3b82f6' },
-  { label: 'Collected', value: 'collected', color: '#8b5cf6' },
-  { label: 'Delivered', value: 'delivered', color: '#10b981' },
-  { label: 'Completed', value: 'completed', color: '#059669' },
-  { label: 'Cancelled', value: 'cancelled', color: '#ef4444' },
+export const ORDER_STATUSES: { label: string; value: OrderStatus; tone: StatusTone }[] = [
+  { label: 'Pending', value: 'pending', tone: 'neutral' },
+  { label: 'Confirmed', value: 'confirmed', tone: 'active' },
+  { label: 'Collected', value: 'collected', tone: 'active' },
+  { label: 'Delivered', value: 'delivered', tone: 'positive' },
+  { label: 'Completed', value: 'completed', tone: 'positive' },
+  { label: 'Cancelled', value: 'cancelled', tone: 'negative' },
 ];
 
-export const PAYMENT_STATUSES: { label: string; value: PaymentStatus; color: string }[] = [
-  { label: 'Unpaid', value: 'unpaid', color: '#ef4444' },
-  { label: 'Partial', value: 'partial', color: '#f59e0b' },
-  { label: 'Paid', value: 'paid', color: '#10b981' },
+export const PAYMENT_STATUSES: { label: string; value: PaymentStatus; tone: StatusTone }[] = [
+  { label: 'Unpaid', value: 'unpaid', tone: 'negative' },
+  { label: 'Partial', value: 'partial', tone: 'neutral' },
+  { label: 'Paid', value: 'paid', tone: 'positive' },
 ];
 
 export const PAYMENT_METHODS: { label: string; value: PaymentMethod }[] = [
@@ -141,11 +149,11 @@ export const PAYMENT_METHODS: { label: string; value: PaymentMethod }[] = [
   { label: 'Credit', value: 'credit' },
 ];
 
-export const ITEM_STATUSES: { label: string; value: ItemStatus; color: string }[] = [
-  { label: 'Pending', value: 'pending', color: '#f59e0b' },
-  { label: 'Delivered', value: 'delivered', color: '#10b981' },
-  { label: 'Partial', value: 'partially_delivered', color: '#3b82f6' },
-  { label: 'Cancelled', value: 'cancelled', color: '#ef4444' },
+export const ITEM_STATUSES: { label: string; value: ItemStatus; tone: StatusTone }[] = [
+  { label: 'Pending', value: 'pending', tone: 'neutral' },
+  { label: 'Delivered', value: 'delivered', tone: 'positive' },
+  { label: 'Partial', value: 'partially_delivered', tone: 'active' },
+  { label: 'Cancelled', value: 'cancelled', tone: 'negative' },
 ];
 
 // Sort options for UI
@@ -363,24 +371,26 @@ export const formatShortDate = (dateString: string | null): string => {
   });
 };
 
-export const getStatusColor = (status: OrderStatus): string => {
+/** Resolve an order status to a theme color (tone-based; dark-mode safe). */
+export const getStatusColor = (
+  status: OrderStatus | string | null | undefined,
+  colors: Record<string, string>
+): string => toneColor(statusTone(VENDOR_ORDER_STATUS_TONES, status), colors);
+
+export const getStatusLabel = (status: OrderStatus | string | null | undefined): string => {
   const found = ORDER_STATUSES.find((s) => s.value === status);
-  return found?.color || '#6b7280';
+  return found?.label || status || '-';
 };
 
-export const getStatusLabel = (status: OrderStatus): string => {
-  const found = ORDER_STATUSES.find((s) => s.value === status);
-  return found?.label || status;
-};
+/** Resolve a payment status to a theme color (tone-based; dark-mode safe). */
+export const getPaymentStatusColor = (
+  status: PaymentStatus | string | null | undefined,
+  colors: Record<string, string>
+): string => toneColor(statusTone(PAYMENT_STATUS_TONES, status), colors);
 
-export const getPaymentStatusColor = (status: PaymentStatus): string => {
+export const getPaymentStatusLabel = (status: PaymentStatus | string | null | undefined): string => {
   const found = PAYMENT_STATUSES.find((s) => s.value === status);
-  return found?.color || '#6b7280';
-};
-
-export const getPaymentStatusLabel = (status: PaymentStatus): string => {
-  const found = PAYMENT_STATUSES.find((s) => s.value === status);
-  return found?.label || status;
+  return found?.label || status || '-';
 };
 
 export const getPaymentMethodLabel = (method: PaymentMethod | null): string => {
@@ -389,10 +399,11 @@ export const getPaymentMethodLabel = (method: PaymentMethod | null): string => {
   return found?.label || method;
 };
 
-export const getItemStatusColor = (status: ItemStatus): string => {
-  const found = ITEM_STATUSES.find((s) => s.value === status);
-  return found?.color || '#6b7280';
-};
+/** Resolve an order item status to a theme color (tone-based; dark-mode safe). */
+export const getItemStatusColor = (
+  status: ItemStatus | string | null | undefined,
+  colors: Record<string, string>
+): string => toneColor(statusTone(ITEM_STATUS_TONES, status), colors);
 
 /**
  * Get available next statuses (UPDATED - no restrictions, all statuses available)

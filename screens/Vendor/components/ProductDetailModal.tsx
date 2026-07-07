@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { deleteProduct, fetchProductDetails } from 'api/actions/productActions';
@@ -140,7 +140,7 @@ export default function ProductDetailModal({
               onPress={onClose}
               className="h-10 w-10 items-center justify-center rounded-full"
               style={{ backgroundColor: colors.background }}>
-              <MaterialIcons name="close" size={22} color={colors.text} />
+              <MaterialCommunityIcons name="close" size={22} color={colors.text} />
             </Pressable>
           </View>
 
@@ -154,7 +154,7 @@ export default function ProductDetailModal({
             </View>
           ) : error ? (
             <View className="flex-1 items-center justify-center px-6">
-              <MaterialIcons name="error-outline" size={64} color={colors.error} />
+              <MaterialCommunityIcons name="alert-circle-outline" size={64} color={colors.error} />
               <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
                 Failed to load details
               </Text>
@@ -169,7 +169,7 @@ export default function ProductDetailModal({
                   <View className="flex-row items-center">
                     <View
                       className="h-16 w-16 items-center justify-center rounded-2xl"
-                      style={{ backgroundColor: colors.primary + '15' }}>
+                      style={{ backgroundColor: colors.primary + '14' }}>
                       <Text className="text-2xl font-bold" style={{ color: colors.primary }}>
                         {getInitials(product.name)}
                       </Text>
@@ -183,8 +183,8 @@ export default function ProductDetailModal({
                           className="rounded-full px-3 py-1"
                           style={{
                             backgroundColor: product.isActive
-                              ? colors.success + '20'
-                              : colors.error + '20',
+                              ? colors.success + '14'
+                              : colors.error + '14',
                           }}>
                           <Text
                             className="text-xs font-bold"
@@ -196,7 +196,7 @@ export default function ProductDetailModal({
                         </View>
                         <View
                           className="rounded-full px-3 py-1"
-                          style={{ backgroundColor: colors.primary + '20' }}>
+                          style={{ backgroundColor: colors.primary + '14' }}>
                           <Text className="text-xs font-bold" style={{ color: colors.primary }}>
                             {product.unit}
                           </Text>
@@ -211,7 +211,7 @@ export default function ProductDetailModal({
                   className="mb-4 rounded-2xl p-4"
                   style={{ backgroundColor: colors.background }}>
                   <View className="mb-4 flex-row items-center">
-                    <MaterialIcons name="attach-money" size={20} color={colors.primary} />
+                    <MaterialCommunityIcons name="currency-gbp" size={20} color={colors.primary} />
                     <Text className="ml-2 text-base font-bold" style={{ color: colors.text }}>
                       Pricing
                     </Text>
@@ -229,7 +229,7 @@ export default function ProductDetailModal({
                     </View>
 
                     <View className="items-center justify-center px-2">
-                      <MaterialIcons name="arrow-forward" size={20} color={colors.muted} />
+                      <MaterialCommunityIcons name="arrow-right" size={20} color={colors.muted} />
                     </View>
 
                     {/* Selling Price */}
@@ -247,7 +247,7 @@ export default function ProductDetailModal({
                   <View
                     className="flex-row rounded-xl p-3"
                     style={{
-                      backgroundColor: isProfitable ? colors.success + '10' : colors.error + '10',
+                      backgroundColor: isProfitable ? colors.success + '14' : colors.error + '14',
                     }}>
                     <View className="flex-1 items-center">
                       <Text className="mb-1 text-xs" style={{ color: colors.muted }}>
@@ -284,7 +284,7 @@ export default function ProductDetailModal({
                     className="mb-4 rounded-2xl p-4"
                     style={{ backgroundColor: colors.background }}>
                     <View className="mb-3 flex-row items-center">
-                      <Ionicons name="pricetags" size={18} color={colors.primary} />
+                      <MaterialCommunityIcons name="tag-multiple" size={18} color={colors.primary} />
                       <Text className="ml-2 text-base font-bold" style={{ color: colors.text }}>
                         Tags
                       </Text>
@@ -294,7 +294,7 @@ export default function ProductDetailModal({
                         <View
                           key={idx}
                           className="rounded-lg px-3 py-1.5"
-                          style={{ backgroundColor: colors.primary + '15' }}>
+                          style={{ backgroundColor: colors.primary + '14' }}>
                           <Text className="text-sm font-medium" style={{ color: colors.primary }}>
                             {tag}
                           </Text>
@@ -310,7 +310,11 @@ export default function ProductDetailModal({
                     className="mb-4 rounded-2xl p-4"
                     style={{ backgroundColor: colors.background }}>
                     <View className="mb-3 flex-row items-center">
-                      <MaterialIcons name="description" size={18} color={colors.primary} />
+                      <MaterialCommunityIcons
+                        name="text-box-outline"
+                        size={18}
+                        color={colors.primary}
+                      />
                       <Text className="ml-2 text-base font-bold" style={{ color: colors.text }}>
                         Description
                       </Text>
@@ -333,11 +337,11 @@ export default function ProductDetailModal({
                   onPress={confirmDelete}
                   className="flex-1 flex-row items-center justify-center rounded-xl py-3"
                   style={{
-                    backgroundColor: colors.error + '15',
+                    backgroundColor: colors.error + '14',
                     borderWidth: 1,
                     borderColor: colors.error,
                   }}>
-                  <MaterialIcons name="delete" size={18} color={colors.error} />
+                  <MaterialCommunityIcons name="delete-outline" size={18} color={colors.error} />
                   <Text className="ml-2 text-sm font-bold" style={{ color: colors.error }}>
                     Delete
                   </Text>
@@ -350,14 +354,14 @@ export default function ProductDetailModal({
                   }}
                   className="flex-1 flex-row items-center justify-center rounded-xl py-3"
                   style={{ backgroundColor: colors.primary }}>
-                  <MaterialIcons name="edit" size={18} color="#fff" />
+                  <MaterialCommunityIcons name="pencil" size={18} color={colors.white} />
                   <Text className="ml-2 text-sm font-bold text-white">Edit</Text>
                 </TouchableOpacity>
               </View>
             </>
           ) : (
             <View className="flex-1 items-center justify-center px-6">
-              <MaterialIcons name="error-outline" size={64} color={colors.muted} />
+              <MaterialCommunityIcons name="alert-circle-outline" size={64} color={colors.muted} />
               <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
                 No data available
               </Text>

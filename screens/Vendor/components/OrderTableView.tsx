@@ -1,7 +1,7 @@
 // screens/Vendor/components/OrderTableView.tsx
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import {
   formatPrice,
@@ -11,6 +11,7 @@ import {
   getPaymentStatusColor,
   getPaymentStatusLabel,
 } from 'types/order.types';
+import { typo } from 'constants/design';
 
 interface Order {
   id: number;
@@ -53,7 +54,7 @@ export default function OrderTableView({
   if (orders.length === 0) {
     return (
       <View className="items-center py-16">
-        <MaterialIcons name="receipt-long" size={48} color={colors.muted} />
+        <MaterialCommunityIcons name="receipt" size={48} color={colors.muted} />
         <Text className="mt-4 text-center" style={{ color: colors.muted }}>
           No orders found
         </Text>
@@ -172,8 +173,8 @@ export default function OrderTableView({
           {/* Table Rows */}
           <ScrollView showsVerticalScrollIndicator={false}>
             {orders.map((order, index) => {
-              const statusColor = getStatusColor(order.status);
-              const paymentColor = getPaymentStatusColor(order.paymentStatus);
+              const statusColor = getStatusColor(order.status, colors);
+              const paymentColor = getPaymentStatusColor(order.paymentStatus, colors);
               const hasBalance = parseFloat(String(order.balanceAmount || 0)) > 0;
               const isCancelled = order.status === 'cancelled';
 
@@ -225,7 +226,7 @@ export default function OrderTableView({
                     style={{ borderColor: colors.border }}>
                     <View
                       className="rounded-full px-2 py-0.5"
-                      style={{ backgroundColor: statusColor + '20' }}>
+                      style={{ backgroundColor: statusColor + '14' }}>
                       <Text className="text-xs font-semibold" style={{ color: statusColor }}>
                         {getStatusLabel(order.status)}
                       </Text>
@@ -236,7 +237,7 @@ export default function OrderTableView({
                     style={{ borderColor: colors.border }}>
                     <View
                       className="rounded-full px-2 py-0.5"
-                      style={{ backgroundColor: paymentColor + '15' }}>
+                      style={{ backgroundColor: paymentColor + '14' }}>
                       <Text className="text-xs font-semibold" style={{ color: paymentColor }}>
                         {getPaymentStatusLabel(order.paymentStatus)}
                       </Text>
@@ -260,7 +261,7 @@ export default function OrderTableView({
                     <Text
                       className="text-sm font-semibold"
                       style={{
-                        color: isCancelled ? colors.muted : hasBalance ? '#f59e0b' : colors.success,
+                        color: isCancelled ? colors.muted : hasBalance ? colors.error : colors.success,
                       }}>
                       {isCancelled ? '—' : hasBalance ? formatPrice(order.balanceAmount) : '—'}
                     </Text>
@@ -329,7 +330,7 @@ export default function OrderTableView({
               <View
                 className="w-24 items-end justify-center border-r px-3 py-3"
                 style={{ borderColor: colors.border }}>
-                <Text className="text-sm font-bold" style={{ color: colors.primary }}>
+                <Text className="text-sm" style={[typo.num, { color: colors.primary }]}>
                   {formatPrice(totals.amount)}
                 </Text>
               </View>
@@ -337,8 +338,8 @@ export default function OrderTableView({
                 className="w-24 items-end justify-center border-r px-3 py-3"
                 style={{ borderColor: colors.border }}>
                 <Text
-                  className="text-sm font-bold"
-                  style={{ color: totals.balance > 0 ? '#f59e0b' : colors.success }}>
+                  className="text-sm"
+                  style={[typo.num, { color: totals.balance > 0 ? colors.error : colors.success }]}>
                   {formatPrice(totals.balance)}
                 </Text>
               </View>
@@ -377,14 +378,14 @@ export function ViewToggle({ viewMode, onToggle }: ViewToggleProps) {
         onPress={() => onToggle('card')}
         className="flex-row items-center rounded-md px-3 py-1.5"
         style={{ backgroundColor: viewMode === 'card' ? colors.primary : 'transparent' }}>
-        <Ionicons
-          name="grid-outline"
+        <MaterialCommunityIcons
+          name="view-grid-outline"
           size={14}
-          color={viewMode === 'card' ? '#fff' : colors.muted}
+          color={viewMode === 'card' ? colors.white : colors.muted}
         />
         <Text
           className="ml-1 text-xs font-medium"
-          style={{ color: viewMode === 'card' ? '#fff' : colors.muted }}>
+          style={{ color: viewMode === 'card' ? colors.white : colors.muted }}>
           Cards
         </Text>
       </TouchableOpacity>
@@ -392,14 +393,14 @@ export function ViewToggle({ viewMode, onToggle }: ViewToggleProps) {
         onPress={() => onToggle('table')}
         className="flex-row items-center rounded-md px-3 py-1.5"
         style={{ backgroundColor: viewMode === 'table' ? colors.primary : 'transparent' }}>
-        <Ionicons
-          name="list-outline"
+        <MaterialCommunityIcons
+          name="format-list-bulleted"
           size={14}
-          color={viewMode === 'table' ? '#fff' : colors.muted}
+          color={viewMode === 'table' ? colors.white : colors.muted}
         />
         <Text
           className="ml-1 text-xs font-medium"
-          style={{ color: viewMode === 'table' ? '#fff' : colors.muted }}>
+          style={{ color: viewMode === 'table' ? colors.white : colors.muted }}>
           Table
         </Text>
       </TouchableOpacity>

@@ -2,7 +2,7 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { View, Text, FlatList, Pressable, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAllProducts } from 'api/actions/productActions';
 import {
@@ -70,7 +70,7 @@ export default function ProductsList({
   if (error) {
     return (
       <View className="flex-1 items-center justify-center px-6">
-        <Ionicons name="alert-circle" size={64} color={colors.error} />
+        <MaterialCommunityIcons name="alert-circle" size={64} color={colors.error} />
         <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
           Failed to load products
         </Text>
@@ -97,7 +97,7 @@ export default function ProductsList({
         <View className="flex-row items-center gap-2">
           <View
             className="flex-row items-center rounded-full px-2.5 py-1"
-            style={{ backgroundColor: colors.success + '20' }}>
+            style={{ backgroundColor: colors.success + '14' }}>
             <View
               className="mr-1.5 h-2 w-2 rounded-full"
               style={{ backgroundColor: colors.success }}
@@ -108,7 +108,7 @@ export default function ProductsList({
           </View>
           <View
             className="flex-row items-center rounded-full px-2.5 py-1"
-            style={{ backgroundColor: colors.error + '20' }}>
+            style={{ backgroundColor: colors.error + '14' }}>
             <View
               className="mr-1.5 h-2 w-2 rounded-full"
               style={{ backgroundColor: colors.error }}
@@ -144,7 +144,7 @@ export default function ProductsList({
         }
         ListEmptyComponent={
           <View className="items-center justify-center py-20">
-            <MaterialIcons name="inventory-2" size={72} color={colors.muted} />
+            <MaterialCommunityIcons name="package-variant" size={72} color={colors.muted} />
             <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
               No products found
             </Text>
@@ -196,7 +196,7 @@ function ProductCard({ product, colors, onPress, onEdit }: ProductCardProps) {
         {/* Product Icon/Avatar */}
         <View
           className="h-12 w-12 items-center justify-center rounded-xl"
-          style={{ backgroundColor: colors.primary + '15' }}>
+          style={{ backgroundColor: colors.primary + '14' }}>
           <Text className="text-base font-bold" style={{ color: colors.primary }}>
             {getInitials(product.name)}
           </Text>
@@ -215,7 +215,7 @@ function ProductCard({ product, colors, onPress, onEdit }: ProductCardProps) {
             <View
               className="rounded-full px-2 py-1"
               style={{
-                backgroundColor: product.isActive ? colors.success + '20' : colors.error + '20',
+                backgroundColor: product.isActive ? colors.success + '14' : colors.error + '14',
               }}>
               <Text
                 className="text-xs font-semibold"
@@ -266,7 +266,7 @@ function ProductCard({ product, colors, onPress, onEdit }: ProductCardProps) {
               </View>
 
               {/* Arrow */}
-              <MaterialIcons name="arrow-forward" size={14} color={colors.muted} />
+              <MaterialCommunityIcons name="arrow-right" size={14} color={colors.muted} />
 
               {/* Selling Price */}
               <View>
@@ -297,7 +297,7 @@ function ProductCard({ product, colors, onPress, onEdit }: ProductCardProps) {
             {/* Unit Badge */}
             <View
               className="rounded-lg px-2.5 py-1"
-              style={{ backgroundColor: colors.primary + '15' }}>
+              style={{ backgroundColor: colors.primary + '14' }}>
               <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
                 {product.unit}
               </Text>
@@ -314,7 +314,7 @@ function ProductCard({ product, colors, onPress, onEdit }: ProductCardProps) {
           className="ml-2 self-start rounded-lg p-2"
           style={{ backgroundColor: colors.background }}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <MaterialIcons name="edit" size={18} color={colors.primary} />
+          <MaterialCommunityIcons name="pencil" size={18} color={colors.primary} />
         </TouchableOpacity>
       </View>
     </Pressable>

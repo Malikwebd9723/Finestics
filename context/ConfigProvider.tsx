@@ -22,14 +22,16 @@ const FALLBACK_CONFIG: AppConfig = {
     decimals: CURRENCY.decimalPlaces,
   },
   productUnits: PRODUCT_UNITS.map((u) => u.value),
-  orderStatuses: ORDER_STATUSES.map((s) => ({ value: s.value, label: s.label, color: s.color })),
-  paymentStatuses: PAYMENT_STATUSES.map((s) => ({ value: s.value, label: s.label, color: s.color })),
+  // Local constants now carry theme tones (not hex). AppConfig's `color` slot is a
+  // server-provided value; in the offline fallback we pass the tone name through.
+  orderStatuses: ORDER_STATUSES.map((s) => ({ value: s.value, label: s.label, color: s.tone })),
+  paymentStatuses: PAYMENT_STATUSES.map((s) => ({ value: s.value, label: s.label, color: s.tone })),
   paymentMethods: PAYMENT_METHODS.map((m) => ({ value: m.value, label: m.label })),
   itemStatuses: ITEM_STATUSES.map((s) => ({ value: s.value, label: s.label })),
   returnActions: RETURN_ACTIONS.map((a) => ({
     value: a.value,
     label: a.label,
-    color: a.color,
+    color: a.tone,
     description: a.description,
   })),
   policies: {

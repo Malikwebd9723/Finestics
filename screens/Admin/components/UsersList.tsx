@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAllUsersAdmin, AdminUser } from 'api/actions/adminActions';
 import UserDetailModal from './UserDetailModal';
@@ -98,11 +98,9 @@ export default function UsersList({ searchQuery, statusFilter, roleFilter }: Use
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin':
-        return '#8b5cf6';
       case 'vendor':
-        return '#3b82f6';
       case 'customer':
-        return '#10b981';
+        return colors.primary;
       default:
         return colors.muted;
     }
@@ -113,9 +111,8 @@ export default function UsersList({ searchQuery, statusFilter, roleFilter }: Use
       case 'active':
         return colors.success;
       case 'suspended':
-        return colors.error;
       case 'deleted':
-        return '#6b7280';
+        return colors.error;
       default:
         return colors.muted;
     }
@@ -168,7 +165,7 @@ export default function UsersList({ searchQuery, statusFilter, roleFilter }: Use
   if (error) {
     return (
       <View className="flex-1 items-center justify-center px-4">
-        <Ionicons name="alert-circle" size={64} color={colors.error} />
+        <MaterialCommunityIcons name="alert-circle" size={64} color={colors.error} />
         <Text className="text-lg font-semibold mt-4" style={{ color: colors.text }}>
           Failed to load users
         </Text>
@@ -190,7 +187,7 @@ export default function UsersList({ searchQuery, statusFilter, roleFilter }: Use
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
         ListEmptyComponent={
           <View className="items-center justify-center py-16">
-            <Ionicons name="people-outline" size={64} color={colors.muted} />
+            <MaterialCommunityIcons name="account-group-outline" size={64} color={colors.muted} />
             <Text className="text-center mt-4 text-base font-medium" style={{ color: colors.text }}>
               No users found
             </Text>
@@ -216,7 +213,7 @@ export default function UsersList({ searchQuery, statusFilter, roleFilter }: Use
               ) : (
                 <View
                   className="relative w-14 h-14 rounded-full items-center justify-center"
-                  style={{ backgroundColor: getRoleColor(item.role) + '20' }}>
+                  style={{ backgroundColor: getRoleColor(item.role) + '14' }}>
                   <Text className="text-lg font-bold" style={{ color: getRoleColor(item.role) }}>
                     {getInitials(item.firstName, item.lastName)}
                   </Text>
@@ -230,7 +227,7 @@ export default function UsersList({ searchQuery, statusFilter, roleFilter }: Use
                   </Text>
                   <View
                     className="px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: getRoleColor(item.role) + '20' }}>
+                    style={{ backgroundColor: getRoleColor(item.role) + '14' }}>
                     <Text
                       className="text-xs font-semibold uppercase"
                       style={{ color: getRoleColor(item.role) }}>
@@ -251,8 +248,8 @@ export default function UsersList({ searchQuery, statusFilter, roleFilter }: Use
                   </Text>
                   {!item.isEmailVerified && (
                     <View className="flex-row items-center ml-2">
-                      <MaterialIcons name="warning" size={12} color="#f59e0b" />
-                      <Text className="text-xs ml-0.5" style={{ color: '#f59e0b' }}>
+                      <MaterialCommunityIcons name="alert" size={12} color={colors.muted} />
+                      <Text className="text-xs ml-0.5" style={{ color: colors.muted }}>
                         Unverified
                       </Text>
                     </View>
@@ -261,7 +258,7 @@ export default function UsersList({ searchQuery, statusFilter, roleFilter }: Use
               </View>
             </View>
 
-            <MaterialIcons name="chevron-right" size={24} color={colors.muted} />
+            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.muted} />
           </Pressable>
         )}
       />

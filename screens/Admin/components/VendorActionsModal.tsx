@@ -10,7 +10,7 @@ import {
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import {
@@ -180,7 +180,7 @@ export default function VendorActionsModal({
         return {
           title: 'Suspend Vendor',
           description: 'Please provide a reason for suspending this vendor. They will be unable to sell until reactivated.',
-          icon: 'block',
+          icon: 'block-helper',
           color: colors.error,
           buttonText: 'Suspend',
         };
@@ -213,8 +213,8 @@ export default function VendorActionsModal({
           <View className="flex-row items-center mb-4">
             <View
               className="h-12 w-12 rounded-full items-center justify-center mr-3"
-              style={{ backgroundColor: config.color + '20' }}>
-              <MaterialIcons name={config.icon as any} size={28} color={config.color} />
+              style={{ backgroundColor: config.color + '14' }}>
+              <MaterialCommunityIcons name={config.icon as any} size={28} color={config.color} />
             </View>
             <Text className="text-xl font-bold flex-1" style={{ color: colors.text }}>
               {config.title}
@@ -223,7 +223,7 @@ export default function VendorActionsModal({
               onPress={onClose}
               className="w-8 h-8 rounded-full items-center justify-center"
               style={{ backgroundColor: colors.background }}>
-              <MaterialIcons name="close" size={20} color={colors.text} />
+              <MaterialCommunityIcons name="close" size={20} color={colors.text} />
             </Pressable>
           </View>
 
@@ -274,7 +274,7 @@ export default function VendorActionsModal({
                 opacity: isLoading || (needsReason && !reason.trim()) ? 0.5 : 1,
               }}>
               {isLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={colors.white} />
               ) : (
                 <Text className="text-base font-bold text-white">{config.buttonText}</Text>
               )}

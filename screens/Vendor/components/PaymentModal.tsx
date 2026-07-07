@@ -7,13 +7,12 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchOrderDetails, recordPayment } from 'api/actions/orderActions';
@@ -125,7 +124,7 @@ export default function PaymentModal({ visible, orderId, onClose }: PaymentModal
                 disabled={isSubmitting}
                 className="h-10 w-10 items-center justify-center rounded-full"
                 style={{ backgroundColor: colors.background }}>
-                <MaterialIcons name="close" size={22} color={colors.text} />
+                <MaterialCommunityIcons name="close" size={22} color={colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -226,7 +225,7 @@ export default function PaymentModal({ visible, orderId, onClose }: PaymentModal
                         <Text
                           className="text-sm font-medium"
                           style={{
-                            color: paymentMethod === method.value ? '#fff' : colors.text,
+                            color: paymentMethod === method.value ? colors.white : colors.text,
                           }}>
                           {method.label}
                         </Text>
@@ -261,10 +260,10 @@ export default function PaymentModal({ visible, orderId, onClose }: PaymentModal
                       opacity: isSubmitting || !amount ? 0.7 : 1,
                     }}>
                     {isSubmitting ? (
-                      <ActivityIndicator size="small" color="#fff" />
+                      <ActivityIndicator size="small" color={colors.white} />
                     ) : (
                       <>
-                        <MaterialIcons name="check" size={18} color="#fff" />
+                        <MaterialCommunityIcons name="check" size={18} color={colors.white} />
                         <Text className="ml-1 font-semibold text-white">Record Payment</Text>
                       </>
                     )}

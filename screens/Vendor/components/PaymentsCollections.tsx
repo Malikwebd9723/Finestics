@@ -1,7 +1,7 @@
 // screens/Vendor/components/PaymentsCollections.tsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { MaterialIcons, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import {
@@ -72,7 +72,7 @@ export default function PaymentsCollectionsTab({ startDate, endDate, isActive }:
   if (error) {
     return (
       <View className="items-center py-16 px-6">
-        <MaterialIcons name="error-outline" size={40} color={colors.error} />
+        <MaterialCommunityIcons name="alert-circle-outline" size={40} color={colors.error} />
         <Text className="mt-3 text-sm" style={{ color: colors.muted }}>
           Failed to load collections
         </Text>
@@ -111,7 +111,7 @@ export default function PaymentsCollectionsTab({ startDate, endDate, isActive }:
                   }}>
                   <Text
                     className="text-xs font-medium"
-                    style={{ color: active ? '#fff' : colors.muted }}>
+                    style={{ color: active ? colors.white : colors.muted }}>
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
@@ -124,7 +124,7 @@ export default function PaymentsCollectionsTab({ startDate, endDate, isActive }:
             onPress={handleCopy}
             className="ml-2 flex-row items-center rounded-full px-3"
             style={{ height: 30, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <Ionicons name="copy-outline" size={13} color={colors.muted} />
+            <MaterialCommunityIcons name="content-copy" size={13} color={colors.muted} />
             <Text className="ml-1.5 text-xs" style={{ color: colors.muted }}>Copy</Text>
           </TouchableOpacity>
         )}
@@ -134,7 +134,7 @@ export default function PaymentsCollectionsTab({ startDate, endDate, isActive }:
       {collections && (
         <View
           className="mb-4 flex-row items-center justify-between rounded-xl px-4 py-3"
-          style={{ backgroundColor: colors.success + '10' }}>
+          style={{ backgroundColor: colors.success + '14' }}>
           <Text className="text-sm" style={{ color: colors.text }}>
             Total Collected
           </Text>
@@ -177,8 +177,8 @@ export default function PaymentsCollectionsTab({ startDate, endDate, isActive }:
                   {formatPrice(item.totalCollected)}
                 </Text>
                 {groupBy === 'day' && (
-                  <MaterialIcons
-                    name={selectedDate === item.period ? 'expand-less' : 'expand-more'}
+                  <MaterialCommunityIcons
+                    name={selectedDate === item.period ? 'chevron-up' : 'chevron-down'}
                     size={18}
                     color={colors.muted}
                   />

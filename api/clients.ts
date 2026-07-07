@@ -11,7 +11,10 @@ type AuthEventListener = () => void;
 const authEventListeners = new Set<AuthEventListener>();
 export const onUnauthorized = (listener: AuthEventListener) => {
   authEventListeners.add(listener);
-  return () => authEventListeners.delete(listener);
+  // Void-returning unsubscribe so it can be used directly as an effect cleanup.
+  return () => {
+    authEventListeners.delete(listener);
+  };
 };
 const emitUnauthorized = () => {
   authEventListeners.forEach((fn) => {

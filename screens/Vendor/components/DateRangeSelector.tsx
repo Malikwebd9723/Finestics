@@ -1,7 +1,7 @@
 // screens/Vendor/components/DateRangeSelector.tsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Platform } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useThemeContext } from 'context/ThemeProvider';
 
@@ -82,7 +82,7 @@ export default function DateRangeSelector({
           }}>
           <Text
             className="text-xs font-semibold"
-            style={{ color: todayActive ? '#fff' : colors.text }}>
+            style={{ color: todayActive ? colors.white : colors.text }}>
             Today
           </Text>
         </TouchableOpacity>
@@ -93,11 +93,15 @@ export default function DateRangeSelector({
           className="flex-row items-center rounded-full px-3"
           style={{
             height: 34,
-            backgroundColor: !todayActive ? colors.primary + '10' : colors.card,
+            backgroundColor: !todayActive ? colors.primary + '14' : colors.card,
             borderWidth: 1,
             borderColor: !todayActive ? colors.primary + '40' : colors.border,
           }}>
-          <MaterialIcons name="calendar-today" size={13} color={!todayActive ? colors.primary : colors.muted} />
+          <MaterialCommunityIcons
+            name="calendar-today"
+            size={13}
+            color={!todayActive ? colors.primary : colors.muted}
+          />
           <Text
             className="ml-1.5 text-xs font-medium"
             style={{ color: !todayActive ? colors.primary : colors.text }}>
@@ -112,11 +116,15 @@ export default function DateRangeSelector({
           className="flex-row items-center rounded-full px-3"
           style={{
             height: 34,
-            backgroundColor: !todayActive ? colors.primary + '10' : colors.card,
+            backgroundColor: !todayActive ? colors.primary + '14' : colors.card,
             borderWidth: 1,
             borderColor: !todayActive ? colors.primary + '40' : colors.border,
           }}>
-          <MaterialIcons name="calendar-today" size={13} color={!todayActive ? colors.primary : colors.muted} />
+          <MaterialCommunityIcons
+            name="calendar-today"
+            size={13}
+            color={!todayActive ? colors.primary : colors.muted}
+          />
           <Text
             className="ml-1.5 text-xs font-medium"
             style={{ color: !todayActive ? colors.primary : colors.text }}>

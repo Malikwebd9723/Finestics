@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, FlatList, Pressable, TouchableOpacity, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAllCustomers } from 'api/actions/customerActions';
 import {
@@ -65,7 +65,7 @@ export default function CustomersList({
   if (error) {
     return (
       <View className="flex-1 items-center justify-center px-6">
-        <Ionicons name="alert-circle" size={64} color={colors.error} />
+        <MaterialCommunityIcons name="alert-circle" size={64} color={colors.error} />
         <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
           Failed to load customers
         </Text>
@@ -89,7 +89,7 @@ export default function CustomersList({
         <Text className="text-base font-bold" style={{ color: colors.text }}>
           All Customers
         </Text>
-        <View className="rounded-full px-3 py-1" style={{ backgroundColor: colors.primary + '20' }}>
+        <View className="rounded-full px-3 py-1" style={{ backgroundColor: colors.primary + '14' }}>
           <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
             {filteredCustomers.length}
           </Text>
@@ -111,7 +111,7 @@ export default function CustomersList({
         }
         ListEmptyComponent={
           <View className="items-center justify-center py-20">
-            <Ionicons name="people-outline" size={72} color={colors.muted} />
+            <MaterialCommunityIcons name="account-group-outline" size={72} color={colors.muted} />
             <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
               No customers found
             </Text>
@@ -162,7 +162,7 @@ function CustomerCard({ customer, colors, onPress, onEdit }: CustomerCardProps) 
         {/* Avatar */}
         <View
           className="h-12 w-12 items-center justify-center rounded-full"
-          style={{ backgroundColor: colors.primary + '15' }}>
+          style={{ backgroundColor: colors.primary + '14' }}>
           <Text className="text-base font-bold" style={{ color: colors.primary }}>
             {getInitials(customer.contactPerson || customer.businessName)}
           </Text>
@@ -178,7 +178,7 @@ function CustomerCard({ customer, colors, onPress, onEdit }: CustomerCardProps) 
             {isNewCustomer(customer.createdAt) && (
               <View
                 className="ml-2 rounded-full px-2 py-0.5"
-                style={{ backgroundColor: colors.success + '20' }}>
+                style={{ backgroundColor: colors.success + '14' }}>
                 <Text className="text-xs font-semibold" style={{ color: colors.success }}>
                   New
                 </Text>
@@ -188,7 +188,7 @@ function CustomerCard({ customer, colors, onPress, onEdit }: CustomerCardProps) 
 
           {/* Contact Person */}
           <View className="mt-1 flex-row items-center">
-            <Ionicons name="person-outline" size={13} color={colors.muted} />
+            <MaterialCommunityIcons name="account-outline" size={13} color={colors.muted} />
             <Text className="ml-1.5 text-sm" style={{ color: colors.text }}>
               {customer.contactPerson}
             </Text>
@@ -196,7 +196,7 @@ function CustomerCard({ customer, colors, onPress, onEdit }: CustomerCardProps) 
 
           {/* Phone */}
           <View className="mt-0.5 flex-row items-center">
-            <Ionicons name="call-outline" size={13} color={colors.muted} />
+            <MaterialCommunityIcons name="phone-outline" size={13} color={colors.muted} />
             <Text className="ml-1.5 text-sm" style={{ color: colors.muted }}>
               {customer.phone}
             </Text>
@@ -223,7 +223,7 @@ function CustomerCard({ customer, colors, onPress, onEdit }: CustomerCardProps) 
               className="rounded-lg px-2 py-1"
               style={{
                 backgroundColor:
-                  customer.status === 'active' ? colors.success + '20' : colors.error + '20',
+                  customer.status === 'active' ? colors.success + '14' : colors.error + '14',
               }}>
               <Text
                 className="text-xs font-semibold capitalize"
@@ -247,7 +247,7 @@ function CustomerCard({ customer, colors, onPress, onEdit }: CustomerCardProps) 
             className="rounded-lg p-2"
             style={{ backgroundColor: colors.background }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <MaterialIcons name="edit" size={18} color={colors.primary} />
+            <MaterialCommunityIcons name="pencil" size={18} color={colors.primary} />
           </TouchableOpacity>
 
           {/* Credit Limit */}
@@ -268,7 +268,7 @@ function CustomerCard({ customer, colors, onPress, onEdit }: CustomerCardProps) 
           className="mt-3 flex-row items-center justify-between pt-3"
           style={{ borderTopWidth: 1, borderTopColor: colors.border }}>
           <View className="flex-row items-center">
-            <Ionicons name="wallet-outline" size={14} color={colors.error} />
+            <MaterialCommunityIcons name="wallet-outline" size={14} color={colors.error} />
             <Text className="ml-1 text-xs font-medium" style={{ color: colors.muted }}>
               Outstanding Balance
             </Text>

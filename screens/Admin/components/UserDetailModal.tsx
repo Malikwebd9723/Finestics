@@ -188,28 +188,17 @@ export default function UserDetailModal({
             case "active":
                 return colors.success;
             case "pending":
-                return "#f59e0b";
+                return colors.muted;
             case "suspended":
-                return colors.error;
             case "deleted":
-                return "#6b7280";
-            default:
-                return "#6b7280";
-        }
-    };
-
-    const getRoleColor = (role: string) => {
-        switch (role) {
-            case "admin":
-                return "#8b5cf6";
-            case "vendor":
-                return "#3b82f6";
-            case "customer":
-                return "#10b981";
+                return colors.error;
             default:
                 return colors.muted;
         }
     };
+
+    // One accent — the role label carries the meaning, not a color rainbow.
+    const getRoleColor = (_role: string) => colors.primary;
 
     if (!visible) return null;
 

@@ -9,7 +9,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAllCustomers } from 'api/actions/customerActions';
@@ -75,7 +75,7 @@ export default function CustomerSelectModal({
               onPress={onClose}
               className="h-10 w-10 items-center justify-center rounded-full"
               style={{ backgroundColor: colors.background }}>
-              <MaterialIcons name="close" size={22} color={colors.text} />
+              <MaterialCommunityIcons name="close" size={22} color={colors.text} />
             </TouchableOpacity>
           </View>
 
@@ -88,7 +88,7 @@ export default function CustomerSelectModal({
                 borderWidth: 1,
                 borderColor: colors.border,
               }}>
-              <Ionicons name="search" size={18} color={colors.muted} />
+              <MaterialCommunityIcons name="magnify" size={18} color={colors.muted} />
               <TextInput
                 value={search}
                 onChangeText={setSearch}
@@ -99,7 +99,7 @@ export default function CustomerSelectModal({
               />
               {search.length > 0 && (
                 <TouchableOpacity onPress={() => setSearch('')}>
-                  <Ionicons name="close-circle" size={18} color={colors.muted} />
+                  <MaterialCommunityIcons name="close-circle" size={18} color={colors.muted} />
                 </TouchableOpacity>
               )}
             </View>
@@ -120,7 +120,7 @@ export default function CustomerSelectModal({
               contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
               ListEmptyComponent={
                 <View className="items-center py-12">
-                  <Ionicons name="people" size={48} color={colors.muted} />
+                  <MaterialCommunityIcons name="account-group" size={48} color={colors.muted} />
                   <Text className="mt-4 text-center" style={{ color: colors.muted }}>
                     {search ? 'No customers match your search' : 'No customers found'}
                   </Text>
@@ -134,7 +134,7 @@ export default function CustomerSelectModal({
                     onPress={() => handleSelect(item)}
                     className="mb-2 flex-row items-center rounded-xl p-4"
                     style={{
-                      backgroundColor: isSelected ? colors.primary + '15' : colors.background,
+                      backgroundColor: isSelected ? colors.primary + '14' : colors.background,
                       borderWidth: 1,
                       borderColor: isSelected ? colors.primary : colors.border,
                     }}>
@@ -142,11 +142,11 @@ export default function CustomerSelectModal({
                     <View
                       className="mr-3 h-11 w-11 items-center justify-center rounded-full"
                       style={{
-                        backgroundColor: isSelected ? colors.primary : colors.primary + '20',
+                        backgroundColor: isSelected ? colors.primary : colors.primary + '14',
                       }}>
                       <Text
                         className="text-sm font-bold"
-                        style={{ color: isSelected ? '#fff' : colors.primary }}>
+                        style={{ color: isSelected ? colors.white : colors.primary }}>
                         {item.businessName?.slice(0, 2).toUpperCase() || '??'}
                       </Text>
                     </View>
@@ -170,7 +170,7 @@ export default function CustomerSelectModal({
 
                     {/* Check Icon */}
                     {isSelected && (
-                      <MaterialIcons name="check-circle" size={22} color={colors.primary} />
+                      <MaterialCommunityIcons name="check-circle" size={22} color={colors.primary} />
                     )}
                   </TouchableOpacity>
                 );

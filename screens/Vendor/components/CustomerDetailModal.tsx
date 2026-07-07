@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { deleteCustomer, fetchCustomerSummary } from 'api/actions/customerActions';
@@ -31,6 +31,7 @@ import {
   formatCurrency,
   formatDate,
 } from 'types/customer.types';
+import { typo } from 'constants/design';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native'; // ADD THIS
 
@@ -193,7 +194,7 @@ export default function CustomerDetailModal({
               onPress={onClose}
               className="h-10 w-10 items-center justify-center rounded-full"
               style={{ backgroundColor: colors.background }}>
-              <MaterialIcons name="close" size={22} color={colors.text} />
+              <MaterialCommunityIcons name="close" size={22} color={colors.text} />
             </Pressable>
           </View>
 
@@ -207,7 +208,7 @@ export default function CustomerDetailModal({
             </View>
           ) : error ? (
             <View className="flex-1 items-center justify-center px-6">
-              <MaterialIcons name="error-outline" size={64} color={colors.error} />
+              <MaterialCommunityIcons name="alert-circle-outline" size={64} color={colors.error} />
               <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
                 Failed to load details
               </Text>
@@ -250,9 +251,9 @@ export default function CustomerDetailModal({
                 </View>
 
                 {/* Contact Information */}
-                <SectionCard title="Contact Information" icon="person" colors={colors}>
+                <SectionCard title="Contact Information" icon="account" colors={colors}>
                   <InfoRow
-                    icon="person"
+                    icon="account"
                     label="Contact Person"
                     value={customer.contactPerson}
                     colors={colors}
@@ -267,16 +268,16 @@ export default function CustomerDetailModal({
                     />
                   )}
                   {customer.email && (
-                    <InfoRow icon="email" label="Email" value={customer.email} colors={colors} />
+                    <InfoRow icon="email-outline" label="Email" value={customer.email} colors={colors} />
                   )}
                   <InfoRow
-                    icon="business"
+                    icon="domain"
                     label="Business Type"
                     value={getBusinessTypeLabel(customer.businessType)}
                     colors={colors}
                   />
                   <InfoRow
-                    icon="event"
+                    icon="calendar"
                     label="Joined"
                     value={formatDate(customer.createdAt)}
                     colors={colors}
@@ -285,23 +286,23 @@ export default function CustomerDetailModal({
 
                 {/* Linked self-serve app account (customer signed up themselves) */}
                 {customer.customerUser && (
-                  <SectionCard title="Linked App Account" icon="smartphone" colors={colors}>
+                  <SectionCard title="Linked App Account" icon="cellphone" colors={colors}>
                     <InfoRow
-                      icon="person"
+                      icon="account"
                       label="App User"
                       value={`${customer.customerUser.firstName} ${customer.customerUser.lastName}`.trim()}
                       colors={colors}
                     />
                     {customer.customerUser.email && (
                       <InfoRow
-                        icon="email"
+                        icon="email-outline"
                         label="Login Email"
                         value={customer.customerUser.email}
                         colors={colors}
                       />
                     )}
                     <InfoRow
-                      icon="link"
+                      icon="link-variant"
                       label="Connection"
                       value={
                         (customer.connectionStatus || 'active').charAt(0).toUpperCase() +
@@ -315,10 +316,10 @@ export default function CustomerDetailModal({
                 {/* Financial Information */}
                 <SectionCard
                   title="Financial Information"
-                  icon="account-balance-wallet"
+                  icon="wallet-outline"
                   colors={colors}>
                   <InfoRow
-                    icon="credit-card"
+                    icon="credit-card-outline"
                     label="Payment Terms"
                     value={getPaymentTermsLabel(customer.paymentTerms)}
                     colors={colors}
@@ -330,7 +331,7 @@ export default function CustomerDetailModal({
                     colors={colors}
                   />
                   <InfoRow
-                    icon="account-balance"
+                    icon="bank"
                     label="Current Balance"
                     value={formatCurrency(
                       customer.stats?.totalOutstanding || customer.currentBalance || 0
@@ -346,13 +347,13 @@ export default function CustomerDetailModal({
                   {customer.stats && (
                     <>
                       <InfoRow
-                        icon="receipt-long"
+                        icon="receipt"
                         label="Total Orders"
                         value={customer.stats.totalOrders?.toString() || '0'}
                         colors={colors}
                       />
                       <InfoRow
-                        icon="payments"
+                        icon="cash-multiple"
                         label="Total Spent"
                         value={formatCurrency(customer.stats.totalSpent || 0)}
                         colors={colors}
@@ -364,7 +365,7 @@ export default function CustomerDetailModal({
                           value={`${formatCurrency(customer.stats.grossProfit || 0)} (${customer.stats.grossMargin || 0}%)`}
                           colors={colors}
                           highlight
-                          highlightColor={(customer.stats.grossProfit || 0) >= 0 ? '#10b981' : '#ef4444'}
+                          highlightColor={(customer.stats.grossProfit || 0) >= 0 ? colors.success : colors.error}
                         />
                       )}
                     </>
@@ -373,7 +374,7 @@ export default function CustomerDetailModal({
 
                 {/* Address Information */}
                 {customer.address && (
-                  <SectionCard title="Address" icon="location-on" colors={colors}>
+                  <SectionCard title="Address" icon="map-marker" colors={colors}>
                     <View className="mb-3 flex-row flex-wrap items-center gap-2">
                       {customer.address.label && (
                         <View
@@ -424,7 +425,7 @@ export default function CustomerDetailModal({
 
                 {/* Additional Notes */}
                 {(customer.notes || customer.deliveryInstructions) && (
-                  <SectionCard title="Additional Notes" icon="info" colors={colors}>
+                  <SectionCard title="Additional Notes" icon="information" colors={colors}>
                     {customer.notes && (
                       <View className="mb-3">
                         <Text
@@ -457,22 +458,22 @@ export default function CustomerDetailModal({
                   <TouchableOpacity
                     onPress={() => setPendingItemsVisible(true)}
                     className="mb-4 flex-row items-center rounded-2xl p-4"
-                    style={{ backgroundColor: '#3b82f620', borderWidth: 1, borderColor: '#3b82f6' }}>
-                    <MaterialIcons name="schedule" size={22} color="#3b82f6" />
+                    style={{ backgroundColor: colors.primary + '14', borderWidth: 1, borderColor: colors.primary }}>
+                    <MaterialCommunityIcons name="clock-outline" size={22} color={colors.primary} />
                     <View className="ml-3 flex-1">
-                      <Text className="text-sm font-bold" style={{ color: '#3b82f6' }}>
+                      <Text className="text-sm font-bold" style={{ color: colors.primary }}>
                         {pendingCount} pending replacement item(s)
                       </Text>
                       <Text className="text-xs" style={{ color: colors.muted }}>
                         From previous returns — tap to view
                       </Text>
                     </View>
-                    <MaterialIcons name="chevron-right" size={22} color="#3b82f6" />
+                    <MaterialCommunityIcons name="chevron-right" size={22} color={colors.primary} />
                   </TouchableOpacity>
                 )}
 
                 {/* Order History - NOW WITH onViewOrder */}
-                <SectionCard title="Order History" icon="receipt-long" colors={colors}>
+                <SectionCard title="Order History" icon="receipt" colors={colors}>
                   <CustomerOrderHistory
                     customerId={customerId!}
                     maxOrders={5}
@@ -496,7 +497,7 @@ export default function CustomerDetailModal({
                     borderWidth: 1,
                     borderColor: colors.error,
                   }}>
-                  <MaterialIcons name="delete" size={18} color={colors.error} />
+                  <MaterialCommunityIcons name="delete" size={18} color={colors.error} />
                   <Text className="ml-2 text-sm font-bold" style={{ color: colors.error }}>
                     Delete
                   </Text>
@@ -509,14 +510,14 @@ export default function CustomerDetailModal({
                   }}
                   className="flex-1 flex-row items-center justify-center rounded-xl py-3"
                   style={{ backgroundColor: colors.primary }}>
-                  <MaterialIcons name="edit" size={18} color="#fff" />
+                  <MaterialCommunityIcons name="pencil" size={18} color={colors.white} />
                   <Text className="ml-2 text-sm font-bold text-white">Edit</Text>
                 </TouchableOpacity>
               </View>
             </>
           ) : (
             <View className="flex-1 items-center justify-center px-6">
-              <MaterialIcons name="error-outline" size={64} color={colors.muted} />
+              <MaterialCommunityIcons name="alert-circle-outline" size={64} color={colors.muted} />
               <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
                 No data available
               </Text>
@@ -563,8 +564,10 @@ function SectionCard({ title, icon, colors, children }: SectionCardProps) {
   return (
     <View className="mb-4 rounded-2xl p-4" style={{ backgroundColor: colors.background }}>
       <View className="mb-3 flex-row items-center">
-        <MaterialIcons name={icon as any} size={20} color={colors.primary} />
-        <Text className="ml-2 text-base font-bold" style={{ color: colors.text }}>
+        <MaterialCommunityIcons name={icon as any} size={20} color={colors.primary} />
+        <Text
+          className="ml-2"
+          style={[typo.eyebrow, { color: colors.muted, textTransform: 'uppercase' }]}>
           {title}
         </Text>
       </View>
@@ -586,14 +589,14 @@ interface InfoRowProps {
 function InfoRow({ icon, label, value, colors, highlight, highlightColor }: InfoRowProps) {
   return (
     <View className="flex-row items-center py-2">
-      <MaterialIcons name={icon as any} size={16} color={colors.muted} />
+      <MaterialCommunityIcons name={icon as any} size={16} color={colors.muted} />
       <Text className="ml-2 w-28 text-sm" style={{ color: colors.muted }}>
         {label}
       </Text>
       {highlight ? (
         <View
           className="rounded-full px-2 py-1"
-          style={{ backgroundColor: (highlightColor || colors.primary) + '20' }}>
+          style={{ backgroundColor: (highlightColor || colors.primary) + '14' }}>
           <Text
             className="text-xs font-semibold"
             style={{ color: highlightColor || colors.primary }}>

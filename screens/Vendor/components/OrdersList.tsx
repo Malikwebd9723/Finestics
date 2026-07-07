@@ -13,16 +13,18 @@ import {
   Animated,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAllOrders } from 'api/actions/orderActions';
 import { fetchVans } from 'api/actions/vendorActions';
 import {
   Order,
+  OrderStatus,
   OrdersApiResponse,
   ORDER_STATUSES,
   PAYMENT_STATUSES,
+  PaymentStatus,
   SORT_OPTIONS,
   SortField,
   SortOrder,
@@ -35,6 +37,8 @@ import {
   getPaymentStatusLabel,
   isToday,
 } from 'types/order.types';
+import { toneColor, toneTint } from 'utils/statusTones';
+import { typo } from 'constants/design';
 import OrderCardSkeleton from './OrderCardSkeleton';
 
 interface OrdersListProps {
@@ -145,8 +149,8 @@ export default function OrdersList({
     ],
     queryFn: () =>
       fetchAllOrders({
-        status: statusFilter || undefined,
-        paymentStatus: paymentFilter || undefined,
+        status: (statusFilter as OrderStatus) || undefined,
+        paymentStatus: (paymentFilter as PaymentStatus) || undefined,
         vanName: vanFilter || undefined,
         dateFrom: dateFromStr,
         dateTo: dateToStr,
@@ -311,7 +315,7 @@ export default function OrdersList({
   if (error) {
     return (
       <View className="flex-1 items-center justify-center px-6">
-        <Ionicons name="alert-circle" size={64} color={colors.error} />
+        <MaterialCommunityIcons name="alert-circle" size={64} color={colors.error} />
         <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
           Failed to load orders
         </Text>
@@ -339,27 +343,27 @@ export default function OrdersList({
           onPress={() => navigateQuickDate('prev')}
           className="rounded-full p-2"
           style={{ backgroundColor: colors.background }}>
-          <Ionicons name="chevron-back" size={18} color={colors.text} />
+          <MaterialCommunityIcons name="chevron-left" size={18} color={colors.text} />
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => setShowQuickDatePicker(true)}
           className="flex-row items-center rounded-lg px-4 py-2"
           style={{ backgroundColor: colors.background }}>
-          <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+          <MaterialCommunityIcons name="calendar-outline" size={16} color={colors.primary} />
           <Text className="mx-2 font-semibold" style={{ color: colors.text }}>
             {dateFrom && dateTo && dateFrom.toDateString() === dateTo.toDateString()
               ? formatQuickDate(dateFrom)
               : 'All Dates'}
           </Text>
-          <MaterialIcons name="arrow-drop-down" size={18} color={colors.muted} />
+          <MaterialCommunityIcons name="menu-down" size={18} color={colors.muted} />
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => navigateQuickDate('next')}
           className="rounded-full p-2"
           style={{ backgroundColor: colors.background }}>
-          <Ionicons name="chevron-forward" size={18} color={colors.text} />
+          <MaterialCommunityIcons name="chevron-right" size={18} color={colors.text} />
         </TouchableOpacity>
 
         {/* Today & Clear buttons */}
@@ -374,7 +378,7 @@ export default function OrdersList({
             }}>
             <Text
               className="text-xs font-semibold"
-              style={{ color: isToday(quickDate.toISOString()) ? '#fff' : colors.text }}>
+              style={{ color: isToday(quickDate.toISOString()) ? colors.white : colors.text }}>
               Today
             </Text>
           </TouchableOpacity>
@@ -383,7 +387,7 @@ export default function OrdersList({
               onPress={clearQuickDate}
               className="items-center justify-center rounded-lg px-2"
               style={{ backgroundColor: colors.background }}>
-              <Ionicons name="close" size={16} color={colors.muted} />
+              <MaterialCommunityIcons name="close" size={16} color={colors.muted} />
             </TouchableOpacity>
           )}
         </View>
@@ -399,23 +403,23 @@ export default function OrdersList({
                   onPress={() => onStatusFilterChange(null)}
                   className="flex-row items-center rounded-full px-3 py-1.5"
                   style={{
-                    backgroundColor: ORDER_STATUSES.find(s => s.value === statusFilter)?.color + '20',
+                    backgroundColor: getStatusColor(statusFilter, colors) + '14',
                     borderWidth: 1,
-                    borderColor: ORDER_STATUSES.find(s => s.value === statusFilter)?.color,
+                    borderColor: getStatusColor(statusFilter, colors),
                   }}>
                   <View
                     className="mr-1.5 h-2 w-2 rounded-full"
-                    style={{ backgroundColor: ORDER_STATUSES.find(s => s.value === statusFilter)?.color }}
+                    style={{ backgroundColor: getStatusColor(statusFilter, colors) }}
                   />
                   <Text
                     className="text-xs font-semibold"
-                    style={{ color: ORDER_STATUSES.find(s => s.value === statusFilter)?.color }}>
-                    {ORDER_STATUSES.find(s => s.value === statusFilter)?.label}
+                    style={{ color: getStatusColor(statusFilter, colors) }}>
+                    {getStatusLabel(statusFilter)}
                   </Text>
-                  <Ionicons
+                  <MaterialCommunityIcons
                     name="close"
                     size={14}
-                    color={ORDER_STATUSES.find(s => s.value === statusFilter)?.color}
+                    color={getStatusColor(statusFilter, colors)}
                     style={{ marginLeft: 4 }}
                   />
                 </TouchableOpacity>
@@ -425,23 +429,23 @@ export default function OrdersList({
                   onPress={() => onPaymentFilterChange(null)}
                   className="flex-row items-center rounded-full px-3 py-1.5"
                   style={{
-                    backgroundColor: PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color + '20',
+                    backgroundColor: getPaymentStatusColor(paymentFilter, colors) + '14',
                     borderWidth: 1,
-                    borderColor: PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color,
+                    borderColor: getPaymentStatusColor(paymentFilter, colors),
                   }}>
                   <View
                     className="mr-1.5 h-2 w-2 rounded-full"
-                    style={{ backgroundColor: PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color }}
+                    style={{ backgroundColor: getPaymentStatusColor(paymentFilter, colors) }}
                   />
                   <Text
                     className="text-xs font-semibold"
-                    style={{ color: PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color }}>
-                    {PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.label}
+                    style={{ color: getPaymentStatusColor(paymentFilter, colors) }}>
+                    {getPaymentStatusLabel(paymentFilter)}
                   </Text>
-                  <Ionicons
+                  <MaterialCommunityIcons
                     name="close"
                     size={14}
-                    color={PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color}
+                    color={getPaymentStatusColor(paymentFilter, colors)}
                     style={{ marginLeft: 4 }}
                   />
                 </TouchableOpacity>
@@ -451,15 +455,15 @@ export default function OrdersList({
                   onPress={() => onVanFilterChange(null)}
                   className="flex-row items-center rounded-full px-3 py-1.5"
                   style={{
-                    backgroundColor: colors.primary + '20',
+                    backgroundColor: colors.primary + '14',
                     borderWidth: 1,
                     borderColor: colors.primary,
                   }}>
-                  <Ionicons name="car" size={12} color={colors.primary} style={{ marginRight: 4 }} />
+                  <MaterialCommunityIcons name="truck-outline" size={12} color={colors.primary} style={{ marginRight: 4 }} />
                   <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
                     {vanFilter}
                   </Text>
-                  <Ionicons name="close" size={14} color={colors.primary} style={{ marginLeft: 4 }} />
+                  <MaterialCommunityIcons name="close" size={14} color={colors.primary} style={{ marginLeft: 4 }} />
                 </TouchableOpacity>
               )}
               {(dateFrom || dateTo) && !(dateFrom && dateTo && dateFrom.toDateString() === dateTo.toDateString()) && (
@@ -467,15 +471,15 @@ export default function OrdersList({
                   onPress={clearDateFilter}
                   className="flex-row items-center rounded-full px-3 py-1.5"
                   style={{
-                    backgroundColor: colors.primary + '20',
+                    backgroundColor: colors.primary + '14',
                     borderWidth: 1,
                     borderColor: colors.primary,
                   }}>
-                  <Ionicons name="calendar" size={12} color={colors.primary} style={{ marginRight: 4 }} />
+                  <MaterialCommunityIcons name="calendar" size={12} color={colors.primary} style={{ marginRight: 4 }} />
                   <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
                     {dateFrom ? dateFrom.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '...'} - {dateTo ? dateTo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '...'}
                   </Text>
-                  <Ionicons name="close" size={14} color={colors.primary} style={{ marginLeft: 4 }} />
+                  <MaterialCommunityIcons name="close" size={14} color={colors.primary} style={{ marginLeft: 4 }} />
                 </TouchableOpacity>
               )}
               {/* Clear All */}
@@ -504,7 +508,7 @@ export default function OrdersList({
             {stats.total} orders
           </Text>
           {stats.pending > 0 && (
-            <Text className="text-xs" style={{ color: '#f59e0b' }}>
+            <Text className="text-xs" style={{ color: colors.muted }}>
               {stats.pending} pending
             </Text>
           )}
@@ -512,7 +516,7 @@ export default function OrdersList({
             <TouchableOpacity
               onPress={handleSelectAllVisible}
               className="rounded-full px-2.5 py-1"
-              style={{ backgroundColor: colors.primary + '20' }}>
+              style={{ backgroundColor: colors.primary + '14' }}>
               <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
                 Select All
               </Text>
@@ -526,8 +530,8 @@ export default function OrdersList({
             onPress={() => setShowSortOptions(!showSortOptions)}
             className="flex-row items-center rounded-lg px-2.5 py-1.5"
             style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <MaterialIcons
-              name={sortOrder === 'DESC' ? 'arrow-downward' : 'arrow-upward'}
+            <MaterialCommunityIcons
+              name={sortOrder === 'DESC' ? 'arrow-down' : 'arrow-up'}
               size={14}
               color={colors.text}
             />
@@ -545,13 +549,13 @@ export default function OrdersList({
               borderWidth: 1,
               borderColor: activeFiltersCount > 0 ? colors.primary : colors.border,
             }}>
-            <MaterialIcons
+            <MaterialCommunityIcons
               name="tune"
               size={16}
-              color={activeFiltersCount > 0 ? '#fff' : colors.text}
+              color={activeFiltersCount > 0 ? colors.white : colors.text}
             />
             {activeFiltersCount > 0 && (
-              <Text className="ml-1 text-xs font-bold" style={{ color: '#fff' }}>
+              <Text className="ml-1 text-xs font-bold" style={{ color: colors.white }}>
                 {activeFiltersCount}
               </Text>
             )}
@@ -566,8 +570,8 @@ export default function OrdersList({
               borderWidth: 1,
               borderColor: showSummary ? colors.primary : colors.border,
             }}>
-            <Ionicons
-              name="stats-chart"
+            <MaterialCommunityIcons
+              name="chart-bar"
               size={16}
               color={showSummary ? colors.primary : colors.text}
             />
@@ -581,9 +585,7 @@ export default function OrdersList({
           className="mx-4 mb-2 rounded-xl p-3"
           style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
           <View className="mb-2 flex-row items-center justify-between">
-            <Text className="text-xs font-semibold" style={{ color: colors.muted }}>
-              SORT BY
-            </Text>
+            <Text style={[typo.eyebrow, { color: colors.muted }]}>SORT BY</Text>
             <View className="flex-row items-center gap-2">
               {/* Date Filter Type Toggle */}
               <TouchableOpacity
@@ -593,14 +595,14 @@ export default function OrdersList({
                 <Text className="text-xs" style={{ color: colors.primary }}>
                   By {dateFilterField === 'orderDate' ? 'Order' : 'Delivery'} Date
                 </Text>
-                <Ionicons name="swap-horizontal" size={12} color={colors.primary} style={{ marginLeft: 4 }} />
+                <MaterialCommunityIcons name="swap-horizontal" size={12} color={colors.primary} style={{ marginLeft: 4 }} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={toggleSortOrder}
                 className="flex-row items-center rounded-lg px-2 py-1"
                 style={{ backgroundColor: colors.background }}>
-                <MaterialIcons
-                  name={sortOrder === 'DESC' ? 'arrow-downward' : 'arrow-upward'}
+                <MaterialCommunityIcons
+                  name={sortOrder === 'DESC' ? 'arrow-down' : 'arrow-up'}
                   size={14}
                   color={colors.primary}
                 />
@@ -627,7 +629,7 @@ export default function OrdersList({
                   }}>
                   <Text
                     className="text-xs font-semibold"
-                    style={{ color: sortBy === option.value ? '#fff' : colors.text }}>
+                    style={{ color: sortBy === option.value ? colors.white : colors.text }}>
                     {option.label}
                   </Text>
                 </TouchableOpacity>
@@ -645,19 +647,19 @@ export default function OrdersList({
           <View className="flex-row">
             <View className="flex-1 border-r p-2.5" style={{ borderColor: colors.border }}>
               <Text className="text-xs" style={{ color: colors.muted }}>Value</Text>
-              <Text className="text-sm font-bold" style={{ color: colors.text }}>
+              <Text className="text-sm" style={[typo.num, { color: colors.text }]}>
                 {formatPrice(stats.totalAmount)}
               </Text>
             </View>
             <View className="flex-1 border-r p-2.5" style={{ borderColor: colors.border }}>
               <Text className="text-xs" style={{ color: colors.muted }}>Collected</Text>
-              <Text className="text-sm font-bold" style={{ color: colors.success }}>
+              <Text className="text-sm" style={[typo.num, { color: colors.success }]}>
                 {formatPrice(stats.paidAmount)}
               </Text>
             </View>
             <View className="flex-1 p-2.5">
               <Text className="text-xs" style={{ color: colors.muted }}>Outstanding</Text>
-              <Text className="text-sm font-bold" style={{ color: colors.error }}>
+              <Text className="text-sm" style={[typo.num, { color: colors.error }]}>
                 {formatPrice(stats.balanceAmount)}
               </Text>
             </View>
@@ -669,6 +671,7 @@ export default function OrdersList({
                 {ORDER_STATUSES.map((status) => {
                   const count = stats[status.value as keyof typeof stats] || 0;
                   if (!count) return null;
+                  const chipColor = toneColor(status.tone, colors);
                   return (
                     <TouchableOpacity
                       key={status.value}
@@ -676,9 +679,9 @@ export default function OrdersList({
                         onStatusFilterChange(statusFilter === status.value ? null : status.value);
                       }}
                       className="flex-row items-center rounded-full px-2 py-0.5"
-                      style={{ backgroundColor: status.color + '15' }}>
-                      <View className="mr-1 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: status.color }} />
-                      <Text className="text-xs" style={{ color: status.color }}>
+                      style={{ backgroundColor: toneTint(status.tone, colors) }}>
+                      <View className="mr-1 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: chipColor }} />
+                      <Text className="text-xs" style={{ color: chipColor }}>
                         {status.label} {count as number}
                       </Text>
                     </TouchableOpacity>
@@ -702,7 +705,7 @@ export default function OrdersList({
               className="flex-1 flex-row items-center justify-between px-4 py-3 border-r"
               style={{ borderColor: colors.border }}>
               <View className="flex-row items-center">
-                <Ionicons name="calendar-outline" size={16} color={dateFrom ? colors.primary : colors.muted} />
+                <MaterialCommunityIcons name="calendar-outline" size={16} color={dateFrom ? colors.primary : colors.muted} />
                 <Text className="ml-2 text-sm font-medium" style={{ color: colors.text }}>
                   From
                 </Text>
@@ -715,7 +718,7 @@ export default function OrdersList({
               onPress={() => setShowDateTo(true)}
               className="flex-1 flex-row items-center justify-between px-4 py-3">
               <View className="flex-row items-center">
-                <Ionicons name="calendar-outline" size={16} color={dateTo ? colors.primary : colors.muted} />
+                <MaterialCommunityIcons name="calendar-outline" size={16} color={dateTo ? colors.primary : colors.muted} />
                 <Text className="ml-2 text-sm font-medium" style={{ color: colors.text }}>
                   To
                 </Text>
@@ -726,7 +729,7 @@ export default function OrdersList({
             </TouchableOpacity>
             {(dateFrom || dateTo) && (
               <TouchableOpacity onPress={clearDateFilter} className="pr-3">
-                <Ionicons name="close-circle" size={18} color={colors.error} />
+                <MaterialCommunityIcons name="close-circle" size={18} color={colors.error} />
               </TouchableOpacity>
             )}
           </View>
@@ -737,7 +740,7 @@ export default function OrdersList({
             className="flex-row items-center justify-between px-4 py-3 border-b"
             style={{ borderColor: colors.border }}>
             <View className="flex-row items-center">
-              <Ionicons name="flag-outline" size={18} color={statusFilter ? colors.primary : colors.muted} />
+              <MaterialCommunityIcons name="flag-outline" size={18} color={statusFilter ? colors.primary : colors.muted} />
               <Text className="ml-3 text-sm font-medium" style={{ color: colors.text }}>
                 Order Status
               </Text>
@@ -747,23 +750,23 @@ export default function OrdersList({
                 <>
                   <View
                     className="flex-row items-center rounded-full px-2 py-0.5"
-                    style={{ backgroundColor: ORDER_STATUSES.find(s => s.value === statusFilter)?.color + '20' }}>
+                    style={{ backgroundColor: getStatusColor(statusFilter, colors) + '14' }}>
                     <View
                       className="mr-1 h-2 w-2 rounded-full"
-                      style={{ backgroundColor: ORDER_STATUSES.find(s => s.value === statusFilter)?.color }}
+                      style={{ backgroundColor: getStatusColor(statusFilter, colors) }}
                     />
-                    <Text className="text-xs font-medium" style={{ color: ORDER_STATUSES.find(s => s.value === statusFilter)?.color }}>
-                      {ORDER_STATUSES.find(s => s.value === statusFilter)?.label}
+                    <Text className="text-xs font-medium" style={{ color: getStatusColor(statusFilter, colors) }}>
+                      {getStatusLabel(statusFilter)}
                     </Text>
                   </View>
                   <TouchableOpacity onPress={() => onStatusFilterChange(null)} className="ml-2">
-                    <Ionicons name="close-circle" size={18} color={colors.error} />
+                    <MaterialCommunityIcons name="close-circle" size={18} color={colors.error} />
                   </TouchableOpacity>
                 </>
               ) : (
                 <>
                   <Text className="text-sm" style={{ color: colors.muted }}>All</Text>
-                  <Ionicons name="chevron-forward" size={16} color={colors.muted} style={{ marginLeft: 4 }} />
+                  <MaterialCommunityIcons name="chevron-right" size={16} color={colors.muted} style={{ marginLeft: 4 }} />
                 </>
               )}
             </View>
@@ -775,7 +778,7 @@ export default function OrdersList({
             className="flex-row items-center justify-between px-4 py-3 border-b"
             style={{ borderColor: colors.border }}>
             <View className="flex-row items-center">
-              <Ionicons name="wallet-outline" size={18} color={paymentFilter ? colors.primary : colors.muted} />
+              <MaterialCommunityIcons name="wallet-outline" size={18} color={paymentFilter ? colors.primary : colors.muted} />
               <Text className="ml-3 text-sm font-medium" style={{ color: colors.text }}>
                 Payment Status
               </Text>
@@ -785,23 +788,23 @@ export default function OrdersList({
                 <>
                   <View
                     className="flex-row items-center rounded-full px-2 py-0.5"
-                    style={{ backgroundColor: PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color + '20' }}>
+                    style={{ backgroundColor: getPaymentStatusColor(paymentFilter, colors) + '14' }}>
                     <View
                       className="mr-1 h-2 w-2 rounded-full"
-                      style={{ backgroundColor: PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color }}
+                      style={{ backgroundColor: getPaymentStatusColor(paymentFilter, colors) }}
                     />
-                    <Text className="text-xs font-medium" style={{ color: PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.color }}>
-                      {PAYMENT_STATUSES.find(s => s.value === paymentFilter)?.label}
+                    <Text className="text-xs font-medium" style={{ color: getPaymentStatusColor(paymentFilter, colors) }}>
+                      {getPaymentStatusLabel(paymentFilter)}
                     </Text>
                   </View>
                   <TouchableOpacity onPress={() => onPaymentFilterChange(null)} className="ml-2">
-                    <Ionicons name="close-circle" size={18} color={colors.error} />
+                    <MaterialCommunityIcons name="close-circle" size={18} color={colors.error} />
                   </TouchableOpacity>
                 </>
               ) : (
                 <>
                   <Text className="text-sm" style={{ color: colors.muted }}>All</Text>
-                  <Ionicons name="chevron-forward" size={16} color={colors.muted} style={{ marginLeft: 4 }} />
+                  <MaterialCommunityIcons name="chevron-right" size={16} color={colors.muted} style={{ marginLeft: 4 }} />
                 </>
               )}
             </View>
@@ -814,7 +817,7 @@ export default function OrdersList({
               className="flex-row items-center justify-between px-4 py-3"
               style={{ borderColor: colors.border }}>
               <View className="flex-row items-center">
-                <Ionicons name="car-outline" size={18} color={vanFilter ? colors.primary : colors.muted} />
+                <MaterialCommunityIcons name="truck-outline" size={18} color={vanFilter ? colors.primary : colors.muted} />
                 <Text className="ml-3 text-sm font-medium" style={{ color: colors.text }}>
                   Van
                 </Text>
@@ -824,13 +827,13 @@ export default function OrdersList({
                   <>
                     <Text className="text-sm" style={{ color: colors.primary }}>{vanFilter}</Text>
                     <TouchableOpacity onPress={() => onVanFilterChange(null)} className="ml-2">
-                      <Ionicons name="close-circle" size={18} color={colors.error} />
+                      <MaterialCommunityIcons name="close-circle" size={18} color={colors.error} />
                     </TouchableOpacity>
                   </>
                 ) : (
                   <>
                     <Text className="text-sm" style={{ color: colors.muted }}>All Vans</Text>
-                    <Ionicons name="chevron-forward" size={16} color={colors.muted} style={{ marginLeft: 4 }} />
+                    <MaterialCommunityIcons name="chevron-right" size={16} color={colors.muted} style={{ marginLeft: 4 }} />
                   </>
                 )}
               </View>
@@ -891,7 +894,7 @@ export default function OrdersList({
         }
         ListEmptyComponent={
           <View className="items-center justify-center px-4 py-20">
-            <MaterialIcons name="receipt-long" size={72} color={colors.muted} />
+            <MaterialCommunityIcons name="receipt" size={72} color={colors.muted} />
             <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
               No orders found
             </Text>
@@ -968,9 +971,11 @@ export default function OrdersList({
                     <Text className="text-sm font-medium" style={{ color: !statusFilter ? colors.primary : colors.text }}>
                       All Statuses
                     </Text>
-                    {!statusFilter && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                    {!statusFilter && <MaterialCommunityIcons name="check" size={20} color={colors.primary} />}
                   </TouchableOpacity>
-                  {ORDER_STATUSES.map((status) => (
+                  {ORDER_STATUSES.map((status) => {
+                    const statusColor = toneColor(status.tone, colors);
+                    return (
                     <TouchableOpacity
                       key={status.value}
                       onPress={() => {
@@ -979,24 +984,25 @@ export default function OrdersList({
                       }}
                       className="flex-row items-center justify-between rounded-xl px-4 py-3"
                       style={{
-                        backgroundColor: statusFilter === status.value ? status.color + '15' : colors.background,
+                        backgroundColor: statusFilter === status.value ? toneTint(status.tone, colors) : colors.background,
                         borderWidth: statusFilter === status.value ? 1 : 0,
-                        borderColor: status.color,
+                        borderColor: statusColor,
                       }}>
                       <View className="flex-row items-center">
                         <View
                           className="mr-3 h-3 w-3 rounded-full"
-                          style={{ backgroundColor: status.color }}
+                          style={{ backgroundColor: statusColor }}
                         />
                         <Text
                           className="text-sm font-medium"
-                          style={{ color: statusFilter === status.value ? status.color : colors.text }}>
+                          style={{ color: statusFilter === status.value ? statusColor : colors.text }}>
                           {status.label}
                         </Text>
                       </View>
-                      {statusFilter === status.value && <Ionicons name="checkmark" size={20} color={status.color} />}
+                      {statusFilter === status.value && <MaterialCommunityIcons name="check" size={20} color={statusColor} />}
                     </TouchableOpacity>
-                  ))}
+                    );
+                  })}
                 </View>
               )}
 
@@ -1017,9 +1023,11 @@ export default function OrdersList({
                     <Text className="text-sm font-medium" style={{ color: !paymentFilter ? colors.primary : colors.text }}>
                       All Payment Statuses
                     </Text>
-                    {!paymentFilter && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                    {!paymentFilter && <MaterialCommunityIcons name="check" size={20} color={colors.primary} />}
                   </TouchableOpacity>
-                  {PAYMENT_STATUSES.map((status) => (
+                  {PAYMENT_STATUSES.map((status) => {
+                    const statusColor = toneColor(status.tone, colors);
+                    return (
                     <TouchableOpacity
                       key={status.value}
                       onPress={() => {
@@ -1028,24 +1036,25 @@ export default function OrdersList({
                       }}
                       className="flex-row items-center justify-between rounded-xl px-4 py-3"
                       style={{
-                        backgroundColor: paymentFilter === status.value ? status.color + '15' : colors.background,
+                        backgroundColor: paymentFilter === status.value ? toneTint(status.tone, colors) : colors.background,
                         borderWidth: paymentFilter === status.value ? 1 : 0,
-                        borderColor: status.color,
+                        borderColor: statusColor,
                       }}>
                       <View className="flex-row items-center">
                         <View
                           className="mr-3 h-3 w-3 rounded-full"
-                          style={{ backgroundColor: status.color }}
+                          style={{ backgroundColor: statusColor }}
                         />
                         <Text
                           className="text-sm font-medium"
-                          style={{ color: paymentFilter === status.value ? status.color : colors.text }}>
+                          style={{ color: paymentFilter === status.value ? statusColor : colors.text }}>
                           {status.label}
                         </Text>
                       </View>
-                      {paymentFilter === status.value && <Ionicons name="checkmark" size={20} color={status.color} />}
+                      {paymentFilter === status.value && <MaterialCommunityIcons name="check" size={20} color={statusColor} />}
                     </TouchableOpacity>
-                  ))}
+                    );
+                  })}
                 </View>
               )}
 
@@ -1064,12 +1073,12 @@ export default function OrdersList({
                       borderColor: colors.primary,
                     }}>
                     <View className="flex-row items-center">
-                      <Ionicons name="car" size={18} color={!vanFilter ? colors.primary : colors.muted} style={{ marginRight: 12 }} />
+                      <MaterialCommunityIcons name="truck-outline" size={18} color={!vanFilter ? colors.primary : colors.muted} style={{ marginRight: 12 }} />
                       <Text className="text-sm font-medium" style={{ color: !vanFilter ? colors.primary : colors.text }}>
                         All Vans
                       </Text>
                     </View>
-                    {!vanFilter && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                    {!vanFilter && <MaterialCommunityIcons name="check" size={20} color={colors.primary} />}
                   </TouchableOpacity>
                   {vans.map((van) => (
                     <TouchableOpacity
@@ -1085,14 +1094,14 @@ export default function OrdersList({
                         borderColor: colors.primary,
                       }}>
                       <View className="flex-row items-center">
-                        <Ionicons name="car" size={18} color={vanFilter === van ? colors.primary : colors.muted} style={{ marginRight: 12 }} />
+                        <MaterialCommunityIcons name="truck-outline" size={18} color={vanFilter === van ? colors.primary : colors.muted} style={{ marginRight: 12 }} />
                         <Text
                           className="text-sm font-medium"
                           style={{ color: vanFilter === van ? colors.primary : colors.text }}>
                           {van}
                         </Text>
                       </View>
-                      {vanFilter === van && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                      {vanFilter === van && <MaterialCommunityIcons name="check" size={20} color={colors.primary} />}
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -1123,8 +1132,8 @@ function OrderCard({
   isSelectionMode,
   isSelected,
 }: OrderCardProps) {
-  const statusColor = getStatusColor(order.status);
-  const paymentColor = getPaymentStatusColor(order.paymentStatus);
+  const statusColor = getStatusColor(order.status, colors);
+  const paymentColor = getPaymentStatusColor(order.paymentStatus, colors);
 
   // count items
   // const itemCount = order.items?.length || 0;
@@ -1150,7 +1159,7 @@ function OrderCard({
               borderWidth: isSelected ? 0 : 2,
               borderColor: colors.border,
             }}>
-            {isSelected && <Ionicons name="checkmark" size={16} color="#fff" />}
+            {isSelected && <MaterialCommunityIcons name="check" size={16} color={colors.white} />}
           </View>
         </View>
       )}
@@ -1174,7 +1183,7 @@ function OrderCard({
           </View>
           <View
             className="rounded-full px-2.5 py-1"
-            style={{ backgroundColor: statusColor + '20' }}>
+            style={{ backgroundColor: statusColor + '14' }}>
             <Text className="text-xs font-bold" style={{ color: statusColor }}>
               {getStatusLabel(order.status)}
             </Text>
@@ -1202,7 +1211,7 @@ function OrderCard({
         <View className="mb-3 flex-row items-center flex-wrap gap-3">
           {/* Order Date */}
           <View className="flex-row items-center">
-            <Ionicons name="cart-outline" size={14} color={colors.muted} />
+            <MaterialCommunityIcons name="cart-outline" size={14} color={colors.muted} />
             <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
               Order: {formatShortDate(order.orderDate)}
             </Text>
@@ -1210,7 +1219,7 @@ function OrderCard({
           {/* Delivery Date */}
           {order.deliveryDate && (
             <View className="flex-row items-center">
-              <Ionicons name="car-outline" size={14} color={colors.primary} />
+              <MaterialCommunityIcons name="truck-outline" size={14} color={colors.primary} />
               <Text className="ml-1 text-xs font-medium" style={{ color: colors.primary }}>
                 Delivery: {formatShortDate(order.deliveryDate)}
               </Text>
@@ -1219,7 +1228,7 @@ function OrderCard({
           {/* Van */}
           {order.vanName && (
             <View className="flex-row items-center">
-              <MaterialIcons name="local-shipping" size={14} color={colors.muted} />
+              <MaterialCommunityIcons name="truck-outline" size={14} color={colors.muted} />
               <Text className="ml-1 text-xs" style={{ color: colors.muted }}>
                 {order.vanName}
               </Text>
@@ -1232,7 +1241,7 @@ function OrderCard({
           className="flex-row items-center justify-between border-t pt-3"
           style={{ borderColor: colors.border }}>
           <View className="flex-row items-center gap-2">
-            <View className="rounded-md px-2 py-1" style={{ backgroundColor: paymentColor + '15' }}>
+            <View className="rounded-md px-2 py-1" style={{ backgroundColor: paymentColor + '14' }}>
               <Text className="text-xs font-semibold" style={{ color: paymentColor }}>
                 {getPaymentStatusLabel(order.paymentStatus)}
               </Text>
@@ -1244,7 +1253,7 @@ function OrderCard({
             )}
           </View>
           <View className="items-end">
-            <Text className="text-lg font-bold" style={{ color: colors.text }}>
+            <Text className="text-lg" style={[typo.num, { color: colors.text }]}>
               {formatPrice(order.totalAmount)}
             </Text>
             {order.items && order.items.length > 0 && (() => {

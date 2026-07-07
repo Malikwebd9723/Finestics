@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useQuery } from '@tanstack/react-query';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -22,6 +22,7 @@ import Toast from 'utils/Toast';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchCollectionSheet } from 'api/actions/orderActions';
 import { formatPrice } from 'types/order.types';
+import { typo } from 'constants/design';
 import { ViewToggle } from './components/OrderTableView';
 
 interface CollectionItem {
@@ -139,15 +140,17 @@ export default function CollectionSheet() {
 
     const sortedItems = [...collectionSheet.items].sort((a, b) => b.totalQuantity - a.totalQuantity);
 
-    let text = `📅 Report Date: ${dateStr} , ${timeStr}\n`;
-    text += `📦 Total Orders: ${collectionSheet.totalOrders}\n`;
-    text += `📊 Total Products: ${totals.items}\n`;
-    text += `📈 Total Quantity: ${totals.quantity}\n`;
+    let text = `COLLECTION SHEET\n`;
+    text += `------------------------\n\n`;
+    text += `Date: ${dateStr}, ${timeStr}\n`;
+    text += `Orders: ${collectionSheet.totalOrders}\n`;
+    text += `Products: ${totals.items}\n`;
+    text += `Quantity: ${totals.quantity}\n`;
     if (includeCosts) {
-      text += `💰 Est. Total Cost: ${formatPrice(totals.cost)}\n`;
+      text += `Est. Cost: ${formatPrice(totals.cost)}\n`;
     }
-    text += `\nPRODUCT BREAKDOWN (High → Low)\n`;
-    text += `──────────────────\n\n`;
+    text += `\nPRODUCT BREAKDOWN (High to Low)\n`;
+    text += `------------------------\n\n`;
 
     sortedItems.forEach((item) => {
       text += `${item.productName} = ${item.totalQuantity}\n`;
@@ -214,7 +217,7 @@ export default function CollectionSheet() {
             onPress={() => navigation.goBack()}
             className="mr-3 p-1"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
           </TouchableOpacity>
           <View>
             <Text className="text-xl font-bold" style={{ color: colors.text }}>
@@ -232,7 +235,7 @@ export default function CollectionSheet() {
           disabled={!collectionSheet?.items?.length}
           className="p-2"
           style={{ opacity: collectionSheet?.items?.length ? 1 : 0.5 }}>
-          <Ionicons name="share-outline" size={22} color={colors.primary} />
+          <MaterialCommunityIcons name="share-variant" size={22} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -244,25 +247,25 @@ export default function CollectionSheet() {
           onPress={() => navigateDate('prev')}
           className="rounded-full p-2"
           style={{ backgroundColor: colors.background }}>
-          <Ionicons name="chevron-back" size={20} color={colors.text} />
+          <MaterialCommunityIcons name="chevron-left" size={20} color={colors.text} />
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => setShowDatePicker(true)}
           className="flex-row items-center rounded-lg px-4 py-2"
           style={{ backgroundColor: colors.background }}>
-          <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+          <MaterialCommunityIcons name="calendar-outline" size={18} color={colors.primary} />
           <Text className="ml-2 font-semibold" style={{ color: colors.text }}>
             {formatDisplayDate(selectedDate)}
           </Text>
-          <MaterialIcons name="arrow-drop-down" size={20} color={colors.muted} />
+          <MaterialCommunityIcons name="menu-down" size={20} color={colors.muted} />
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => navigateDate('next')}
           className="rounded-full p-2"
           style={{ backgroundColor: colors.background }}>
-          <Ionicons name="chevron-forward" size={20} color={colors.text} />
+          <MaterialCommunityIcons name="chevron-right" size={20} color={colors.text} />
         </TouchableOpacity>
       </View>
 
@@ -303,7 +306,7 @@ export default function CollectionSheet() {
               <Text className="text-xs" style={{ color: colors.muted }}>
                 Est. Cost
               </Text>
-              <Text className="text-lg font-bold" style={{ color: colors.primary }}>
+              <Text className="text-lg" style={[typo.num, { color: colors.primary }]}>
                 {formatPrice(totals.cost)}
               </Text>
             </View>
@@ -336,7 +339,7 @@ export default function CollectionSheet() {
             </View>
           ) : error ? (
             <View className="items-center py-20">
-              <Ionicons name="alert-circle" size={48} color={colors.error} />
+              <MaterialCommunityIcons name="alert-circle" size={48} color={colors.error} />
               <Text className="mt-4 text-center" style={{ color: colors.text }}>
                 Failed to load collection sheet
               </Text>
@@ -349,7 +352,7 @@ export default function CollectionSheet() {
             </View>
           ) : !collectionSheet?.items?.length ? (
             <View className="items-center py-20">
-              <MaterialIcons name="shopping-basket" size={64} color={colors.muted} />
+              <MaterialCommunityIcons name="basket" size={64} color={colors.muted} />
               <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
                 No items to collect
               </Text>
@@ -395,7 +398,7 @@ export default function CollectionSheet() {
               onPress={() => handleShare(true)}
               className="mb-3 flex-row items-center rounded-xl p-4"
               style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
-              <MaterialIcons name="share" size={22} color={colors.primary} />
+              <MaterialCommunityIcons name="share-variant" size={22} color={colors.primary} />
               <View className="ml-3 flex-1">
                 <Text className="font-semibold" style={{ color: colors.text }}>
                   Share With Costs
@@ -409,7 +412,7 @@ export default function CollectionSheet() {
               onPress={() => handleShare(false)}
               className="mb-3 flex-row items-center rounded-xl p-4"
               style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
-              <MaterialIcons name="share" size={22} color={colors.muted} />
+              <MaterialCommunityIcons name="share-variant" size={22} color={colors.muted} />
               <View className="ml-3 flex-1">
                 <Text className="font-semibold" style={{ color: colors.text }}>
                   Share Without Costs
@@ -423,7 +426,7 @@ export default function CollectionSheet() {
               onPress={() => handleCopy(true)}
               className="mb-3 flex-row items-center rounded-xl p-4"
               style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
-              <MaterialIcons name="content-copy" size={22} color={colors.primary} />
+              <MaterialCommunityIcons name="content-copy" size={22} color={colors.primary} />
               <View className="ml-3 flex-1">
                 <Text className="font-semibold" style={{ color: colors.text }}>
                   Copy With Costs
@@ -434,7 +437,7 @@ export default function CollectionSheet() {
               onPress={() => handleCopy(false)}
               className="mb-3 flex-row items-center rounded-xl p-4"
               style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
-              <MaterialIcons name="content-copy" size={22} color={colors.muted} />
+              <MaterialCommunityIcons name="content-copy" size={22} color={colors.muted} />
               <View className="ml-3 flex-1">
                 <Text className="font-semibold" style={{ color: colors.text }}>
                   Copy Without Costs
@@ -531,7 +534,7 @@ function CollectionTableView({ items, colors }: { items: CollectionItem[]; color
           <Text className="w-20 text-right text-sm font-bold" style={{ color: colors.primary }}>
             {items.reduce((sum, i) => sum + i.totalQuantity, 0)}
           </Text>
-          <Text className="w-24 text-right text-sm font-bold" style={{ color: colors.primary }}>
+          <Text className="w-24 text-right text-sm" style={[typo.num, { color: colors.primary }]}>
             {formatPrice(items.reduce((sum, i) => sum + i.totalQuantity * i.avgBuyingPrice, 0))}
           </Text>
         </View>
@@ -604,7 +607,7 @@ function CollectionItemCard({
 
         {/* Expand Indicator */}
         <View className="mt-2 flex-row items-center justify-center">
-          <Ionicons
+          <MaterialCommunityIcons
             name={isExpanded ? 'chevron-up' : 'chevron-down'}
             size={16}
             color={colors.muted}
@@ -615,7 +618,7 @@ function CollectionItemCard({
       {/* Expanded Order Details */}
       {isExpanded && (
         <View className="border-t px-4 pb-4 pt-2" style={{ borderColor: colors.border }}>
-          <Text className="mb-2 text-xs font-semibold" style={{ color: colors.muted }}>
+          <Text className="mb-2" style={[typo.eyebrow, { color: colors.muted }]}>
             ORDER BREAKDOWN
           </Text>
           <View className="gap-2">

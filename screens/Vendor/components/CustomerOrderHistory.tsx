@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchCustomerOrders } from 'api/actions/customerActions';
 import {
@@ -13,6 +13,7 @@ import {
   getPaymentStatusColor,
   getPaymentStatusLabel,
 } from 'types/order.types';
+import { typo } from 'constants/design';
 import { useNavigation } from '@react-navigation/native';
 
 interface CustomerOrderHistoryProps {
@@ -70,7 +71,7 @@ export default function CustomerOrderHistory({
   if (orders.length === 0) {
     return (
       <View className="items-center py-6">
-        <MaterialIcons name="receipt-long" size={32} color={colors.muted} />
+        <MaterialCommunityIcons name="receipt" size={32} color={colors.muted} />
         <Text className="mt-2 text-sm" style={{ color: colors.muted }}>
           No orders yet
         </Text>
@@ -95,7 +96,7 @@ export default function CustomerOrderHistory({
             <Text className="text-xs" style={{ color: colors.muted }}>
               Total Spent
             </Text>
-            <Text className="text-lg font-bold" style={{ color: colors.primary }}>
+            <Text className="text-lg" style={[typo.num, { color: colors.primary }]}>
               {formatPrice(stats.totalSpent || 0)}
             </Text>
           </View>
@@ -104,13 +105,16 @@ export default function CustomerOrderHistory({
               Balance
             </Text>
             <Text
-              className="text-lg font-bold"
-              style={{
-                color:
-                  parseFloat(stats.totalBalance || stats.totalOutstanding || 0) > 0
-                    ? colors.error
-                    : colors.success,
-              }}>
+              className="text-lg"
+              style={[
+                typo.num,
+                {
+                  color:
+                    parseFloat(stats.totalBalance || stats.totalOutstanding || 0) > 0
+                      ? colors.error
+                      : colors.success,
+                },
+              ]}>
               {formatPrice(stats.totalBalance || stats.totalOutstanding || 0)}
             </Text>
           </View>
@@ -134,10 +138,10 @@ export default function CustomerOrderHistory({
                 </Text>
                 <View
                   className="rounded px-1.5 py-0.5"
-                  style={{ backgroundColor: getStatusColor(order.status) + '20' }}>
+                  style={{ backgroundColor: getStatusColor(order.status, colors) + '14' }}>
                   <Text
                     className="text-xs font-semibold"
-                    style={{ color: getStatusColor(order.status) }}>
+                    style={{ color: getStatusColor(order.status, colors) }}>
                     {getStatusLabel(order.status)}
                   </Text>
                 </View>
@@ -151,10 +155,10 @@ export default function CustomerOrderHistory({
                 </Text>
                 <View
                   className="rounded px-1.5 py-0.5"
-                  style={{ backgroundColor: getPaymentStatusColor(order.paymentStatus) + '15' }}>
+                  style={{ backgroundColor: getPaymentStatusColor(order.paymentStatus, colors) + '14' }}>
                   <Text
                     className="text-xs"
-                    style={{ color: getPaymentStatusColor(order.paymentStatus) }}>
+                    style={{ color: getPaymentStatusColor(order.paymentStatus, colors) }}>
                     {getPaymentStatusLabel(order.paymentStatus)}
                   </Text>
                 </View>
@@ -163,7 +167,7 @@ export default function CustomerOrderHistory({
 
             {/* Amount */}
             <View className="items-end">
-              <Text className="font-bold" style={{ color: colors.text }}>
+              <Text style={[typo.num, { color: colors.text }]}>
                 {formatPrice(order.totalAmount)}
               </Text>
               {parseFloat(order.balanceAmount || 0) > 0 && (
@@ -175,7 +179,7 @@ export default function CustomerOrderHistory({
 
             {/* Chevron */}
             {onViewOrder && (
-              <MaterialIcons
+              <MaterialCommunityIcons
                 name="chevron-right"
                 size={20}
                 color={colors.muted}

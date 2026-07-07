@@ -1,7 +1,7 @@
 // screens/Vendor/components/PaymentsCustomers.tsx
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { MaterialIcons, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchCustomerPaymentSummaries, CustomerPaymentSummary } from 'api/actions/paymentActions';
@@ -84,7 +84,7 @@ export default function PaymentsCustomersTab({
   if (error) {
     return (
       <View className="items-center py-16 px-6">
-        <MaterialIcons name="error-outline" size={40} color={colors.error} />
+        <MaterialCommunityIcons name="alert-circle-outline" size={40} color={colors.error} />
         <Text className="mt-3 text-sm" style={{ color: colors.muted }}>
           Failed to load customers
         </Text>
@@ -115,7 +115,7 @@ export default function PaymentsCustomersTab({
               className="flex-row items-center rounded-full px-3"
               style={{
                 height: 28,
-                backgroundColor: hasBalanceOnly ? colors.error + '15' : colors.card,
+                backgroundColor: hasBalanceOnly ? colors.error + '14' : colors.card,
                 borderWidth: 1,
                 borderColor: hasBalanceOnly ? colors.error : colors.border,
               }}>
@@ -125,7 +125,12 @@ export default function PaymentsCustomersTab({
                 Owing
               </Text>
               {hasBalanceOnly && (
-                <MaterialIcons name="close" size={12} color={colors.error} style={{ marginLeft: 2 }} />
+                <MaterialCommunityIcons
+                  name="close"
+                  size={12}
+                  color={colors.error}
+                  style={{ marginLeft: 2 }}
+                />
               )}
             </TouchableOpacity>
 
@@ -142,7 +147,7 @@ export default function PaymentsCustomersTab({
                   className="flex-row items-center rounded-full px-3"
                   style={{
                     height: 28,
-                    backgroundColor: active ? colors.primary + '15' : colors.card,
+                    backgroundColor: active ? colors.primary + '14' : colors.card,
                     borderWidth: 1,
                     borderColor: active ? colors.primary : colors.border,
                   }}>
@@ -152,8 +157,8 @@ export default function PaymentsCustomersTab({
                     {opt.label}
                   </Text>
                   {active && (
-                    <MaterialIcons
-                      name={sortOrder === 'DESC' ? 'arrow-downward' : 'arrow-upward'}
+                    <MaterialCommunityIcons
+                      name={sortOrder === 'DESC' ? 'arrow-down' : 'arrow-up'}
                       size={12}
                       color={colors.primary}
                     />
@@ -168,7 +173,7 @@ export default function PaymentsCustomersTab({
             onPress={() => copyToClipboard(formatCustomersText(filteredCustomers, startDate, endDate))}
             className="ml-2 flex-row items-center rounded-full px-3"
             style={{ height: 28, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-            <Ionicons name="copy-outline" size={13} color={colors.muted} />
+            <MaterialCommunityIcons name="content-copy" size={13} color={colors.muted} />
           </TouchableOpacity>
         )}
         </View>
@@ -250,7 +255,7 @@ export default function PaymentsCustomersTab({
                           customer.creditUtilization > 80
                             ? colors.error
                             : customer.creditUtilization > 50
-                              ? '#f59e0b'
+                              ? colors.muted
                               : colors.success,
                       }}
                     />

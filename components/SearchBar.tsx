@@ -1,7 +1,7 @@
 // components/SearchBar.tsx
 import React from 'react';
 import { View, TextInput, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 
 interface SearchBarProps {
@@ -31,7 +31,7 @@ export default function SearchBar({
           shadowRadius: 2,
           elevation: 2,
         }}>
-        <Ionicons name="search" size={20} color={colors.muted} />
+        <MaterialCommunityIcons name="magnify" size={20} color={colors.muted} />
         <TextInput
           placeholder={placeholder}
           placeholderTextColor={colors.muted}
@@ -46,7 +46,7 @@ export default function SearchBar({
             onPress={() => setSearchQuery('')}
             className="mr-2 p-1"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Ionicons name="close-circle" size={18} color={colors.muted} />
+            <MaterialCommunityIcons name="close-circle" size={18} color={colors.muted} />
           </Pressable>
         )}
 
@@ -62,7 +62,7 @@ export default function SearchBar({
               shadowRadius: 3,
               elevation: 3,
             }}>
-            <Ionicons name="add" size={24} color="#fff" />
+            <MaterialCommunityIcons name="plus" size={24} color={colors.white} />
           </Pressable>
         )}
       </View>

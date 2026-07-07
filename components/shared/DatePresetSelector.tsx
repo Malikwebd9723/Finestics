@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, Platform } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useThemeContext } from 'context/ThemeProvider';
 
@@ -197,7 +197,9 @@ export default function DatePresetSelector({
                 borderWidth: 1,
                 borderColor: active ? colors.primary : colors.border,
               }}>
-              <Text className="text-xs font-semibold" style={{ color: active ? '#fff' : colors.text }}>
+              <Text
+                className="text-xs font-semibold"
+                style={{ color: active ? colors.white : colors.text }}>
                 {PRESET_LABELS[preset]}
               </Text>
             </TouchableOpacity>
@@ -231,7 +233,7 @@ export default function DatePresetSelector({
                   FROM
                 </Text>
                 <View className="mt-0.5 flex-row items-center">
-                  <MaterialIcons name="calendar-today" size={14} color={colors.primary} />
+                  <MaterialCommunityIcons name="calendar-today" size={14} color={colors.primary} />
                   <Text className="ml-2 text-sm" style={{ color: colors.text }}>
                     {formatDisplay(draftRange.from)}
                   </Text>
@@ -246,7 +248,7 @@ export default function DatePresetSelector({
                   TO
                 </Text>
                 <View className="mt-0.5 flex-row items-center">
-                  <MaterialIcons name="calendar-today" size={14} color={colors.primary} />
+                  <MaterialCommunityIcons name="calendar-today" size={14} color={colors.primary} />
                   <Text className="ml-2 text-sm" style={{ color: colors.text }}>
                     {formatDisplay(draftRange.to)}
                   </Text>
