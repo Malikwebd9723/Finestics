@@ -1,8 +1,14 @@
 // components/ui/Button.tsx
 // The canonical button. One filled primary per screen; secondary is outlined;
 // ghost is a bare text action. Replaces the per-screen Pressable/Touchable mix.
+//
+// Deliberately a TouchableOpacity with a STATIC style array: the previous
+// Pressable used a function-form style ({ pressed }) => [...], which
+// NativeWind v4's interop silently dropped — the button rendered with no
+// background at all (invisible but tappable). Do not reintroduce function
+// styles here.
 import React from 'react';
-import { Pressable, Text, ActivityIndicator, View, type ViewStyle } from 'react-native';
+import { TouchableOpacity, Text, ActivityIndicator, type ViewStyle } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 
@@ -40,10 +46,11 @@ export default function Button({
   const labelColor = variant === 'primary' ? ctaLabel : colors.text;
 
   return (
-    <Pressable
+    <TouchableOpacity
       onPress={onPress}
       disabled={blocked}
-      style={({ pressed }) => [
+      activeOpacity={0.85}
+      style={[
         {
           flexDirection: 'row',
           alignItems: 'center',
@@ -55,7 +62,7 @@ export default function Button({
           borderRadius: 12,
           paddingVertical: variant === 'ghost' ? 10 : 14,
           paddingHorizontal: 16,
-          opacity: blocked ? 0.55 : pressed ? 0.85 : 1,
+          opacity: blocked ? 0.55 : 1,
         },
         style,
       ]}>
@@ -67,6 +74,6 @@ export default function Button({
           <Text style={{ color: labelColor, fontSize: 15, fontWeight: '700' }}>{title}</Text>
         </>
       )}
-    </Pressable>
+    </TouchableOpacity>
   );
 }
