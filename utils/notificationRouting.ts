@@ -42,10 +42,11 @@ export function routeForNotification(
   switch (data.kind) {
     case 'new_order':
     case 'order_cancelled':
-      // Vendor-facing order events
+      // Vendor-facing order events. Without an orderId, land on the Orders
+      // tab, where new app orders queue for acceptance.
       return data.orderId
         ? inDrawer('VendorOrderDetailScreen', { orderId: data.orderId })
-        : inDrawer('IncomingOrdersScreen');
+        : inTabs('Orders');
 
     case 'order_status':
       // Customer-facing order events

@@ -2,14 +2,16 @@
 
 import React, { useEffect, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Pressable, View, ActivityIndicator } from 'react-native';
+import { AppState, Pressable, View, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from '../context/ThemeProvider';
 import { fonts } from '../constants/design';
 import { useNavigation } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getTabNavigationItems } from './NavigationItems';
+import { getVendorOrders } from 'api/actions/vendorOrderInboxActions';
 
 // ==================== ADMIN SCREENS ====================
 import AdminDashboard from '../screens/Admin/Dashboard';
@@ -80,6 +82,27 @@ export default function TabNavigator() {
     fetchNavigationItems();
   }, []);
 
+  // Only poll while the app is foregrounded — this navigator lives for the
+  // whole session, so an unguarded interval would poll in the background.
+  const [appActive, setAppActive] = useState(AppState.currentState === 'active');
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => setAppActive(s === 'active'));
+    return () => sub.remove();
+  }, []);
+
+  // Vendor only: pending app orders drive a badge on the Orders tab.
+  const hasOrdersTab = navigationItems.some((item) => item.screen === 'OrdersScreen');
+  const { data: pendingAppOrders } = useQuery({
+    queryKey: ['vendor-customer-orders', 'pending-badge'],
+    queryFn: () => getVendorOrders('pending'),
+    enabled: hasOrdersTab,
+    refetchInterval: appActive ? 60000 : false,
+    refetchIntervalInBackground: false,
+  });
+  const pendingAppOrderCount = hasOrdersTab
+    ? (pendingAppOrders?.pagination?.totalItems ?? pendingAppOrders?.items.length ?? 0)
+    : 0;
+
   // Header configuration — clean flat bar: hamburger · title · notification bell
   const renderHeader = (title: string) => ({
     headerTitleAlign: 'left' as const,
@@ -149,6 +172,24 @@ export default function TabNavigator() {
           return null;
         }
 
+        // Pending app-order badge, on the vendor Orders tab only.
+        const badge =
+          item.screen === 'OrdersScreen' && pendingAppOrderCount > 0
+            ? {
+                tabBarBadge: pendingAppOrderCount,
+                tabBarBadgeStyle: {
+                  backgroundColor: colors.cta,
+                  color: colors.onCta,
+                  fontSize: 10,
+                  fontWeight: '700' as const,
+                  minWidth: 16,
+                  maxHeight: 16,
+                  borderRadius: 8,
+                  lineHeight: 14,
+                },
+              }
+            : {};
+
         return (
           <Tab.Screen
             key={index}
@@ -157,6 +198,7 @@ export default function TabNavigator() {
             options={{
               ...renderHeader(item.label),
               tabBarIcon: ({ color, size }) => renderIcon(item.icon, size, color),
+              ...badge,
             }}
           />
         );

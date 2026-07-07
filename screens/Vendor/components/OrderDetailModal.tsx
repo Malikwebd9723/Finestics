@@ -10,7 +10,6 @@ import {
   Dimensions,
   ActivityIndicator,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
@@ -428,6 +427,9 @@ export default function OrderDetailModal({
   // Get available statuses (all except current)
   const availableStatuses = order ? getNextStatuses(order.status) : [];
   const isCancelled = order?.status === 'cancelled';
+  // Mirrored app orders: server blocks delete and reopening after cancel.
+  const isMirrored = order?.sourceOrderId != null;
+  const canReopenFromDropdown = !(isCancelled && isMirrored);
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
@@ -485,17 +487,34 @@ export default function OrderDetailModal({
                   className="mb-4 rounded-2xl p-4"
                   style={{ backgroundColor: colors.background }}>
                   <View className="mb-3 flex-row items-center justify-between">
-                    <Text className="text-lg font-bold" style={{ color: colors.primary }}>
-                      {order.orderNumber}
-                    </Text>
+                    <View className="flex-row items-center gap-2">
+                      <Text className="text-lg font-bold" style={{ color: colors.primary }}>
+                        {order.orderNumber}
+                      </Text>
+                      {isMirrored && (
+                        <View
+                          className="flex-row items-center rounded-full px-2 py-0.5"
+                          style={{ backgroundColor: colors.primary + '14' }}>
+                          <MaterialCommunityIcons name="cellphone" size={12} color={colors.accent} />
+                          <Text
+                            className="ml-0.5 text-xs font-semibold"
+                            style={{ color: colors.accent }}>
+                            App
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                     <TouchableOpacity
                       onPress={() => setStatusMenuVisible(!statusMenuVisible)}
+                      disabled={!canReopenFromDropdown}
                       className="flex-row items-center rounded-full px-3 py-1.5"
                       style={{ backgroundColor: statusColor + '14' }}>
                       <Text className="text-sm font-bold" style={{ color: statusColor }}>
                         {getStatusLabel(order.status)}
                       </Text>
-                      <MaterialCommunityIcons name="menu-down" size={18} color={statusColor} />
+                      {canReopenFromDropdown && (
+                        <MaterialCommunityIcons name="menu-down" size={18} color={statusColor} />
+                      )}
                     </TouchableOpacity>
                   </View>
 
@@ -975,7 +994,7 @@ export default function OrderDetailModal({
                     </TouchableOpacity>
                   )}
 
-                  {/* For pending: show both Cancel and Delete */}
+                  {/* For pending: show both Cancel and Delete (no Delete on mirrored app orders) */}
                   {order.status === 'pending' && (
                     <>
                       <TouchableOpacity
@@ -993,20 +1012,22 @@ export default function OrderDetailModal({
                           Cancel
                         </Text>
                       </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={confirmDeleteOrder}
-                        className="flex-1 flex-row items-center justify-center rounded-xl py-3"
-                        style={{
-                          backgroundColor: colors.error,
-                        }}>
-                        <MaterialCommunityIcons name="delete" size={16} color={colors.white} />
-                        <Text className="ml-1.5 text-sm font-semibold text-white">Delete</Text>
-                      </TouchableOpacity>
+                      {!isMirrored && (
+                        <TouchableOpacity
+                          onPress={confirmDeleteOrder}
+                          className="flex-1 flex-row items-center justify-center rounded-xl py-3"
+                          style={{
+                            backgroundColor: colors.error,
+                          }}>
+                          <MaterialCommunityIcons name="delete" size={16} color={colors.white} />
+                          <Text className="ml-1.5 text-sm font-semibold text-white">Delete</Text>
+                        </TouchableOpacity>
+                      )}
                     </>
                   )}
 
-                  {/* Delete button - only for cancelled orders */}
-                  {order.status === 'cancelled' && (
+                  {/* Delete button - only for cancelled orders (server blocks mirrored deletes) */}
+                  {order.status === 'cancelled' && !isMirrored && (
                     <TouchableOpacity
                       onPress={confirmDeleteOrder}
                       className="flex-1 flex-row items-center justify-center rounded-xl py-3"
@@ -1019,8 +1040,8 @@ export default function OrderDetailModal({
                   )}
                 </View>
 
-                {/* Reopen hint for cancelled orders - separate row if needed */}
-                {isCancelled && (
+                {/* Reopen hint for cancelled orders (mirrored app orders can't reopen) */}
+                {isCancelled && !isMirrored && (
                   <View className="mt-3 flex-row items-center justify-center">
                     <MaterialCommunityIcons name="information-outline" size={14} color={colors.muted} />
                     <Text className="ml-1 text-xs" style={{ color: colors.muted }}>

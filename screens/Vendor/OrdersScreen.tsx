@@ -1,9 +1,14 @@
 // screens/Vendor/OrdersScreen.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Pressable, Text, TouchableOpacity } from 'react-native';
+import { View, Pressable, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
+import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
+import { typo } from 'constants/design';
+import { AttentionRow, BottomSheet } from 'components/ui';
+import { getVendorOrders } from 'api/actions/vendorOrderInboxActions';
+import { formatPrice } from 'types/order.types';
 import SearchBar from 'components/SearchBar';
 import OrdersList from './components/OrdersList';
 import OrderDetailModal from './components/OrderDetailModal';
@@ -13,6 +18,7 @@ import BulkActionsBar from './components/BulkActionsBar';
 export default function Orders() {
   const { colors } = useThemeContext();
   const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
 
   // Search & filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,6 +36,29 @@ export default function Orders() {
   // Bulk selection state
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState<Set<number>>(new Set());
+
+  // Pending app orders (customer-placed, awaiting acceptance)
+  const [appOrdersSheetVisible, setAppOrdersSheetVisible] = useState(false);
+  const { data: pendingAppOrders } = useQuery({
+    queryKey: ['vendor-customer-orders', 'pending'],
+    queryFn: () => getVendorOrders('pending'),
+    refetchInterval: isFocused ? 30000 : false,
+  });
+  const pendingItems = pendingAppOrders?.items ?? [];
+  const pendingCount = pendingAppOrders?.pagination?.totalItems ?? pendingItems.length;
+
+  const openAppOrder = (orderId: number) => {
+    setAppOrdersSheetVisible(false);
+    navigation.navigate('VendorOrderDetailScreen', { orderId });
+  };
+
+  const handleAppOrdersPress = () => {
+    if (pendingItems.length === 1) {
+      openAppOrder(pendingItems[0].id);
+    } else {
+      setAppOrdersSheetVisible(true);
+    }
+  };
 
   // Filters can be preset by other screens (e.g. Dashboard attention rows).
   const route = useRoute<any>();
@@ -199,6 +228,18 @@ export default function Orders() {
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* New app orders awaiting acceptance */}
+          {pendingCount > 0 && (
+            <View className="px-4 pb-2">
+              <AttentionRow
+                icon="cart-arrow-down"
+                title={`${pendingCount} new app order${pendingCount === 1 ? '' : 's'}`}
+                subtitle="Review and accept"
+                onPress={handleAppOrdersPress}
+              />
+            </View>
+          )}
         </View>
       )}
 
@@ -262,6 +303,47 @@ export default function Orders() {
         orderId={selectedOrderId}
         onClose={handleClosePaymentModal}
       />
+
+      {/* New app orders sheet */}
+      <BottomSheet
+        visible={appOrdersSheetVisible}
+        onClose={() => setAppOrdersSheetVisible(false)}
+        title="New app orders"
+        maxHeightRatio={0.75}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {pendingItems.map((item, index) => {
+            const customer = (item as any).customer;
+            const name = customer
+              ? `${customer.firstName} ${customer.lastName}`.trim()
+              : 'Customer';
+            const itemCount = item.itemCount ?? 0;
+            return (
+              <TouchableOpacity
+                key={item.id}
+                onPress={() => openAppOrder(item.id)}
+                activeOpacity={0.7}
+                className="flex-row items-center py-3.5"
+                style={{
+                  borderTopWidth: index === 0 ? 0 : 1,
+                  borderTopColor: colors.border,
+                }}>
+                <View className="flex-1 pr-3">
+                  <Text className="text-[15px] font-bold" style={{ color: colors.text }}>
+                    {name}
+                  </Text>
+                  <Text className="mt-0.5 text-xs" style={{ color: colors.muted }}>
+                    {item.orderNumber} · {itemCount} item{itemCount === 1 ? '' : 's'}
+                  </Text>
+                </View>
+                <Text className="mr-1 text-[15px]" style={[typo.num, { color: colors.text }]}>
+                  {formatPrice(item.totalAmount)}
+                </Text>
+                <MaterialCommunityIcons name="chevron-right" size={20} color={colors.muted} />
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </BottomSheet>
 
     </View>
   );

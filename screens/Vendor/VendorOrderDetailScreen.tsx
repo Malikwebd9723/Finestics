@@ -1,34 +1,24 @@
 // screens/Vendor/VendorOrderDetailScreen.tsx
+// Acceptance screen for customer app orders. A pending order is reviewed and
+// accepted or rejected here; on acceptance the backend mirrors it into the
+// vendor's order book, where all further management (status, payments,
+// returns, invoices) happens. Non-pending orders just point at the Orders tab.
 import React from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
 import Toast from 'utils/Toast';
-import {
-  getVendorOrder,
-  updateVendorOrderStatus,
-  recordOrderPayment,
-  type VendorOrderStatusAction,
-} from 'api/actions/vendorOrderInboxActions';
-import type { OrderStatus } from 'api/actions/customerOrderActions';
+import Dialog from 'utils/Dialog';
+import { Button, EmptyState } from 'components/ui';
+import { getVendorOrder, updateVendorOrderStatus } from 'api/actions/vendorOrderInboxActions';
 import { formatPrice } from '../Customer/components/ProductCard';
 import OrderStatusBadge from '../Customer/components/OrderStatusBadge';
 
-// Forward action available from each status.
-const NEXT_ACTION: Partial<Record<OrderStatus, { status: VendorOrderStatusAction; label: string }>> = {
-  pending: { status: 'confirmed', label: 'Accept Order' },
-  confirmed: { status: 'processing', label: 'Start Preparing' },
-  processing: { status: 'ready_for_delivery', label: 'Mark Ready' },
-  ready_for_delivery: { status: 'dispatched', label: 'Dispatch' },
-  dispatched: { status: 'delivered', label: 'Mark Delivered' },
-};
-
-const CAN_CANCEL: OrderStatus[] = ['pending', 'confirmed', 'processing'];
-
 export default function VendorOrderDetailScreen() {
   const { colors } = useThemeContext();
+  const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const orderId: number = route.params?.orderId;
   const queryClient = useQueryClient();
@@ -45,23 +35,38 @@ export default function VendorOrderDetailScreen() {
     queryClient.invalidateQueries({ queryKey: ['vendor-customer-order-stats'] });
   };
 
-  const mutation = useMutation({
-    mutationFn: (status: VendorOrderStatusAction) => updateVendorOrderStatus(orderId, status),
+  const acceptMutation = useMutation({
+    mutationFn: () => updateVendorOrderStatus(orderId, 'confirmed'),
     onSuccess: () => {
-      Toast.success('Order updated');
       invalidate();
+      // Acceptance materializes the order in the vendor's order book.
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      Toast.success('Order added to your order book');
     },
-    onError: (e: any) => Toast.error(e?.message || 'Failed to update'),
+    onError: (e: any) => Toast.error(e?.message || 'Failed to accept order'),
   });
 
-  const paymentMutation = useMutation({
-    mutationFn: () => recordOrderPayment(orderId),
+  const rejectMutation = useMutation({
+    mutationFn: () => updateVendorOrderStatus(orderId, 'cancelled'),
     onSuccess: () => {
-      Toast.success('Payment recorded');
+      Toast.success('Order rejected');
       invalidate();
     },
-    onError: (e: any) => Toast.error(e?.message || 'Failed to record payment'),
+    onError: (e: any) => Toast.error(e?.message || 'Failed to reject order'),
   });
+
+  const confirmReject = () => {
+    Dialog.confirm(
+      'Reject Order?',
+      'This cancels the order and the customer will be notified. This cannot be undone.',
+      {
+        confirmText: 'Reject',
+        cancelText: 'Keep Order',
+        destructive: true,
+        onConfirm: () => rejectMutation.mutate(),
+      }
+    );
+  };
 
   if (isLoading || !order) {
     return (
@@ -71,13 +76,30 @@ export default function VendorOrderDetailScreen() {
     );
   }
 
+  // Anything past pending is mirrored into (or closed out of) the order book —
+  // the inbox endpoints reject further changes, so send the vendor there.
+  if (order.status !== 'pending') {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <EmptyState
+          icon="book-open-variant"
+          title="This order is managed in your Orders book"
+          subtitle={`${order.orderNumber} · Status, payments, returns and invoices live in the Orders tab.`}
+          action={
+            <Button
+              title="Go to Orders"
+              icon="cart"
+              onPress={() => navigation.navigate('MainTabs', { screen: 'Orders' })}
+            />
+          }
+        />
+      </View>
+    );
+  }
+
   const customer = (order as any).customer;
   const customerName = customer ? `${customer.firstName} ${customer.lastName}`.trim() : 'Customer';
-  const next = NEXT_ACTION[order.status as OrderStatus];
-  const canCancel = CAN_CANCEL.includes(order.status as OrderStatus);
-  const canRecordPayment =
-    order.paymentStatus === 'pending' &&
-    !['cancelled', 'refunded'].includes(order.status as string);
+  const isActing = acceptMutation.isPending || rejectMutation.isPending;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -162,67 +184,35 @@ export default function VendorOrderDetailScreen() {
           </View>
         )}
 
-        {/* Actions */}
-        {next && (
-          <Pressable
-            disabled={mutation.isPending}
-            onPress={() => mutation.mutate(next.status)}
-            style={{
-              backgroundColor: colors.cta,
-              borderRadius: 12,
-              paddingVertical: 15,
-              alignItems: 'center',
-              marginTop: 20,
-              opacity: mutation.isPending ? 0.7 : 1,
-            }}>
-            {mutation.isPending ? (
-              <ActivityIndicator color={colors.onCta} />
-            ) : (
-              <Text style={{ color: colors.onCta, fontWeight: '700', fontSize: 16 }}>
-                {next.label}
-              </Text>
-            )}
-          </Pressable>
-        )}
+        {/* Accept — adds the order to the vendor's order book */}
+        <Button
+          title="Accept Order"
+          icon="check"
+          onPress={() => acceptMutation.mutate()}
+          loading={acceptMutation.isPending}
+          disabled={isActing}
+          style={{ marginTop: 20 }}
+        />
 
-        {/* Money-in action: settles credit against the customer's balance */}
-        {canRecordPayment && (
-          <Pressable
-            disabled={paymentMutation.isPending}
-            onPress={() => paymentMutation.mutate()}
-            style={{
-              borderRadius: 12,
-              paddingVertical: 14,
-              alignItems: 'center',
-              marginTop: 12,
-              borderWidth: 1,
-              borderColor: colors.success,
-              opacity: paymentMutation.isPending ? 0.6 : 1,
-            }}>
-            {paymentMutation.isPending ? (
-              <ActivityIndicator color={colors.success} />
-            ) : (
-              <Text style={{ color: colors.success, fontWeight: '700' }}>Mark as Paid</Text>
-            )}
-          </Pressable>
-        )}
-
-        {canCancel && (
-          <Pressable
-            disabled={mutation.isPending}
-            onPress={() => mutation.mutate('cancelled')}
-            style={{
-              borderRadius: 12,
-              paddingVertical: 14,
-              alignItems: 'center',
-              marginTop: 12,
-              borderWidth: 1,
-              borderColor: colors.error,
-              opacity: mutation.isPending ? 0.6 : 1,
-            }}>
-            <Text style={{ color: colors.error, fontWeight: '700' }}>Reject / Cancel Order</Text>
-          </Pressable>
-        )}
+        {/* Reject — cancels the app order (kept out of the order book) */}
+        <Pressable
+          disabled={isActing}
+          onPress={confirmReject}
+          style={{
+            borderRadius: 12,
+            paddingVertical: 14,
+            alignItems: 'center',
+            marginTop: 12,
+            borderWidth: 1,
+            borderColor: colors.error,
+            opacity: isActing ? 0.6 : 1,
+          }}>
+          {rejectMutation.isPending ? (
+            <ActivityIndicator color={colors.error} />
+          ) : (
+            <Text style={{ color: colors.error, fontWeight: '700' }}>Reject Order</Text>
+          )}
+        </Pressable>
       </ScrollView>
     </View>
   );

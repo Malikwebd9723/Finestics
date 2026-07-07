@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { AppState, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useThemeContext } from '../context/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
-import { DrawerContentScrollView } from '@react-navigation/drawer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
@@ -12,7 +11,6 @@ import { useCart } from '../context/CartContext';
 import { useNotifications } from '../context/NotificationContext';
 import { getNotifications } from 'api/actions/notificationActions';
 import { getConnectionRequests } from 'api/actions/connectionActions';
-import { getVendorOrders } from 'api/actions/vendorOrderInboxActions';
 
 // Import your TabNavigator
 import TabNavigator from './TabNavigator';
@@ -38,7 +36,6 @@ import CustomerOrderDetailScreen from '../screens/Customer/OrderDetailScreen';
 
 // Vendor connection + order management
 import ConnectionRequestsScreen from '../screens/Vendor/ConnectionRequestsScreen';
-import IncomingOrdersScreen from '../screens/Vendor/IncomingOrdersScreen';
 import VendorOrderDetailScreen from '../screens/Vendor/VendorOrderDetailScreen';
 
 // Customer account screens
@@ -76,17 +73,11 @@ function CustomDrawerContent(props: any) {
   });
   const unreadCount = notificationData?.unreadCount ?? 0;
 
-  // Vendor menu badges: pending connection requests + new app orders.
+  // Vendor menu badges: pending connection requests.
+  // (New app orders surface on the Orders tab badge instead — see TabNavigator.)
   const { data: pendingRequests } = useQuery({
     queryKey: ['vendor-connection-requests'],
     queryFn: () => getConnectionRequests('pending'),
-    enabled: isVendor,
-    refetchInterval: pollInterval,
-    refetchIntervalInBackground: false,
-  });
-  const { data: pendingOrders } = useQuery({
-    queryKey: ['vendor-customer-orders', 'pending-badge'],
-    queryFn: () => getVendorOrders('pending'),
     enabled: isVendor,
     refetchInterval: pollInterval,
     refetchIntervalInBackground: false,
@@ -95,7 +86,6 @@ function CustomDrawerContent(props: any) {
   const menuBadges = isVendor
     ? {
         ConnectionRequestsScreen: pendingRequests?.length || 0,
-        IncomingOrdersScreen: pendingOrders?.pagination?.totalItems ?? pendingOrders?.items.length ?? 0,
       }
     : undefined;
 
@@ -472,18 +462,6 @@ export default function DrawerNavigator() {
         options={{
           headerShown: true,
           headerTitle: 'Order',
-          headerStyle: { backgroundColor: colors.card },
-          headerTintColor: colors.text,
-        }}
-      />
-
-      {/* Vendor: Incoming customer orders */}
-      <Drawer.Screen
-        name="IncomingOrdersScreen"
-        component={IncomingOrdersScreen}
-        options={{
-          headerShown: true,
-          headerTitle: 'Incoming Orders',
           headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.text,
         }}

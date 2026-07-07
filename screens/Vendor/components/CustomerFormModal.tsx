@@ -86,6 +86,11 @@ export default function CustomerFormModal({
 
   const editingCustomer = data?.data;
 
+  // Linked customers (self-serve app accounts) own their identity fields —
+  // the server 403s (LINKED_CUSTOMER_IDENTITY_LOCKED) if the vendor edits them.
+  const isLinked =
+    isEditMode && (editingCustomer?.userId != null || !!editingCustomer?.customerUser);
+
   // Form setup
   const {
     control,
@@ -153,6 +158,16 @@ export default function CustomerFormModal({
       : {}),
   });
 
+  // Linked customers: identity fields (name, contacts, type, address) are
+  // managed by the customer in the app — only send the vendor-owned fields
+  // so full-form submits never 403.
+  const buildLinkedUpdatePayload = (formData: CustomerFormValues) => ({
+    creditLimit: formData.creditLimit ? parseFloat(formData.creditLimit) : 0,
+    paymentTerms: formData.paymentTerms || 'cash',
+    notes: formData.notes || null,
+    deliveryInstructions: formData.deliveryInstructions || null,
+  });
+
   // Add mutation
   const addMutation = useMutation({
     mutationFn: (formData: CustomerFormValues) => addCustomer(buildPayload(formData)),
@@ -174,7 +189,10 @@ export default function CustomerFormModal({
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: (formData: CustomerFormValues) =>
-      updateCustomer(customerId!, buildPayload(formData)),
+      updateCustomer(
+        customerId!,
+        isLinked ? buildLinkedUpdatePayload(formData) : buildPayload(formData)
+      ),
     onSuccess: (response) => {
       if (!response.success) {
         Toast.error(response.message || 'Something went wrong');
@@ -293,6 +311,24 @@ export default function CustomerFormModal({
               className="px-5"
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled">
+              {/* Linked-customer notice: identity fields are locked */}
+              {isLinked && (
+                <View
+                  className="mt-5 flex-row items-start rounded-xl p-3"
+                  style={{ backgroundColor: colors.primary + '14' }}>
+                  <MaterialCommunityIcons
+                    name="cellphone-link"
+                    size={18}
+                    color={colors.accent}
+                    style={{ marginTop: 1 }}
+                  />
+                  <Text className="ml-2 flex-1 text-[13px]" style={{ color: colors.muted }}>
+                    This customer manages their own details in the app. You can edit credit
+                    limit, payment terms, notes and delivery instructions.
+                  </Text>
+                </View>
+              )}
+
               {/* Required fields — enough to save */}
               <View className="mt-5">
                 <Controller
@@ -307,7 +343,8 @@ export default function CustomerFormModal({
                       onBlur={field.onBlur}
                       placeholder="Enter business name"
                       error={errors.businessName?.message}
-                      editable={!isSubmitting}
+                      editable={!isSubmitting && !isLinked}
+                      containerClassName={isLinked ? 'opacity-60' : ''}
                     />
                   )}
                 />
@@ -325,7 +362,8 @@ export default function CustomerFormModal({
                       placeholder="07700 900000"
                       keyboardType="phone-pad"
                       error={errors.phone?.message}
-                      editable={!isSubmitting}
+                      editable={!isSubmitting && !isLinked}
+                      containerClassName={isLinked ? 'opacity-60' : ''}
                     />
                   )}
                 />
@@ -344,7 +382,8 @@ export default function CustomerFormModal({
                       onBlur={field.onBlur}
                       placeholder="Enter contact person name"
                       error={errors.contactPerson?.message}
-                      editable={!isSubmitting}
+                      editable={!isSubmitting && !isLinked}
+                      containerClassName={isLinked ? 'opacity-60' : ''}
                     />
                   )}
                 />
@@ -361,7 +400,8 @@ export default function CustomerFormModal({
                       placeholder="Optional"
                       keyboardType="phone-pad"
                       error={errors.alternatePhone?.message}
-                      editable={!isSubmitting}
+                      editable={!isSubmitting && !isLinked}
+                      containerClassName={isLinked ? 'opacity-60' : ''}
                     />
                   )}
                 />
@@ -379,7 +419,8 @@ export default function CustomerFormModal({
                       keyboardType="email-address"
                       autoCapitalize="none"
                       error={errors.email?.message}
-                      editable={!isSubmitting}
+                      editable={!isSubmitting && !isLinked}
+                      containerClassName={isLinked ? 'opacity-60' : ''}
                     />
                   )}
                 />
@@ -394,7 +435,8 @@ export default function CustomerFormModal({
                       value={field.value}
                       onChange={field.onChange}
                       error={errors.businessType?.message}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isLinked}
+                      containerClassName={isLinked ? 'opacity-60' : ''}
                     />
                   )}
                 />
@@ -442,7 +484,8 @@ export default function CustomerFormModal({
                       onBlur={field.onBlur}
                       placeholder="e.g., 14 High Street"
                       error={errors.street?.message}
-                      editable={!isSubmitting}
+                      editable={!isSubmitting && !isLinked}
+                      containerClassName={isLinked ? 'opacity-60' : ''}
                     />
                   )}
                 />
@@ -460,7 +503,8 @@ export default function CustomerFormModal({
                           onBlur={field.onBlur}
                           placeholder="e.g., Birmingham"
                           error={errors.city?.message}
-                          editable={!isSubmitting}
+                          editable={!isSubmitting && !isLinked}
+                          containerClassName={isLinked ? 'opacity-60' : ''}
                         />
                       )}
                     />
@@ -478,7 +522,8 @@ export default function CustomerFormModal({
                           placeholder="e.g., B1 1AA"
                           autoCapitalize="characters"
                           error={errors.postalCode?.message}
-                          editable={!isSubmitting}
+                          editable={!isSubmitting && !isLinked}
+                          containerClassName={isLinked ? 'opacity-60' : ''}
                         />
                       )}
                     />

@@ -158,13 +158,6 @@ export const navigationItems: NavigationItem[] = [
     roles: ['vendor'],
     location: 'drawer',
   },
-  {
-    label: 'Incoming Orders',
-    screen: 'IncomingOrdersScreen',
-    icon: 'cart-arrow-down',
-    roles: ['vendor'],
-    location: 'drawer',
-  },
 ];
 
 /**

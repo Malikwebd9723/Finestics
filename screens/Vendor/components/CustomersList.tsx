@@ -177,6 +177,14 @@ function CustomerCard({ customer, colors, onPress, onEdit }: CustomerCardProps) 
             <Text className="text-base font-bold" style={{ color: colors.text }} numberOfLines={1}>
               {customer.businessName}
             </Text>
+            {(customer.userId != null || customer.customerUser) && (
+              <MaterialCommunityIcons
+                name="cellphone-link"
+                size={14}
+                color={colors.accent}
+                style={{ marginLeft: 6 }}
+              />
+            )}
             {isNewCustomer(customer.createdAt) && (
               <View
                 className="ml-2 rounded-full px-2 py-0.5"

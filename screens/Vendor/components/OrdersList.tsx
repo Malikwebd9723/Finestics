@@ -1173,6 +1173,16 @@ function OrderCard({
             <Text className="text-sm font-bold" style={{ color: colors.primary }}>
               {order.orderNumber}
             </Text>
+            {order.sourceOrderId != null && (
+              <View
+                className="flex-row items-center rounded-full px-2 py-0.5"
+                style={{ backgroundColor: colors.primary + '14' }}>
+                <MaterialCommunityIcons name="cellphone" size={12} color={colors.accent} />
+                <Text className="ml-0.5 text-xs font-semibold" style={{ color: colors.accent }}>
+                  App
+                </Text>
+              </View>
+            )}
             {isToday(order.orderDate) && (
               <View
                 className="rounded-full px-2 py-0.5"

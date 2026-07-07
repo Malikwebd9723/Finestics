@@ -43,6 +43,8 @@ export interface Order {
   vanName: string | null;
   cancelledAt: string | null;
   cancellationReason: string | null;
+  /** Non-null when this vendor-order mirrors a customer app order (Order id). */
+  sourceOrderId?: number | null;
   createdAt: string;
   updatedAt: string;
   // Virtual (computed by backend) — return-adjusted totals and profit.
