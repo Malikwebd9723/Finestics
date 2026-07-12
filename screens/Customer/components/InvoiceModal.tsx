@@ -1,6 +1,6 @@
 // screens/Customer/components/InvoiceModal.tsx
 // Renders a clean order invoice and saves it to the gallery as an image
-// (same captureRef + MediaLibrary flow as screens/InvoiceScreen.tsx).
+// (captureRef → MediaLibrary.saveToLibraryAsync).
 import React, { useRef, useState } from 'react';
 import { Modal, View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -38,9 +38,12 @@ export default function InvoiceModal({ visible, order, onClose }: Props) {
     try {
       setSaving(true);
 
-      const res = await MediaLibrary.requestPermissionsAsync();
-      if (res.status !== 'granted') {
-        Dialog.alert('Permission needed', 'Allow gallery access to save the invoice.');
+      // Write-only access: saving needs no read permissions. The no-arg request
+      // asks for images+video+AUDIO on Android 13+, and READ_MEDIA_AUDIO isn't
+      // in our manifest, so the whole request came back denied every time.
+      const res = await MediaLibrary.requestPermissionsAsync(true);
+      if (!res.granted) {
+        Dialog.alert('Permission needed', 'Allow photo access to save the invoice.');
         return;
       }
 
@@ -48,12 +51,14 @@ export default function InvoiceModal({ visible, order, onClose }: Props) {
       const fileUri = `${FileSystem.cacheDirectory}Invoice_${order.orderNumber}.jpg`;
       await FileSystem.copyAsync({ from: uri, to: fileUri });
 
-      const asset = await MediaLibrary.createAssetAsync(fileUri);
-      await MediaLibrary.createAlbumAsync('Invoices', asset, false);
+      // saveToLibraryAsync, not createAsset+createAlbum: the album "move" path
+      // fails on Android 11+ (the app can't relocate a MediaStore entry).
+      await MediaLibrary.saveToLibraryAsync(fileUri);
 
       Toast.success('Invoice saved to gallery');
       onClose();
     } catch (error) {
+      if (__DEV__) console.log('Invoice save failed:', error);
       Toast.error('Failed to save invoice');
     } finally {
       setSaving(false);

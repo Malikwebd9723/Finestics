@@ -19,15 +19,24 @@ import { registerDeviceToken, unregisterDeviceToken } from 'api/actions/notifica
 import { navigateFromNotification } from 'navigation/navigationRef';
 import { routeForNotification } from 'utils/notificationRouting';
 
+// Expo Go on Android (SDK 53+) has no push native module — ANY
+// expo-notifications call there console.errors a red "removed from Expo Go"
+// box, even inside try/catch. Skip the module entirely in that environment;
+// the in-app notifications list + polling still works.
+const isExpoGo = Constants.executionEnvironment === 'storeClient';
+const pushSupported = !(isExpoGo && Platform.OS === 'android');
+
 // Show pushes as banners while the app is foregrounded.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
+if (pushSupported) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 interface NotificationContextType {
   /** Deactivate this device's token server-side (call before logout). */
@@ -45,7 +54,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   // Register this device for push whenever a user is signed in.
   useEffect(() => {
-    if (!user?.id) return;
+    if (!pushSupported || !user?.id) return;
 
     let cancelled = false;
 
@@ -90,6 +99,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   // Foreground pushes refresh the in-app list/badge; taps deep-link.
   useEffect(() => {
+    if (!pushSupported) return;
+
     const received = Notifications.addNotificationReceivedListener(() => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['customer-orders'] });
