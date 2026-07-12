@@ -4,6 +4,7 @@ import {
   View,
   Text,
   Modal,
+  Pressable,
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
@@ -111,6 +112,8 @@ export default function PaymentModal({ visible, orderId, onClose }: PaymentModal
         behavior={'padding'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         <SafeAreaView className="flex-1 justify-end bg-black/50">
+          {/* Tap outside the sheet to dismiss (blocked while a payment is submitting) */}
+          <Pressable className="flex-1" onPress={isSubmitting ? undefined : onClose} />
           <View className="rounded-t-3xl" style={{ backgroundColor: colors.card }}>
             {/* Header */}
             <View

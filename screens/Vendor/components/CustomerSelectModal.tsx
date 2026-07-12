@@ -4,6 +4,7 @@ import {
   View,
   Text,
   Modal,
+  Pressable,
   TouchableOpacity,
   TextInput,
   FlatList,
@@ -63,6 +64,8 @@ export default function CustomerSelectModal({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <SafeAreaView className="flex-1 justify-end bg-black/50">
+        {/* Tap outside the sheet to dismiss */}
+        <Pressable className="flex-1" onPress={onClose} />
         <View className="rounded-t-3xl" style={{ backgroundColor: colors.card, height: '95%' }}>
           {/* Header */}
           <View

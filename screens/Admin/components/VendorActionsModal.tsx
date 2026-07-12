@@ -202,6 +202,11 @@ export default function VendorActionsModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 bg-black/70 items-center justify-center px-6">
+        {/* Tap outside the card to dismiss */}
+        <Pressable
+          style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}
+          onPress={onClose}
+        />
         <Animated.View
           className="w-full rounded-3xl p-6"
           style={{

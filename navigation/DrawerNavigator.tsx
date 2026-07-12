@@ -235,7 +235,7 @@ function CustomDrawerContent(props: any) {
                     position: 'absolute',
                     top: -4,
                     right: -6,
-                    backgroundColor: colors.primary,
+                    backgroundColor: colors.cta,
                     borderRadius: 8,
                     minWidth: 16,
                     height: 16,
@@ -243,7 +243,7 @@ function CustomDrawerContent(props: any) {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Text style={{ color: colors.white, fontSize: 9, fontWeight: 'bold' }}>
+                  <Text style={{ color: colors.onCta, fontSize: 9, fontWeight: 'bold' }}>
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </Text>
                 </View>

@@ -1,8 +1,15 @@
 // components/Snackbar.tsx
 // The single global toast surface, mounted once by SnackbarProvider and fed
 // through the `Toast` bus (utils/Toast). Anchored to the TOP of the screen.
+//
+// Deliberately NOT wrapped in an RN <Modal>: a modal window intercepts every
+// touch in the app while visible — even `transparent` with pointerEvents
+// "box-none" (that only lets taps through views INSIDE the modal window, they
+// never reach the UI underneath). The old Modal wrapper froze the whole app
+// for the toast's duration and ate Android back presses. The cost of the
+// plain overlay: a toast fired while an RN Modal is open renders behind it.
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, PanResponder, Pressable, Modal } from 'react-native';
+import { View, Text, Animated, PanResponder, Pressable } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from 'context/ThemeProvider';
@@ -45,9 +52,9 @@ export default function Snackbar({
   const translateY = useRef(new Animated.Value(HIDDEN_Y)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const drag = useRef(new Animated.Value(0)).current;
-  // Keep the Modal mounted while the exit animation runs. The parent's `visible`
-  // flag drives the fade/slide; `modalVisible` drives the RN Modal lifecycle.
-  const [modalVisible, setModalVisible] = useState(visible);
+  // Keep the overlay mounted while the exit animation runs. The parent's
+  // `visible` flag drives the fade/slide; `mounted` drives unmounting after.
+  const [mounted, setMounted] = useState(visible);
 
   const hide = (after?: () => void) => {
     Animated.parallel([
@@ -62,7 +69,7 @@ export default function Snackbar({
         useNativeDriver: true,
       }),
     ]).start(() => {
-      setModalVisible(false);
+      setMounted(false);
       after?.();
     });
   };
@@ -70,7 +77,7 @@ export default function Snackbar({
   useEffect(() => {
     if (visible) {
       drag.setValue(0);
-      setModalVisible(true);
+      setMounted(true);
       Animated.parallel([
         Animated.spring(translateY, {
           toValue: 0,
@@ -115,87 +122,77 @@ export default function Snackbar({
     })
   ).current;
 
-  if (!modalVisible) return null;
+  if (!mounted) return null;
 
-  const tint =
-    type === 'success' ? colors.success : type === 'error' ? colors.error : colors.text;
+  const tint = type === 'success' ? colors.success : type === 'error' ? colors.error : colors.text;
 
-  // Render inside a transparent RN <Modal> with `pointerEvents="box-none"` so
-  // the snackbar floats above every other open modal but taps on empty areas
-  // still fall through to the underlying UI.
+  // Absolutely-positioned overlay: only the toast card itself receives
+  // touches; the rest of the screen stays fully interactive.
   return (
-    <Modal
-      visible={modalVisible}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={handleDismiss}>
-      <View style={{ flex: 1 }} pointerEvents="box-none">
-        <Animated.View
-          pointerEvents="box-none"
-          {...panResponder.panHandlers}
+    <Animated.View
+      pointerEvents="box-none"
+      {...panResponder.panHandlers}
+      style={{
+        position: 'absolute',
+        top: insets.top + 10,
+        left: 16,
+        right: 16,
+        zIndex: 1000,
+        transform: [{ translateY: Animated.add(translateY, drag) }],
+        opacity,
+      }}>
+      <View
+        pointerEvents="auto"
+        style={{
+          backgroundColor: colors.card,
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: colors.border,
+          paddingVertical: 13,
+          paddingHorizontal: 14,
+          flexDirection: 'row',
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.14,
+          shadowRadius: 14,
+          elevation: 8,
+        }}>
+        <MaterialCommunityIcons name={ICONS[type]} size={21} color={tint} />
+        <Text
           style={{
-            position: 'absolute',
-            top: insets.top + 10,
-            left: 16,
-            right: 16,
-            transform: [{ translateY: Animated.add(translateY, drag) }],
-            opacity,
-          }}>
-          <View
-            pointerEvents="auto"
+            flex: 1,
+            color: colors.text,
+            fontSize: 14,
+            fontWeight: '500',
+            lineHeight: 19,
+            marginLeft: 10,
+            marginRight: 8,
+          }}
+          numberOfLines={3}>
+          {message}
+        </Text>
+        {action && (
+          <Pressable
+            onPress={() => {
+              action.onPress();
+              handleDismiss();
+            }}
+            hitSlop={6}
             style={{
-              backgroundColor: colors.card,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: colors.border,
-              paddingVertical: 13,
-              paddingHorizontal: 14,
-              flexDirection: 'row',
-              alignItems: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.14,
-              shadowRadius: 14,
-              elevation: 8,
+              paddingHorizontal: 10,
+              paddingVertical: 6,
+              marginRight: 6,
             }}>
-            <MaterialCommunityIcons name={ICONS[type]} size={21} color={tint} />
-            <Text
-              style={{
-                flex: 1,
-                color: colors.text,
-                fontSize: 14,
-                fontWeight: '500',
-                lineHeight: 19,
-                marginLeft: 10,
-                marginRight: 8,
-              }}
-              numberOfLines={3}>
-              {message}
+            <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 13 }}>
+              {action.label}
             </Text>
-            {action && (
-              <Pressable
-                onPress={() => {
-                  action.onPress();
-                  handleDismiss();
-                }}
-                hitSlop={6}
-                style={{
-                  paddingHorizontal: 10,
-                  paddingVertical: 6,
-                  marginRight: 6,
-                }}>
-                <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 13 }}>
-                  {action.label}
-                </Text>
-              </Pressable>
-            )}
-            <Pressable onPress={handleDismiss} hitSlop={8}>
-              <MaterialCommunityIcons name="close" size={18} color={colors.muted} />
-            </Pressable>
-          </View>
-        </Animated.View>
+          </Pressable>
+        )}
+        <Pressable onPress={handleDismiss} hitSlop={8}>
+          <MaterialCommunityIcons name="close" size={18} color={colors.muted} />
+        </Pressable>
       </View>
-    </Modal>
+    </Animated.View>
   );
 }

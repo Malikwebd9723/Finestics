@@ -276,6 +276,8 @@ export default function ProductFormModal({ visible, onClose, productId }: Produc
         behavior={'padding'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         <SafeAreaView className="flex-1 justify-end bg-black/50">
+          {/* Tap outside the sheet to dismiss */}
+          <Pressable className="flex-1" onPress={handleClose} />
           <View
             className="rounded-t-3xl"
             style={{ backgroundColor: colors.card, maxHeight: '92%' }}>

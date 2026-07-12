@@ -196,6 +196,11 @@ export default function ConnectionRequestsScreen() {
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={{ flex: 1, justifyContent: 'center', backgroundColor: '#00000080', padding: 24 }}>
+          {/* Tap outside the card to dismiss */}
+          <Pressable
+            style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}
+            onPress={() => setRejectOpen(false)}
+          />
           <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 20 }}>
             <View
               style={{

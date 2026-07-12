@@ -421,6 +421,11 @@ export default function UserDetailModal({
                             {/* Role Change Dialog */}
                             <Modal visible={showRoleDialog} transparent animationType="fade" onRequestClose={() => setShowRoleDialog(false)}>
                                 <View className="flex-1 bg-black/70 items-center justify-center px-6">
+                                    {/* Tap outside the card to dismiss */}
+                                    <Pressable
+                                        style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0 }}
+                                        onPress={() => setShowRoleDialog(false)}
+                                    />
                                     <View className="w-full rounded-3xl p-6" style={{ backgroundColor: colors.card, maxWidth: 400 }}>
                                         <View className="flex-row items-center mb-4">
                                             <MaterialCommunityIcons name="swap-horizontal" size={28} color={colors.primary} />
@@ -480,6 +485,11 @@ export default function UserDetailModal({
                             {/* Status Change Dialog */}
                             <Modal visible={showStatusDialog} transparent animationType="fade" onRequestClose={() => setShowStatusDialog(false)}>
                                 <View className="flex-1 bg-black/70 items-center justify-center px-6">
+                                    {/* Tap outside the card to dismiss */}
+                                    <Pressable
+                                        style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0 }}
+                                        onPress={() => setShowStatusDialog(false)}
+                                    />
                                     <View className="w-full rounded-3xl p-6" style={{ backgroundColor: colors.card, maxWidth: 400 }}>
                                         <View className="flex-row items-center mb-4">
                                             <MaterialCommunityIcons name="toggle-switch" size={28} color={colors.primary} />
@@ -539,6 +549,11 @@ export default function UserDetailModal({
                             {/* Delete Confirmation Dialog */}
                             <Modal visible={showDeleteDialog} transparent animationType="fade" onRequestClose={() => setShowDeleteDialog(false)}>
                                 <View className="flex-1 bg-black/70 items-center justify-center px-6">
+                                    {/* Tap outside the card to dismiss */}
+                                    <Pressable
+                                        style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0 }}
+                                        onPress={() => setShowDeleteDialog(false)}
+                                    />
                                     <View className="w-full rounded-3xl p-6" style={{ backgroundColor: colors.card, maxWidth: 400 }}>
                                         <View className="flex-row items-center mb-4">
                                             <MaterialCommunityIcons name="alert" size={28} color={colors.error} />

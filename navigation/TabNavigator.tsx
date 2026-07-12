@@ -12,6 +12,7 @@ import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getTabNavigationItems } from './NavigationItems';
 import { getVendorOrders } from 'api/actions/vendorOrderInboxActions';
+import HeaderBell from 'components/HeaderBell';
 
 // ==================== ADMIN SCREENS ====================
 import AdminDashboard from '../screens/Admin/Dashboard';
@@ -124,9 +125,7 @@ export default function TabNavigator() {
     headerTitle: title,
     headerRight: () => (
       <View style={{ marginRight: 15 }}>
-        <Pressable hitSlop={8} onPress={() => navigation.navigate('Notifications')}>
-          <MaterialCommunityIcons name="bell-outline" size={22} color={colors.text} />
-        </Pressable>
+        <HeaderBell onPress={() => navigation.navigate('Notifications')} />
       </View>
     ),
   });
