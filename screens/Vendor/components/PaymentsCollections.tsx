@@ -12,6 +12,7 @@ import {
   DailyCollectionData,
 } from 'api/actions/paymentActions';
 import { formatPrice, formatShortDate, getPaymentMethodLabel } from 'types/order.types';
+import { EmptyState } from 'components/ui';
 import { copyToClipboard, formatCollectionsText } from 'utils/paymentClipboard';
 
 interface Props {
@@ -71,12 +72,11 @@ export default function PaymentsCollectionsTab({ startDate, endDate, isActive }:
 
   if (error) {
     return (
-      <View className="items-center py-16 px-6">
-        <MaterialCommunityIcons name="alert-circle-outline" size={40} color={colors.error} />
-        <Text className="mt-3 text-sm" style={{ color: colors.muted }}>
-          Failed to load collections
-        </Text>
-      </View>
+      <EmptyState
+        icon="alert-circle-outline"
+        title="Couldn't load collections"
+        subtitle="Check your connection and try again."
+      />
     );
   }
 
@@ -146,12 +146,7 @@ export default function PaymentsCollectionsTab({ startDate, endDate, isActive }:
 
       {/* Data list */}
       {collections && collections.data.length === 0 ? (
-        <View className="items-center py-12">
-          <MaterialCommunityIcons name="cash-remove" size={40} color={colors.muted} />
-          <Text className="mt-3 text-sm" style={{ color: colors.muted }}>
-            No collections found
-          </Text>
-        </View>
+        <EmptyState icon="cash-remove" title="No collections found" />
       ) : (
         collections?.data.map((item, idx) => (
           <View key={idx}>

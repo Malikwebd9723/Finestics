@@ -17,6 +17,7 @@ import {
   approveVendor,
   Vendor,
 } from 'api/actions/adminActions';
+import { Button, EmptyState } from 'components/ui';
 import VendorDetailModal from './VendorDetailModal';
 import VendorActionsModal from './VendorActionsModal';
 import VendorFormModal from './VendorFormModal';
@@ -210,20 +211,12 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
 
   if (error) {
     return (
-      <View className="flex-1 items-center justify-center px-4">
-        <MaterialCommunityIcons name="alert-circle" size={64} color={colors.error} />
-        <Text className="text-lg font-semibold mt-4" style={{ color: colors.text }}>
-          Failed to load vendors
-        </Text>
-        <TouchableOpacity
-          onPress={() => refetch()}
-          className="mt-4 px-6 py-2 rounded-lg"
-          style={{ backgroundColor: colors.cta }}>
-          <Text className="font-medium" style={{ color: colors.onCta }}>
-            Retry
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <EmptyState
+        icon="alert-circle-outline"
+        title="Couldn't load vendors"
+        subtitle="Check your connection and try again."
+        action={<Button title="Retry" icon="refresh" onPress={() => refetch()} />}
+      />
     );
   }
 
@@ -233,14 +226,7 @@ export default function VendorsList({ searchQuery, statusFilter }: VendorsListPr
         data={filteredVendors}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
-        ListEmptyComponent={
-          <View className="items-center justify-center py-16">
-            <MaterialCommunityIcons name="store" size={64} color={colors.muted} />
-            <Text className="text-center mt-4 text-base font-medium" style={{ color: colors.text }}>
-              No vendors found
-            </Text>
-          </View>
-        }
+        ListEmptyComponent={<EmptyState icon="store" title="No vendors found" />}
         renderItem={({ item }) => (
           <Pressable
             onPress={() => handleVendorPress(item.id)}

@@ -8,7 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
-import { ListRow } from 'components/ui';
+import { EmptyState, ListRow } from 'components/ui';
 import { getAddresses, deleteAddress } from 'api/actions/customerOrderActions';
 import AddAddressModal from './components/AddAddressModal';
 
@@ -71,17 +71,11 @@ export default function AddressesScreen() {
           );
         }}
         ListEmptyComponent={
-          <View className="items-center px-8" style={{ paddingTop: 90 }}>
-            <MaterialCommunityIcons name="map-marker-outline" size={56} color={colors.muted} />
-            <Text className="mt-4 text-[16px] font-bold" style={{ color: colors.text }}>
-              No saved addresses
-            </Text>
-            <Text
-              className="mt-1.5 text-center text-[13px] font-medium"
-              style={{ color: colors.muted }}>
-              Add a delivery address to speed up checkout.
-            </Text>
-          </View>
+          <EmptyState
+            icon="map-marker-outline"
+            title="No saved addresses"
+            subtitle="Add a delivery address to speed up checkout."
+          />
         }
         ListFooterComponent={
           items.length > 0 ? (

@@ -1,18 +1,11 @@
 // screens/Admin/components/UsersList.tsx
 import React, { useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  Image,
-  Pressable,
-  Animated,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, FlatList, Image, Pressable, Animated } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchAllUsersAdmin, AdminUser } from 'api/actions/adminActions';
+import { Button, EmptyState } from 'components/ui';
 import UserDetailModal from './UserDetailModal';
 
 interface UsersListProps {
@@ -164,20 +157,12 @@ export default function UsersList({ searchQuery, statusFilter, roleFilter }: Use
 
   if (error) {
     return (
-      <View className="flex-1 items-center justify-center px-4">
-        <MaterialCommunityIcons name="alert-circle" size={64} color={colors.error} />
-        <Text className="text-lg font-semibold mt-4" style={{ color: colors.text }}>
-          Failed to load users
-        </Text>
-        <TouchableOpacity
-          onPress={() => refetch()}
-          className="mt-4 px-6 py-2 rounded-lg"
-          style={{ backgroundColor: colors.cta }}>
-          <Text className="font-medium" style={{ color: colors.onCta }}>
-            Retry
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <EmptyState
+        icon="alert-circle-outline"
+        title="Couldn't load users"
+        subtitle="Check your connection and try again."
+        action={<Button title="Retry" icon="refresh" onPress={() => refetch()} />}
+      />
     );
   }
 
@@ -188,12 +173,7 @@ export default function UsersList({ searchQuery, statusFilter, roleFilter }: Use
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
         ListEmptyComponent={
-          <View className="items-center justify-center py-16">
-            <MaterialCommunityIcons name="account-group-outline" size={64} color={colors.muted} />
-            <Text className="text-center mt-4 text-base font-medium" style={{ color: colors.text }}>
-              No users found
-            </Text>
-          </View>
+          <EmptyState icon="account-group-outline" title="No users found" />
         }
         renderItem={({ item }) => (
           <Pressable

@@ -12,6 +12,7 @@ import {
   getPaymentStatusLabel,
 } from 'types/order.types';
 import { typo } from 'constants/design';
+import { EmptyState } from 'components/ui';
 
 interface Order {
   id: number;
@@ -52,14 +53,7 @@ export default function OrderTableView({
   const { colors } = useThemeContext();
 
   if (orders.length === 0) {
-    return (
-      <View className="items-center py-16">
-        <MaterialCommunityIcons name="receipt" size={48} color={colors.muted} />
-        <Text className="mt-4 text-center" style={{ color: colors.muted }}>
-          No orders found
-        </Text>
-      </View>
-    );
+    return <EmptyState icon="receipt" title="No orders found" />;
   }
 
   // Calculate totals (exclude cancelled)

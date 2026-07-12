@@ -17,6 +17,7 @@ import { useThemeContext } from 'context/ThemeProvider';
 import { fetchVans } from 'api/actions/vendorActions';
 import { fetchOrdersByVan } from 'api/actions/orderActions';
 import { typo } from 'constants/design';
+import { EmptyState, StatInline } from 'components/ui';
 import { ViewToggle } from './components/OrderTableView';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'utils/Toast';
@@ -274,15 +275,11 @@ export default function VanOrdersScreen({ navigation }: any) {
 
       {/* Content */}
       {!selectedVan ? (
-        <View className="flex-1 items-center justify-center px-8">
-          <MaterialCommunityIcons name="truck-outline" size={64} color={colors.muted} />
-          <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
-            Select a Van
-          </Text>
-          <Text className="mt-2 text-center" style={{ color: colors.muted }}>
-            Choose a van above to view its assigned orders
-          </Text>
-        </View>
+        <EmptyState
+          icon="truck-outline"
+          title="Select a van"
+          subtitle="Choose a van above to view its assigned orders."
+        />
       ) : ordersLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={colors.primary} />
@@ -301,50 +298,13 @@ export default function VanOrdersScreen({ navigation }: any) {
               <ViewToggle viewMode={viewMode} onToggle={setViewMode} />
             </View>
 
-            <View className="flex-row gap-2">
-              <View
-                className="flex-1 rounded-xl p-3"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Products
-                </Text>
-                <Text className="text-lg font-bold" style={{ color: colors.text }}>
-                  {totals.products}
-                </Text>
-              </View>
-              <View
-                className="flex-1 rounded-xl p-3"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Orders
-                </Text>
-                <Text className="text-lg font-bold" style={{ color: colors.text }}>
-                  {totals.orders}
-                </Text>
-              </View>
-              <View
-                className="flex-1 rounded-xl p-3"
-                style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}>
-                <Text className="text-xs" style={{ color: colors.muted }}>
-                  Total Qty
-                </Text>
-                <Text className="text-lg font-bold" style={{ color: colors.primary }}>
-                  {totals.quantity}
-                </Text>
-              </View>
-            </View>
+            <StatInline
+              items={[
+                { label: 'Products', value: String(totals.products) },
+                { label: 'Orders', value: String(totals.orders) },
+                { label: 'Total qty', value: String(totals.quantity) },
+              ]}
+            />
           </View>
 
           {/* Products List - Card or Table View */}
@@ -363,12 +323,11 @@ export default function VanOrdersScreen({ navigation }: any) {
                 />
               }>
               {aggregatedProducts.length === 0 ? (
-                <View className="items-center py-16">
-                  <MaterialCommunityIcons name="basket" size={48} color={colors.muted} />
-                  <Text className="mt-4 text-center" style={{ color: colors.muted }}>
-                    No products assigned to {selectedVan} for {formatDisplayDate(selectedDate)}
-                  </Text>
-                </View>
+                <EmptyState
+                  icon="basket"
+                  title="Nothing assigned"
+                  subtitle={`No products assigned to ${selectedVan} for ${formatDisplayDate(selectedDate)}.`}
+                />
               ) : (
                 <View className="gap-3">
                   {aggregatedProducts.map((product, index) => (

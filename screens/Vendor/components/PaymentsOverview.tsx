@@ -4,6 +4,8 @@ import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
+import { typo } from 'constants/design';
+import { EmptyState, HeroMetric, StatInline } from 'components/ui';
 import { fetchPaymentOverview, PaymentOverview } from 'api/actions/paymentActions';
 import { formatPrice } from 'types/order.types';
 import { copyToClipboard, formatOverviewText } from 'utils/paymentClipboard';
@@ -35,23 +37,17 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
 
   if (error) {
     return (
-      <View className="items-center py-16 px-6">
-        <MaterialCommunityIcons name="alert-circle-outline" size={40} color={colors.error} />
-        <Text className="mt-3 text-sm" style={{ color: colors.muted }}>
-          Failed to load overview
-        </Text>
-      </View>
+      <EmptyState
+        icon="alert-circle-outline"
+        title="Couldn't load overview"
+        subtitle="Check your connection and try again."
+      />
     );
   }
 
   if (!overview) {
     return (
-      <View className="items-center py-16">
-        <MaterialCommunityIcons name="cash-remove" size={40} color={colors.muted} />
-        <Text className="mt-3 text-sm" style={{ color: colors.muted }}>
-          No data for this period
-        </Text>
-      </View>
+      <EmptyState icon="cash-remove" title="No data for this period" />
     );
   }
 
@@ -74,58 +70,43 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
         <Text className="ml-1.5 text-xs" style={{ color: colors.muted }}>Copy</Text>
       </TouchableOpacity>
 
-      {/* Main figures */}
-      <View className="mb-3 flex-row gap-3">
-        <View className="flex-1 rounded-2xl p-4" style={{ backgroundColor: colors.primary }}>
-          <Text className="text-2xl font-bold text-white">
-            {formatPrice(overview.totalSales)}
-          </Text>
-          <Text className="mt-1 text-xs text-white/70">Total Sales</Text>
-        </View>
-        <View className="flex-1 rounded-2xl p-4" style={{ backgroundColor: colors.success }}>
-          <Text className="text-2xl font-bold text-white">
-            {formatPrice(overview.totalCollections)}
-          </Text>
-          <Text className="mt-1 text-xs text-white/70">Collected</Text>
-        </View>
+      {/* Hero: sales for the period, with the collected/outstanding ledger */}
+      <View className="mb-3">
+        <HeroMetric
+          label="Total sales"
+          value={formatPrice(overview.totalSales)}
+          sublabel={`${overview.orderCount} orders`}
+          footer={
+            <View className="flex-row items-center justify-between">
+              <Text style={{ color: colors.white, opacity: 0.85, fontSize: 13 }}>
+                Collected{' '}
+                <Text style={[typo.num, { color: colors.white }]}>
+                  {formatPrice(overview.totalCollections)}
+                </Text>
+              </Text>
+              <Text style={{ color: colors.white, opacity: 0.85, fontSize: 13 }}>
+                Outstanding{' '}
+                <Text style={[typo.num, { color: colors.white }]}>
+                  {formatPrice(overview.totalOutstanding)}
+                </Text>
+              </Text>
+            </View>
+          }
+        />
       </View>
 
-      {/* Profit row */}
-      <View className="mb-3 flex-row gap-3">
-        <View className="flex-1 rounded-2xl p-4" style={{ backgroundColor: colors.primary }}>
-          <Text className="text-2xl font-bold text-white">
-            {formatPrice(overview.grossProfit)}
-          </Text>
-          <Text className="mt-1 text-xs text-white/70">Gross Profit ({overview.grossMargin}%)</Text>
-        </View>
-      </View>
-
-      {/* Secondary stats row */}
-      <View className="mb-4 flex-row gap-2">
-        <View
-          className="flex-1 items-center rounded-xl py-3"
-          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-          <Text className="text-base font-bold" style={{ color: colors.error }}>
-            {formatPrice(overview.totalOutstanding)}
-          </Text>
-          <Text className="text-xs" style={{ color: colors.muted }}>Outstanding</Text>
-        </View>
-        <View
-          className="flex-1 items-center rounded-xl py-3"
-          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-          <Text className="text-base font-bold" style={{ color: colors.text }}>
-            {overview.orderCount}
-          </Text>
-          <Text className="text-xs" style={{ color: colors.muted }}>Orders</Text>
-        </View>
-        <View
-          className="flex-1 items-center rounded-xl py-3"
-          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-          <Text className="text-base font-bold" style={{ color: colors.text }}>
-            {formatPrice(overview.totalCost)}
-          </Text>
-          <Text className="text-xs" style={{ color: colors.muted }}>Cost</Text>
-        </View>
+      {/* Profit line */}
+      <View className="mb-4">
+        <StatInline
+          items={[
+            {
+              label: `Gross profit · ${overview.grossMargin}%`,
+              value: formatPrice(overview.grossProfit),
+              tone: 'success',
+            },
+            { label: 'Cost', value: formatPrice(overview.totalCost) },
+          ]}
+        />
       </View>
 
       {/* Collection progress */}
@@ -153,22 +134,26 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
         </View>
       </View>
 
-      {/* Payment status */}
-      <View className="mb-4 flex-row gap-2">
+      {/* Payment status — one quiet card, tone carried by the dot + amount */}
+      <View
+        className="mb-4 flex-row rounded-2xl py-3"
+        style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
         {([
           { key: 'paid' as const, label: 'Paid', color: colors.success },
           { key: 'partial' as const, label: 'Partial', color: colors.muted },
           { key: 'unpaid' as const, label: 'Unpaid', color: colors.error },
-        ]).map((s) => (
+        ]).map((s, i) => (
           <View
             key={s.key}
-            className="flex-1 items-center rounded-xl p-3"
-            style={{ backgroundColor: s.color + '14' }}>
-            <Text className="text-lg font-bold" style={{ color: s.color }}>
-              {statuses[s.key]?.count || 0}
-            </Text>
-            <Text className="text-xs" style={{ color: s.color }}>{s.label}</Text>
-            <Text className="mt-0.5 text-xs" style={{ color: colors.muted }}>
+            className="flex-1 items-center px-2"
+            style={i > 0 ? { borderLeftWidth: 1, borderLeftColor: colors.border } : undefined}>
+            <View className="flex-row items-center">
+              <View className="mr-1.5 h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
+              <Text className="text-xs" style={{ color: colors.muted }}>
+                {s.label} · {statuses[s.key]?.count || 0}
+              </Text>
+            </View>
+            <Text className="mt-1 text-sm" style={[typo.num, { color: s.color }]}>
               {formatPrice(statuses[s.key]?.totalAmount || 0)}
             </Text>
           </View>
@@ -187,7 +172,7 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
                 Expenses
               </Text>
             </View>
-            <Text className="font-semibold" style={{ color: colors.error }}>
+            <Text style={[typo.num, { color: colors.error }]}>
               {formatPrice(overview.expenses.total)}
             </Text>
           </View>
@@ -198,10 +183,11 @@ export default function PaymentsOverviewTab({ startDate, endDate, isActive }: Pr
               Net Cash Flow
             </Text>
             <Text
-              className="text-lg font-bold"
-              style={{
-                color: (overview.netCashFlow || 0) >= 0 ? colors.success : colors.error,
-              }}>
+              className="text-lg"
+              style={[
+                typo.num,
+                { color: (overview.netCashFlow || 0) >= 0 ? colors.success : colors.error },
+              ]}>
               {formatPrice(overview.netCashFlow || 0)}
             </Text>
           </View>

@@ -14,6 +14,7 @@ import {
   isNewCustomer,
   formatCurrency,
 } from 'types/customer.types';
+import { Button, EmptyState } from 'components/ui';
 import CustomerCardSkeleton from './CustomerCardSkeleton';
 
 interface CustomersListProps {
@@ -64,23 +65,12 @@ export default function CustomersList({
   // Error state
   if (error) {
     return (
-      <View className="flex-1 items-center justify-center px-6">
-        <MaterialCommunityIcons name="alert-circle" size={64} color={colors.error} />
-        <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
-          Failed to load customers
-        </Text>
-        <Text className="mt-2 text-center text-sm" style={{ color: colors.muted }}>
-          Please check your connection and try again
-        </Text>
-        <TouchableOpacity
-          onPress={() => refetch()}
-          className="mt-4 rounded-xl px-6 py-3"
-          style={{ backgroundColor: colors.cta }}>
-          <Text className="font-semibold" style={{ color: colors.onCta }}>
-            Retry
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <EmptyState
+        icon="alert-circle-outline"
+        title="Couldn't load customers"
+        subtitle="Check your connection and try again."
+        action={<Button title="Retry" icon="refresh" onPress={() => refetch()} />}
+      />
     );
   }
 
@@ -112,17 +102,15 @@ export default function CustomersList({
           />
         }
         ListEmptyComponent={
-          <View className="items-center justify-center py-20">
-            <MaterialCommunityIcons name="account-group-outline" size={72} color={colors.muted} />
-            <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
-              No customers found
-            </Text>
-            <Text className="mt-2 px-8 text-center text-sm" style={{ color: colors.muted }}>
-              {searchQuery
-                ? 'Try a different search term'
-                : 'Add your first customer to get started'}
-            </Text>
-          </View>
+          <EmptyState
+            icon="account-group-outline"
+            title="No customers found"
+            subtitle={
+              searchQuery
+                ? 'Try a different search term.'
+                : 'Add your first customer to get started.'
+            }
+          />
         }
         renderItem={({ item }) => (
           <CustomerCard

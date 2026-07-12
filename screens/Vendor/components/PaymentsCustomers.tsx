@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
 import { fetchCustomerPaymentSummaries, CustomerPaymentSummary } from 'api/actions/paymentActions';
 import { formatPrice } from 'types/order.types';
+import { EmptyState } from 'components/ui';
 import { copyToClipboard, formatCustomersText } from 'utils/paymentClipboard';
 import SearchBar from 'components/SearchBar';
 
@@ -83,12 +84,11 @@ export default function PaymentsCustomersTab({
 
   if (error) {
     return (
-      <View className="items-center py-16 px-6">
-        <MaterialCommunityIcons name="alert-circle-outline" size={40} color={colors.error} />
-        <Text className="mt-3 text-sm" style={{ color: colors.muted }}>
-          Failed to load customers
-        </Text>
-      </View>
+      <EmptyState
+        icon="alert-circle-outline"
+        title="Couldn't load customers"
+        subtitle="Check your connection and try again."
+      />
     );
   }
 
@@ -180,12 +180,10 @@ export default function PaymentsCustomersTab({
 
         {/* Customer List */}
         {filteredCustomers.length === 0 ? (
-          <View className="items-center py-12">
-            <MaterialCommunityIcons name="account-search" size={40} color={colors.muted} />
-            <Text className="mt-3 text-sm" style={{ color: colors.muted }}>
-              {searchQuery ? 'No customers match your search' : 'No customers found'}
-            </Text>
-          </View>
+          <EmptyState
+            icon="account-search"
+            title={searchQuery ? 'No customers match your search' : 'No customers found'}
+          />
         ) : (
           filteredCustomers.map((customer) => (
             <TouchableOpacity

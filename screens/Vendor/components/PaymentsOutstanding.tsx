@@ -12,6 +12,7 @@ import {
 } from 'api/actions/paymentActions';
 import { formatPrice, formatShortDate } from 'types/order.types';
 import { typo } from 'constants/design';
+import { EmptyState } from 'components/ui';
 import { copyToClipboard, formatOutstandingText, formatAgingText } from 'utils/paymentClipboard';
 
 type ViewMode = 'orders' | 'aging';
@@ -198,12 +199,11 @@ export default function PaymentsOutstandingTab({
 
           {/* Orders */}
           {orders.length === 0 ? (
-            <View className="items-center py-12">
-              <MaterialCommunityIcons name="check-circle" size={40} color={colors.success} />
-              <Text className="mt-3 text-sm font-medium" style={{ color: colors.success }}>
-                All caught up!
-              </Text>
-            </View>
+            <EmptyState
+              icon="check-circle-outline"
+              title="All caught up"
+              subtitle="No outstanding balances for this period."
+            />
           ) : (
             <>
               {orders.map((item) => (

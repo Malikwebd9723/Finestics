@@ -23,6 +23,7 @@ import { useThemeContext } from 'context/ThemeProvider';
 import { fetchCollectionSheet } from 'api/actions/orderActions';
 import { formatPrice } from 'types/order.types';
 import { typo } from 'constants/design';
+import { Button, EmptyState } from 'components/ui';
 import { ViewToggle } from './components/OrderTableView';
 
 interface CollectionItem {
@@ -338,30 +339,18 @@ export default function CollectionSheet() {
               </Text>
             </View>
           ) : error ? (
-            <View className="items-center py-20">
-              <MaterialCommunityIcons name="alert-circle" size={48} color={colors.error} />
-              <Text className="mt-4 text-center" style={{ color: colors.text }}>
-                Failed to load collection sheet
-              </Text>
-              <TouchableOpacity
-                onPress={() => refetch()}
-                className="mt-4 rounded-lg px-6 py-2"
-                style={{ backgroundColor: colors.cta }}>
-                <Text className="font-semibold" style={{ color: colors.onCta }}>
-                  Retry
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <EmptyState
+              icon="alert-circle-outline"
+              title="Couldn't load collection sheet"
+              subtitle="Check your connection and try again."
+              action={<Button title="Retry" icon="refresh" onPress={() => refetch()} />}
+            />
           ) : !collectionSheet?.items?.length ? (
-            <View className="items-center py-20">
-              <MaterialCommunityIcons name="basket" size={64} color={colors.muted} />
-              <Text className="mt-4 text-lg font-semibold" style={{ color: colors.text }}>
-                No items to collect
-              </Text>
-              <Text className="mt-2 px-8 text-center" style={{ color: colors.muted }}>
-                No orders scheduled for delivery on {formatDisplayDate(selectedDate)}
-              </Text>
-            </View>
+            <EmptyState
+              icon="basket"
+              title="No items to collect"
+              subtitle={`No orders scheduled for delivery on ${formatDisplayDate(selectedDate)}.`}
+            />
           ) : (
             <View className="gap-3">
               {collectionSheet.items.map((item, index) => (

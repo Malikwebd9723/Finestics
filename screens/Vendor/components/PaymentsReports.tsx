@@ -11,6 +11,8 @@ import {
   ProfitLossData,
 } from 'api/actions/paymentActions';
 import { formatPrice, formatShortDate } from 'types/order.types';
+import { typo } from 'constants/design';
+import { EmptyState, StatInline } from 'components/ui';
 import { copyToClipboard, formatSalesReportText, formatPnLText } from 'utils/paymentClipboard';
 
 type ReportType = 'sales' | 'pnl';
@@ -140,48 +142,30 @@ export default function PaymentsReportsTab({ startDate, endDate, isActive }: Pro
 
           {salesReport ? (
             <>
-              {/* Hero cards */}
-              <View className="mb-3 flex-row gap-3">
-                <View className="flex-1 rounded-2xl p-4" style={{ backgroundColor: colors.primary }}>
-                  <Text className="text-2xl font-bold text-white">
-                    {formatPrice(salesReport.summary.totalSales)}
-                  </Text>
-                  <Text className="mt-1 text-xs text-white/70">Total Sales</Text>
-                </View>
-                <View className="flex-1 rounded-2xl p-4" style={{ backgroundColor: colors.success }}>
-                  <Text className="text-2xl font-bold text-white">
-                    {formatPrice(salesReport.summary.grossProfit)}
-                  </Text>
-                  <Text className="mt-1 text-xs text-white/70">Gross Profit</Text>
-                </View>
+              {/* Summary lines — the hero lives on the Overview tab */}
+              <View className="mb-3">
+                <StatInline
+                  items={[
+                    { label: 'Total sales', value: formatPrice(salesReport.summary.totalSales) },
+                    {
+                      label: `Gross profit · ${salesReport.summary.grossMargin}%`,
+                      value: formatPrice(salesReport.summary.grossProfit),
+                      tone: 'success',
+                    },
+                  ]}
+                />
               </View>
-
-              {/* Secondary stats */}
-              <View className="mb-4 flex-row gap-2">
-                <View
-                  className="flex-1 items-center rounded-xl py-3"
-                  style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-                  <Text className="text-base font-bold" style={{ color: colors.text }}>
-                    {salesReport.summary.orderCount}
-                  </Text>
-                  <Text className="text-xs" style={{ color: colors.muted }}>Orders</Text>
-                </View>
-                <View
-                  className="flex-1 items-center rounded-xl py-3"
-                  style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-                  <Text className="text-base font-bold" style={{ color: colors.text }}>
-                    {salesReport.summary.grossMargin}%
-                  </Text>
-                  <Text className="text-xs" style={{ color: colors.muted }}>Margin</Text>
-                </View>
-                <View
-                  className="flex-1 items-center rounded-xl py-3"
-                  style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-                  <Text className="text-base font-bold" style={{ color: colors.success }}>
-                    {formatPrice(salesReport.summary.totalCollected)}
-                  </Text>
-                  <Text className="text-xs" style={{ color: colors.muted }}>Collected</Text>
-                </View>
+              <View className="mb-4">
+                <StatInline
+                  items={[
+                    { label: 'Orders', value: String(salesReport.summary.orderCount) },
+                    {
+                      label: 'Collected',
+                      value: formatPrice(salesReport.summary.totalCollected),
+                      tone: 'success',
+                    },
+                  ]}
+                />
               </View>
 
               {/* Net Profit */}
@@ -194,10 +178,14 @@ export default function PaymentsReportsTab({ startDate, endDate, isActive }: Pro
                       Net Profit
                     </Text>
                     <Text
-                      className="text-lg font-bold"
-                      style={{
-                        color: salesReport.summary.netProfit >= 0 ? colors.success : colors.error,
-                      }}>
+                      className="text-lg"
+                      style={[
+                        typo.num,
+                        {
+                          color:
+                            salesReport.summary.netProfit >= 0 ? colors.success : colors.error,
+                        },
+                      ]}>
                       {formatPrice(salesReport.summary.netProfit)}
                     </Text>
                   </View>
@@ -282,12 +270,7 @@ export default function PaymentsReportsTab({ startDate, endDate, isActive }: Pro
               )}
             </>
           ) : (
-            <View className="items-center py-12">
-              <MaterialCommunityIcons name="file-chart" size={40} color={colors.muted} />
-              <Text className="mt-3 text-sm" style={{ color: colors.muted }}>
-                No sales data available
-              </Text>
-            </View>
+            <EmptyState icon="file-chart" title="No sales data available" />
           )}
         </>
       )}
@@ -480,12 +463,7 @@ export default function PaymentsReportsTab({ startDate, endDate, isActive }: Pro
               )}
             </>
           ) : (
-            <View className="items-center py-12">
-              <MaterialCommunityIcons name="file-chart" size={40} color={colors.muted} />
-              <Text className="mt-3 text-sm" style={{ color: colors.muted }}>
-                No P&L data available
-              </Text>
-            </View>
+            <EmptyState icon="file-chart" title="No P&L data available" />
           )}
         </>
       )}

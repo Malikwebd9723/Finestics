@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -24,6 +23,7 @@ import {
   getReturnActionLabel,
 } from 'types/return.types';
 import { typo } from 'constants/design';
+import { EmptyState } from 'components/ui';
 import ReturnDetailModal from './components/ReturnDetailModal';
 import SearchBar from 'components/SearchBar';
 
@@ -148,19 +148,17 @@ export default function ReturnsScreen() {
   const renderEmptyState = useCallback(() => {
     if (isLoading) return null;
     return (
-      <View className="flex-1 items-center justify-center px-6 py-20">
-        <MaterialCommunityIcons name="arrow-u-left-top" size={64} color={colors.muted} />
-        <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
-          No returns found
-        </Text>
-        <Text className="mt-2 text-center text-sm" style={{ color: colors.muted }}>
-          {searchQuery
-            ? 'Try adjusting your search query'
-            : 'Returns will appear here once processed'}
-        </Text>
-      </View>
+      <EmptyState
+        icon="arrow-u-left-top"
+        title="No returns found"
+        subtitle={
+          searchQuery
+            ? 'Try adjusting your search query.'
+            : 'Returns will appear here once processed.'
+        }
+      />
     );
-  }, [isLoading, colors, searchQuery]);
+  }, [isLoading, searchQuery]);
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>

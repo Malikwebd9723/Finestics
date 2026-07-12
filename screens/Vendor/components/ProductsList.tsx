@@ -11,6 +11,7 @@ import {
   calculateProfit,
   getInitials,
 } from 'types/product.types';
+import { Button, EmptyState } from 'components/ui';
 import ProductCardSkeleton from './ProductCardSkeleton';
 
 interface ProductsListProps {
@@ -69,54 +70,33 @@ export default function ProductsList({
   // Error state
   if (error) {
     return (
-      <View className="flex-1 items-center justify-center px-6">
-        <MaterialCommunityIcons name="alert-circle" size={64} color={colors.error} />
-        <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
-          Failed to load products
-        </Text>
-        <Text className="mt-2 text-center text-sm" style={{ color: colors.muted }}>
-          Please check your connection and try again
-        </Text>
-        <TouchableOpacity
-          onPress={() => refetch()}
-          className="mt-4 rounded-xl px-6 py-3"
-          style={{ backgroundColor: colors.cta }}>
-          <Text className="font-semibold" style={{ color: colors.onCta }}>
-            Retry
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <EmptyState
+        icon="alert-circle-outline"
+        title="Couldn't load products"
+        subtitle="Check your connection and try again."
+        action={<Button title="Retry" icon="refresh" onPress={() => refetch()} />}
+      />
     );
   }
 
   return (
     <View className="flex-1">
-      {/* Header with stats */}
+      {/* Header with count (success/error stay reserved for money) */}
       <View className="mb-3 flex-row items-center justify-between px-4">
         <Text className="text-base font-bold" style={{ color: colors.text }}>
           Products
         </Text>
         <View className="flex-row items-center gap-2">
-          <View
-            className="flex-row items-center rounded-full px-2.5 py-1"
-            style={{ backgroundColor: colors.success + '14' }}>
-            <View
-              className="mr-1.5 h-2 w-2 rounded-full"
-              style={{ backgroundColor: colors.success }}
-            />
-            <Text className="text-xs font-semibold" style={{ color: colors.success }}>
-              {stats.active}
+          {stats.inactive > 0 && (
+            <Text className="text-xs" style={{ color: colors.muted }}>
+              {stats.inactive} inactive
             </Text>
-          </View>
+          )}
           <View
-            className="flex-row items-center rounded-full px-2.5 py-1"
-            style={{ backgroundColor: colors.error + '14' }}>
-            <View
-              className="mr-1.5 h-2 w-2 rounded-full"
-              style={{ backgroundColor: colors.error }}
-            />
-            <Text className="text-xs font-semibold" style={{ color: colors.error }}>
-              {stats.inactive}
+            className="rounded-full px-3 py-1"
+            style={{ backgroundColor: colors.primary + '14' }}>
+            <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
+              {stats.total}
             </Text>
           </View>
         </View>
@@ -145,17 +125,15 @@ export default function ProductsList({
           ) : null
         }
         ListEmptyComponent={
-          <View className="items-center justify-center py-20">
-            <MaterialCommunityIcons name="package-variant" size={72} color={colors.muted} />
-            <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
-              No products found
-            </Text>
-            <Text className="mt-2 px-8 text-center text-sm" style={{ color: colors.muted }}>
-              {searchQuery
-                ? 'Try a different search term'
-                : 'Add your first product to get started'}
-            </Text>
-          </View>
+          <EmptyState
+            icon="package-variant"
+            title="No products found"
+            subtitle={
+              searchQuery
+                ? 'Try a different search term.'
+                : 'Add your first product to get started.'
+            }
+          />
         }
         renderItem={({ item }) => (
           <ProductCard

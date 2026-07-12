@@ -1,13 +1,13 @@
 // screens/Customer/MyVendorsScreen.tsx
 import React, { useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, Pressable, RefreshControl } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
 import { getConnections } from 'api/actions/connectionActions';
 import type { ConnectionStatus } from 'api/actions/connectionActions';
+import { EmptyState } from 'components/ui';
 import VendorCard from './components/VendorCard';
 import ConnectionStatusBadge from './components/ConnectionStatusBadge';
 
@@ -83,19 +83,17 @@ export default function MyVendorsScreen() {
             ) : null
           }
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', paddingTop: 80, paddingHorizontal: 32 }}>
-              <MaterialCommunityIcons name="account-group-outline" size={56} color={colors.muted} />
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', marginTop: 16 }}>
-                No {tab} vendors
-              </Text>
-              <Text style={{ color: colors.muted, fontSize: 13, marginTop: 6, textAlign: 'center' }}>
-                {tab === 'active'
+            <EmptyState
+              icon="account-group-outline"
+              title={`No ${tab} vendors`}
+              subtitle={
+                tab === 'active'
                   ? 'Connect with vendors from the Marketplace to start ordering.'
                   : tab === 'pending'
                     ? 'Requests awaiting vendor approval will appear here.'
-                    : 'Rejected requests will appear here.'}
-              </Text>
-            </View>
+                    : 'Rejected requests will appear here.'
+              }
+            />
           }
           contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
           refreshControl={

@@ -17,6 +17,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
 import Toast from 'utils/Toast';
+import { EmptyState } from 'components/ui';
 import {
   getConnectionRequests,
   approveConnection,
@@ -164,15 +165,11 @@ export default function ConnectionRequestsScreen() {
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', paddingTop: 80, paddingHorizontal: 32 }}>
-              <MaterialCommunityIcons name="account-clock-outline" size={56} color={colors.muted} />
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', marginTop: 16 }}>
-                No pending requests
-              </Text>
-              <Text style={{ color: colors.muted, fontSize: 13, marginTop: 6, textAlign: 'center' }}>
-                Customer connection requests will appear here.
-              </Text>
-            </View>
+            <EmptyState
+              icon="account-clock-outline"
+              title="No pending requests"
+              subtitle="Customer connection requests will appear here."
+            />
           }
           contentContainerStyle={{ paddingTop: 12, paddingBottom: 24, flexGrow: 1 }}
           refreshControl={

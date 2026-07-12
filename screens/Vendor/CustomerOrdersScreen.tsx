@@ -4,7 +4,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
   TextInput,
   FlatList,
@@ -17,6 +16,8 @@ import {
   formatPrice,
 } from 'types/order.types';
 import { Customer } from 'types/customer.types';
+import { typo } from 'constants/design';
+import { EmptyState } from 'components/ui';
 import CustomerOrderDetailsModal from './components/CustomerOrderDetailsModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -89,9 +90,7 @@ export default function CustomerOrdersScreen({ navigation, route }: CustomerOrde
           <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
         </TouchableOpacity>
         <View>
-          <Text className="text-2xl font-bold" style={{ color: colors.text }}>
-            Customer Orders
-          </Text>
+          <Text style={[typo.title, { color: colors.text }]}>Customer Orders</Text>
           <Text className="text-xs" style={{ color: colors.muted }}>
             Select a customer to view orders
           </Text>
@@ -133,19 +132,15 @@ export default function CustomerOrdersScreen({ navigation, route }: CustomerOrde
           </Text>
         </View>
       ) : filteredCustomers.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-8">
-          <MaterialCommunityIcons name="account-group-outline" size={64} color={colors.muted} />
-          <Text
-            className="mt-4 text-center text-lg font-semibold"
-            style={{ color: colors.text }}>
-            {searchQuery ? 'No customers found' : 'No customers yet'}
-          </Text>
-          <Text className="mt-2 text-center" style={{ color: colors.muted }}>
-            {searchQuery
-              ? 'Try a different search term'
-              : 'Add customers to see their orders here'}
-          </Text>
-        </View>
+        <EmptyState
+          icon="account-group-outline"
+          title={searchQuery ? 'No customers found' : 'No customers yet'}
+          subtitle={
+            searchQuery
+              ? 'Try a different search term.'
+              : 'Add customers to see their orders here.'
+          }
+        />
       ) : (
         <FlatList
           data={filteredCustomers}
