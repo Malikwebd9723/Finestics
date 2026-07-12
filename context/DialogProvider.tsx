@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import {
   Modal,
   View,
@@ -26,25 +26,43 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
   const { colors } = useThemeContext();
   const [visible, setVisible] = useState(false);
   const [opts, setOpts] = useState<DialogOptions | null>(null);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const show = useCallback((next: DialogOptions) => {
+    if (hideTimer.current) {
+      clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
     setOpts(next);
     setVisible(true);
   }, []);
 
   useEffect(() => registerDialogListener(show), [show]);
+  useEffect(
+    () => () => {
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+    },
+    []
+  );
 
-  const close = () => setVisible(false);
-
-  const handleConfirm = () => {
-    close();
-    setTimeout(() => opts?.onConfirm?.(), 0);
+  // Hide, then fully unmount the Modal and clear the stored options. A
+  // hidden-but-mounted RN Modal keeps its native dialog around on Android, and
+  // opening any sibling modal later can re-show it with the stale content
+  // (e.g. a dismissed "Delete Order?" reappearing on every order tap). The
+  // caller's confirm/cancel handler runs only after teardown so its own modal
+  // transitions never race the dialog's dismissal.
+  const close = (after?: () => void) => {
+    setVisible(false);
+    hideTimer.current = setTimeout(() => {
+      hideTimer.current = null;
+      setOpts(null);
+      after?.();
+    }, 180);
   };
 
-  const handleCancel = () => {
-    close();
-    setTimeout(() => opts?.onCancel?.(), 0);
-  };
+  const handleConfirm = () => close(opts?.onConfirm);
+
+  const handleCancel = () => close(opts?.onCancel);
 
   // Accent (not primary) for the confirm label — dark-mode primary is mid-zinc
   // and reads as a disabled/faded button on the card surface.
@@ -53,12 +71,13 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
   return (
     <DialogContext.Provider value={{ show }}>
       {children}
-      <Modal
-        visible={visible}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={handleCancel}>
+      {opts != null && (
+        <Modal
+          visible={visible}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+          onRequestClose={handleCancel}>
         <Pressable style={styles.backdrop} onPress={handleCancel}>
           {/* Stop propagation so taps inside the card don't close the dialog */}
           <Pressable
@@ -98,7 +117,8 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
             </View>
           </Pressable>
         </Pressable>
-      </Modal>
+        </Modal>
+      )}
     </DialogContext.Provider>
   );
 }
