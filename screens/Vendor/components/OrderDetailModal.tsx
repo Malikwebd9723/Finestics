@@ -900,14 +900,15 @@ export default function OrderDetailModal({
                 {/* Primary Actions Row */}
                 {/* Generate Invoice Button */}
 
+                {/* One filled CTA (payment); everything else stays quiet. */}
                 <View className="mb-3 flex-row gap-3">
                   {/* Payment */}
                   <TouchableOpacity
                     onPress={() => onRecordPayment(orderId!)}
                     className="flex-1 flex-row items-center justify-center rounded-xl py-3"
-                    style={{ backgroundColor: colors.success }}>
-                    <MaterialCommunityIcons name="credit-card-outline" size={18} color={colors.white} />
-                    <Text className="ml-2 text-sm font-bold text-white">
+                    style={{ backgroundColor: colors.cta }}>
+                    <MaterialCommunityIcons name="credit-card-outline" size={18} color={colors.onCta} />
+                    <Text className="ml-2 text-sm font-bold" style={{ color: colors.onCta }}>
                       {order.paymentStatus === 'paid' ? 'Adjust' : 'Record'}
                     </Text>
                   </TouchableOpacity>
@@ -917,9 +918,15 @@ export default function OrderDetailModal({
                     <TouchableOpacity
                       onPress={() => setReturnModalVisible(true)}
                       className="flex-1 flex-row items-center justify-center rounded-xl py-3"
-                      style={{ backgroundColor: colors.muted }}>
-                      <MaterialCommunityIcons name="arrow-u-left-top" size={18} color={colors.white} />
-                      <Text className="ml-2 text-sm font-bold text-white">Return</Text>
+                      style={{
+                        backgroundColor: colors.background,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                      }}>
+                      <MaterialCommunityIcons name="arrow-u-left-top" size={18} color={colors.text} />
+                      <Text className="ml-2 text-sm font-semibold" style={{ color: colors.text }}>
+                        Return
+                      </Text>
                     </TouchableOpacity>
                   )}
 
@@ -931,9 +938,13 @@ export default function OrderDetailModal({
                         setTimeout(() => onEdit(orderId!), 300);
                       }}
                       className="flex-1 flex-row items-center justify-center rounded-xl py-3"
-                      style={{ backgroundColor: colors.cta }}>
-                      <MaterialCommunityIcons name="pencil" size={18} color={colors.onCta} />
-                      <Text className="ml-2 text-sm font-bold" style={{ color: colors.onCta }}>
+                      style={{
+                        backgroundColor: colors.background,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                      }}>
+                      <MaterialCommunityIcons name="pencil" size={18} color={colors.text} />
+                      <Text className="ml-2 text-sm font-semibold" style={{ color: colors.text }}>
                         Edit
                       </Text>
                     </TouchableOpacity>

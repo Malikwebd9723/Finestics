@@ -39,6 +39,7 @@ import {
 } from 'types/order.types';
 import { toneColor, toneTint } from 'utils/statusTones';
 import { typo } from 'constants/design';
+import { Button, EmptyState } from 'components/ui';
 import OrderCardSkeleton from './OrderCardSkeleton';
 
 interface OrdersListProps {
@@ -314,23 +315,12 @@ export default function OrdersList({
   // Error state
   if (error) {
     return (
-      <View className="flex-1 items-center justify-center px-6">
-        <MaterialCommunityIcons name="alert-circle" size={64} color={colors.error} />
-        <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
-          Failed to load orders
-        </Text>
-        <Text className="mt-2 text-center text-sm" style={{ color: colors.muted }}>
-          Please check your connection and try again
-        </Text>
-        <TouchableOpacity
-          onPress={() => refetch()}
-          className="mt-4 rounded-xl px-6 py-3"
-          style={{ backgroundColor: colors.cta }}>
-          <Text className="font-semibold" style={{ color: colors.onCta }}>
-            Retry
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <EmptyState
+        icon="alert-circle-outline"
+        title="Couldn't load orders"
+        subtitle="Check your connection and try again."
+        action={<Button title="Retry" icon="refresh" onPress={() => refetch()} />}
+      />
     );
   }
 
@@ -895,17 +885,15 @@ export default function OrdersList({
           />
         }
         ListEmptyComponent={
-          <View className="items-center justify-center px-4 py-20">
-            <MaterialCommunityIcons name="receipt" size={72} color={colors.muted} />
-            <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
-              No orders found
-            </Text>
-            <Text className="mt-2 px-8 text-center text-sm" style={{ color: colors.muted }}>
-              {searchQuery || activeFiltersCount > 0
-                ? 'Try different search or filters'
-                : 'Create your first order to get started'}
-            </Text>
-          </View>
+          <EmptyState
+            icon="receipt"
+            title="No orders found"
+            subtitle={
+              searchQuery || activeFiltersCount > 0
+                ? 'Try a different search or clear the filters.'
+                : 'Create your first order to get started.'
+            }
+          />
         }
         renderItem={({ item }) => (
           <View className="px-4">

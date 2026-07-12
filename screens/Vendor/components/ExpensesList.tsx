@@ -1,5 +1,5 @@
 // screens/Vendor/components/ExpensesList.tsx
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  Animated,
-  Pressable,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeContext } from 'context/ThemeProvider';
+import { typo } from 'constants/design';
+import { BottomSheet, Button, EmptyState, StatInline } from 'components/ui';
 import { fetchAllExpenses, fetchExpenseSummary } from 'api/actions/expensesActions';
 import {
   Expense,
@@ -59,10 +59,8 @@ export default function ExpensesList({
   const { colors } = useThemeContext();
   const [sortBy, setSortBy] = useState<SortField>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('DESC');
-  const [filterMenuVisible, setFilterMenuVisible] = useState(false);
   const [activeFilterType, setActiveFilterType] = useState<'category' | 'dateRange' | null>(null);
   const [showDatePicker, setShowDatePicker] = useState<'from' | 'to' | null>(null);
-  const slideAnim = useRef(new Animated.Value(0)).current;
 
   // Format dates for API
   const dateFromStr = dateFrom?.toISOString().split('T')[0];
@@ -122,28 +120,9 @@ export default function ExpensesList({
     };
   }, [filteredExpenses]);
 
-  // Filter menu handlers
-  const openFilterMenu = (type: 'category' | 'dateRange') => {
-    setActiveFilterType(type);
-    setFilterMenuVisible(true);
-    Animated.spring(slideAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-      tension: 65,
-      friction: 11,
-    }).start();
-  };
-
-  const closeFilterMenu = () => {
-    Animated.timing(slideAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      setFilterMenuVisible(false);
-      setActiveFilterType(null);
-    });
-  };
+  // Filter menu handlers — the sheet itself is the canonical ui/BottomSheet
+  const openFilterMenu = (type: 'category' | 'dateRange') => setActiveFilterType(type);
+  const closeFilterMenu = () => setActiveFilterType(null);
 
   const handleDateChange = (event: any, date?: Date) => {
     if (date) {
@@ -169,7 +148,7 @@ export default function ExpensesList({
       <TouchableOpacity
         onPress={() => onViewExpense(item.id)}
         onLongPress={() => onLongPressExpense(item.id)}
-        className="mx-4 mb-3 overflow-hidden rounded-xl"
+        className="mx-4 mb-3 overflow-hidden rounded-2xl"
         style={{
           backgroundColor: colors.card,
           borderWidth: isSelected ? 2 : 1,
@@ -207,7 +186,7 @@ export default function ExpensesList({
               <Text className="text-base font-semibold" style={{ color: colors.text }}>
                 {getCategoryLabel(item.category)}
               </Text>
-              <Text className="text-lg font-bold" style={{ color: colors.error }}>
+              <Text className="text-base" style={[typo.num, { color: colors.error }]}>
                 -{formatPrice(item.amount)}
               </Text>
             </View>
@@ -279,47 +258,29 @@ export default function ExpensesList({
   // Error state
   if (error) {
     return (
-      <View className="flex-1 items-center justify-center px-6" style={{ backgroundColor: colors.background }}>
-        <MaterialCommunityIcons name="alert-circle-outline" size={48} color={colors.error} />
-        <Text className="mt-4 text-center text-base" style={{ color: colors.text }}>
-          Failed to load expenses
-        </Text>
-        <TouchableOpacity
-          onPress={() => refetch()}
-          className="mt-4 rounded-xl px-6 py-3"
-          style={{ backgroundColor: colors.cta }}>
-          <Text className="font-semibold" style={{ color: colors.onCta }}>
-            Retry
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <EmptyState
+        icon="alert-circle-outline"
+        title="Couldn't load expenses"
+        subtitle="Check your connection and try again."
+        action={<Button title="Retry" icon="refresh" onPress={() => refetch()} />}
+      />
     );
   }
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      {/* Summary Header */}
-      <View className="mx-4 mb-3 flex-row gap-3">
-        <View
-          className="flex-1 rounded-xl p-3"
-          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-          <Text className="text-xs" style={{ color: colors.muted }}>
-            Total Expenses
-          </Text>
-          <Text className="text-xl font-bold" style={{ color: colors.error }}>
-            {formatPrice(summaryData?.data?.grandTotal || stats.total)}
-          </Text>
-        </View>
-        <View
-          className="flex-1 rounded-xl p-3"
-          style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
-          <Text className="text-xs" style={{ color: colors.muted }}>
-            Count
-          </Text>
-          <Text className="text-xl font-bold" style={{ color: colors.text }}>
-            {stats.count}
-          </Text>
-        </View>
+      {/* Summary */}
+      <View className="mx-4 mb-3">
+        <StatInline
+          items={[
+            {
+              label: dateFrom || dateTo ? 'Spend in range' : 'Total spend',
+              value: formatPrice(summaryData?.data?.grandTotal || stats.total),
+              tone: 'error',
+            },
+            { label: 'Expenses', value: String(stats.count) },
+          ]}
+        />
       </View>
 
       {/* Filter Chips */}
@@ -409,150 +370,122 @@ export default function ExpensesList({
           />
         }
         ListEmptyComponent={
-          <View className="flex-1 items-center justify-center px-6 py-12">
-            <MaterialCommunityIcons name="cash-remove" size={64} color={colors.muted} />
-            <Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>
-              No expenses found
-            </Text>
-            <Text className="mt-2 text-center" style={{ color: colors.muted }}>
-              {searchQuery || categoryFilter || dateFrom || dateTo
-                ? 'Try adjusting your filters'
-                : 'Add your first expense to get started'}
-            </Text>
-          </View>
+          <EmptyState
+            icon="cash-remove"
+            title="No expenses found"
+            subtitle={
+              searchQuery || categoryFilter || dateFrom || dateTo
+                ? 'Try adjusting your search or filters.'
+                : 'Add your first expense to get started.'
+            }
+          />
         }
       />
 
-      {/* Filter Menu Modal */}
-      {filterMenuVisible && (
-        <Pressable
-          onPress={closeFilterMenu}
-          className="absolute inset-0 justify-end bg-black/50">
-          <Animated.View
-            style={{
-              transform: [
-                {
-                  translateY: slideAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [300, 0],
-                  }),
-                },
-              ],
-            }}>
-            <Pressable onPress={(e) => e.stopPropagation()}>
-              <View className="rounded-t-3xl p-5" style={{ backgroundColor: colors.card }}>
-                {/* Category Filter */}
-                {activeFilterType === 'category' && (
-                  <>
-                    <Text className="mb-4 text-lg font-bold" style={{ color: colors.text }}>
-                      Select Category
-                    </Text>
-                    <View className="flex-row flex-wrap gap-2">
-                      <TouchableOpacity
-                        onPress={() => {
-                          onCategoryFilterChange(null);
-                          closeFilterMenu();
-                        }}
-                        className="rounded-xl px-4 py-3"
-                        style={{
-                          backgroundColor: !categoryFilter ? colors.cta : colors.background,
-                          borderWidth: 1,
-                          borderColor: !categoryFilter ? colors.cta : colors.border,
-                        }}>
-                        <Text
-                          className="font-medium"
-                          style={{ color: !categoryFilter ? colors.onCta : colors.text }}>
-                          All Categories
-                        </Text>
-                      </TouchableOpacity>
-                      {EXPENSE_CATEGORIES.map((cat) => {
-                        const isSelected = categoryFilter === cat.value;
-                        return (
-                          <TouchableOpacity
-                            key={cat.value}
-                            onPress={() => {
-                              onCategoryFilterChange(cat.value);
-                              closeFilterMenu();
-                            }}
-                            className="flex-row items-center rounded-xl px-4 py-3"
-                            style={{
-                              backgroundColor: isSelected ? colors.cta : colors.background,
-                              borderWidth: 1,
-                              borderColor: isSelected ? colors.cta : colors.border,
-                            }}>
-                            <MaterialCommunityIcons
-                              name={cat.icon as any}
-                              size={18}
-                              color={isSelected ? colors.onCta : colors.text}
-                            />
-                            <Text
-                              className="ml-2 font-medium"
-                              style={{ color: isSelected ? colors.onCta : colors.text }}>
-                              {cat.label}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </>
-                )}
+      {/* Filter Sheet */}
+      <BottomSheet
+        visible={activeFilterType !== null}
+        onClose={closeFilterMenu}
+        title={activeFilterType === 'category' ? 'Category' : 'Date range'}
+        maxHeightRatio={0.75}>
+        {activeFilterType === 'category' && (
+          <View className="flex-row flex-wrap gap-2 pt-2">
+            <TouchableOpacity
+              onPress={() => {
+                onCategoryFilterChange(null);
+                closeFilterMenu();
+              }}
+              className="rounded-xl px-4 py-3"
+              style={{
+                backgroundColor: !categoryFilter ? colors.cta : colors.background,
+                borderWidth: 1,
+                borderColor: !categoryFilter ? colors.cta : colors.border,
+              }}>
+              <Text
+                className="font-medium"
+                style={{ color: !categoryFilter ? colors.onCta : colors.text }}>
+                All Categories
+              </Text>
+            </TouchableOpacity>
+            {EXPENSE_CATEGORIES.map((cat) => {
+              const isSelected = categoryFilter === cat.value;
+              return (
+                <TouchableOpacity
+                  key={cat.value}
+                  onPress={() => {
+                    onCategoryFilterChange(cat.value);
+                    closeFilterMenu();
+                  }}
+                  className="flex-row items-center rounded-xl px-4 py-3"
+                  style={{
+                    backgroundColor: isSelected ? colors.cta : colors.background,
+                    borderWidth: 1,
+                    borderColor: isSelected ? colors.cta : colors.border,
+                  }}>
+                  <MaterialCommunityIcons
+                    name={cat.icon as any}
+                    size={18}
+                    color={isSelected ? colors.onCta : colors.text}
+                  />
+                  <Text
+                    className="ml-2 font-medium"
+                    style={{ color: isSelected ? colors.onCta : colors.text }}>
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
 
-                {/* Date Range Filter */}
-                {activeFilterType === 'dateRange' && (
-                  <>
-                    <Text className="mb-4 text-lg font-bold" style={{ color: colors.text }}>
-                      Date Range
-                    </Text>
-                    <View className="gap-3">
-                      <TouchableOpacity
-                        onPress={() => setShowDatePicker('from')}
-                        className="flex-row items-center rounded-xl p-4"
-                        style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
-                        <MaterialCommunityIcons name="calendar-start" size={20} color={colors.muted} />
-                        <Text className="ml-3 flex-1" style={{ color: dateFrom ? colors.text : colors.muted }}>
-                          {dateFrom ? formatDate(dateFrom.toISOString()) : 'Start Date'}
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => setShowDatePicker('to')}
-                        className="flex-row items-center rounded-xl p-4"
-                        style={{ backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }}>
-                        <MaterialCommunityIcons name="calendar-end" size={20} color={colors.muted} />
-                        <Text className="ml-3 flex-1" style={{ color: dateTo ? colors.text : colors.muted }}>
-                          {dateTo ? formatDate(dateTo.toISOString()) : 'End Date'}
-                        </Text>
-                      </TouchableOpacity>
-                      {(dateFrom || dateTo) && (
-                        <TouchableOpacity
-                          onPress={clearDateRange}
-                          className="items-center rounded-xl py-3"
-                          style={{ backgroundColor: colors.error + '14' }}>
-                          <Text className="font-medium" style={{ color: colors.error }}>
-                            Clear Date Range
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  </>
-                )}
+        {activeFilterType === 'dateRange' && (
+          <View className="gap-3 pt-2">
+            <TouchableOpacity
+              onPress={() => setShowDatePicker('from')}
+              className="flex-row items-center rounded-xl p-4"
+              style={{
+                backgroundColor: colors.background,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}>
+              <MaterialCommunityIcons name="calendar-start" size={20} color={colors.muted} />
+              <Text className="ml-3 flex-1" style={{ color: dateFrom ? colors.text : colors.muted }}>
+                {dateFrom ? formatDate(dateFrom.toISOString()) : 'Start Date'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setShowDatePicker('to')}
+              className="flex-row items-center rounded-xl p-4"
+              style={{
+                backgroundColor: colors.background,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}>
+              <MaterialCommunityIcons name="calendar-end" size={20} color={colors.muted} />
+              <Text className="ml-3 flex-1" style={{ color: dateTo ? colors.text : colors.muted }}>
+                {dateTo ? formatDate(dateTo.toISOString()) : 'End Date'}
+              </Text>
+            </TouchableOpacity>
+            {(dateFrom || dateTo) && (
+              <Button title="Clear date range" variant="ghost" onPress={clearDateRange} />
+            )}
+            {/* Rendered inside the sheet: on iOS the picker is an inline view and
+                would otherwise be hidden behind this Modal. */}
+            {showDatePicker && (
+              <DateTimePicker
+                value={
+                  showDatePicker === 'from' ? dateFrom || new Date() : dateTo || new Date()
+                }
+                mode="date"
+                display="default"
+                onChange={handleDateChange}
+                maximumDate={new Date()}
+              />
+            )}
+          </View>
+        )}
+      </BottomSheet>
 
-                <View className="h-6" />
-              </View>
-            </Pressable>
-          </Animated.View>
-        </Pressable>
-      )}
-
-      {/* Date Picker */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={showDatePicker === 'from' ? (dateFrom || new Date()) : (dateTo || new Date())}
-          mode="date"
-          display="default"
-          onChange={handleDateChange}
-          maximumDate={new Date()}
-        />
-      )}
     </View>
   );
 }
