@@ -2,7 +2,7 @@
   "expo": {
     "name": "Finestics",
     "slug": "Finestics",
-    "version": "1.5.0",
+    "version": "2.0.0",
     "scheme": "finestics",
     "owner": "maazkh01",
     "web": {
@@ -34,7 +34,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "bundleIdentifier": "com.finestics.app",
-      "buildNumber": "7",
+      "buildNumber": "8",
       "supportsTablet": false,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Finestics needs photo access to save your financial reports and receipts.",
@@ -45,7 +45,7 @@
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
-      "versionCode": 7,
+      "versionCode": 8,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
