@@ -16,11 +16,17 @@ import { useThemeContext } from 'context/ThemeProvider';
 import { useCart } from 'context/CartContext';
 import { typo, fonts, radius } from 'constants/design';
 import Toast from 'utils/Toast';
+import { DatePickerSheet } from 'components/ui';
 import { getAddresses, createOrder } from 'api/actions/customerOrderActions';
+import { getVendor } from 'api/actions/marketplaceActions';
 import { formatPrice } from './components/ProductCard';
 import AddAddressModal from './components/AddAddressModal';
 
 type PaymentMethod = 'cash' | 'credit';
+
+// Local YYYY-MM-DD (toISOString would shift the day across midnight UTC).
+const toYMD = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export default function CheckoutScreen() {
   const { colors } = useThemeContext();
@@ -41,11 +47,22 @@ export default function CheckoutScreen() {
   const [creditError, setCreditError] = useState<any>(null);
   const [pricesChanged, setPricesChanged] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [dateSheetOpen, setDateSheetOpen] = useState(false);
 
   const { data: addresses } = useQuery({
     queryKey: ['customer-addresses'],
     queryFn: getAddresses,
   });
+
+  // Hidden-price vendors: this checkout is a quote request — no totals shown,
+  // the vendor prices the order after it's placed. (Shares the vendor-detail
+  // cache, so this is usually already loaded.)
+  const { data: vendorInfo } = useQuery({
+    queryKey: ['marketplace-vendor', vendorId],
+    queryFn: () => getVendor(vendorId),
+    enabled: !!vendorId,
+  });
+  const isQuote = !!vendorInfo?.hidePrices;
 
   // Default to the primary address once loaded.
   useEffect(() => {
@@ -63,14 +80,15 @@ export default function CheckoutScreen() {
         deliveryAddressId: addressId,
         requestedDeliveryDate: deliveryDate,
         notes: notes.trim() || null,
-        expectedTotal: Math.round(total * 100) / 100,
+        // Quote orders have no client-visible prices to confirm.
+        expectedTotal: isQuote ? null : Math.round(total * 100) / 100,
         items: items.map((l) => ({ productId: l.productId, quantity: l.quantity })),
       }),
     onSuccess: (order) => {
       clearCart(vendorId);
       queryClient.invalidateQueries({ queryKey: ['customer-orders'] });
-      Toast.success('Order placed successfully');
-      navigation.navigate('CustomerOrderDetailScreen', { orderId: order.id });
+      Toast.success(isQuote ? 'Quote request sent' : 'Order placed successfully');
+      navigation.navigate('CustomerOrderDetailScreen', { orderId: order.id, justPlaced: true });
     },
     onError: (e: any) => {
       if (e?.code === 'CREDIT_LIMIT_EXCEEDED') {
@@ -101,7 +119,7 @@ export default function CheckoutScreen() {
                 {l.quantity} × {l.name}
               </Text>
               <Text style={[typo.num, { color: colors.text }]}>
-                {formatPrice(Number(l.sellingPrice) * l.quantity)}
+                {isQuote ? '—' : formatPrice(Number(l.sellingPrice) * l.quantity)}
               </Text>
             </View>
           ))}
@@ -116,9 +134,15 @@ export default function CheckoutScreen() {
             }}>
             <Text style={{ color: colors.text, fontFamily: fonts.bold }}>Total</Text>
             <Text style={[typo.num, { color: colors.text, fontSize: 15 }]}>
-              {formatPrice(total)}
+              {isQuote ? 'Priced by vendor' : formatPrice(total)}
             </Text>
           </View>
+          {isQuote && (
+            <Text style={{ color: colors.muted, fontSize: 12, marginTop: 8 }}>
+              This vendor prices orders individually — you{"'"}ll receive a quote to accept or
+              decline before anything is prepared.
+            </Text>
+          )}
         </Section>
 
         {/* Delivery address */}
@@ -148,38 +172,79 @@ export default function CheckoutScreen() {
           </Pressable>
         </Section>
 
-        {/* Delivery day (optional quick-select; no native picker dependency) */}
+        {/* Delivery day (optional): quick presets + a real date picker */}
         <Section title="Delivery Day (optional)" colors={colors}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {[
-              { label: 'No preference', offset: null },
-              { label: 'Tomorrow', offset: 1 },
-              { label: 'In 2 days', offset: 2 },
-              { label: 'In 3 days', offset: 3 },
-            ].map((opt) => {
-              const value =
-                opt.offset === null
-                  ? null
-                  : new Date(Date.now() + opt.offset * 864e5).toISOString().slice(0, 10);
-              const selected = deliveryDate === value;
+            {(() => {
+              const presets = [
+                { label: 'No preference', offset: null },
+                { label: 'Tomorrow', offset: 1 },
+                { label: 'In 2 days', offset: 2 },
+                { label: 'In 3 days', offset: 3 },
+              ].map((opt) => ({
+                ...opt,
+                value:
+                  opt.offset === null ? null : toYMD(new Date(Date.now() + opt.offset * 864e5)),
+              }));
+              const isCustom =
+                deliveryDate !== null && !presets.some((p) => p.value === deliveryDate);
               return (
-                <Pressable
-                  key={opt.label}
-                  onPress={() => setDeliveryDate(value)}
-                  style={{
-                    paddingHorizontal: 14,
-                    paddingVertical: 9,
-                    borderRadius: 999,
-                    backgroundColor: selected ? colors.cta : colors.background,
-                    borderWidth: 1,
-                    borderColor: selected ? colors.cta : colors.border,
-                  }}>
-                  <Text style={{ color: selected ? colors.onCta : colors.text, fontSize: 13 }}>
-                    {opt.label}
-                  </Text>
-                </Pressable>
+                <>
+                  {presets.map((opt) => {
+                    const selected = deliveryDate === opt.value && !isCustom;
+                    return (
+                      <Pressable
+                        key={opt.label}
+                        onPress={() => setDeliveryDate(opt.value)}
+                        style={{
+                          paddingHorizontal: 14,
+                          paddingVertical: 9,
+                          borderRadius: 999,
+                          backgroundColor: selected ? colors.cta : colors.background,
+                          borderWidth: 1,
+                          borderColor: selected ? colors.cta : colors.border,
+                        }}>
+                        <Text
+                          style={{ color: selected ? colors.onCta : colors.text, fontSize: 13 }}>
+                          {opt.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                  <Pressable
+                    onPress={() => setDateSheetOpen(true)}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingHorizontal: 14,
+                      paddingVertical: 9,
+                      borderRadius: 999,
+                      backgroundColor: isCustom ? colors.cta : colors.background,
+                      borderWidth: 1,
+                      borderColor: isCustom ? colors.cta : colors.border,
+                    }}>
+                    <MaterialCommunityIcons
+                      name="calendar-month-outline"
+                      size={14}
+                      color={isCustom ? colors.onCta : colors.text}
+                    />
+                    <Text
+                      style={{
+                        color: isCustom ? colors.onCta : colors.text,
+                        fontSize: 13,
+                        marginLeft: 5,
+                      }}>
+                      {isCustom
+                        ? new Date(`${deliveryDate}T12:00:00`).toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'short',
+                          })
+                        : 'Pick a date'}
+                    </Text>
+                  </Pressable>
+                </>
               );
-            })}
+            })()}
           </View>
         </Section>
 
@@ -324,7 +389,7 @@ export default function CheckoutScreen() {
             <ActivityIndicator color={colors.onCta} />
           ) : (
             <Text style={[typo.num, { color: colors.onCta, fontSize: 16 }]}>
-              Place Order · {formatPrice(total)}
+              {isQuote ? 'Request Quote' : `Place Order · ${formatPrice(total)}`}
             </Text>
           )}
         </Pressable>
@@ -338,6 +403,16 @@ export default function CheckoutScreen() {
           setAddOpen(false);
           queryClient.invalidateQueries({ queryKey: ['customer-addresses'] });
         }}
+      />
+
+      <DatePickerSheet
+        visible={dateSheetOpen}
+        onClose={() => setDateSheetOpen(false)}
+        title="Delivery date"
+        value={deliveryDate ? new Date(`${deliveryDate}T12:00:00`) : new Date(Date.now() + 864e5)}
+        minimumDate={new Date(Date.now() + 864e5)}
+        maximumDate={new Date(Date.now() + 30 * 864e5)}
+        onSelect={(date) => setDeliveryDate(toYMD(date))}
       />
     </View>
   );

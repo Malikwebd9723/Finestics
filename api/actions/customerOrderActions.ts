@@ -5,6 +5,8 @@ import type { Pagination } from './marketplaceActions';
 // ==================== TYPES ====================
 
 export type OrderStatus =
+  | 'quote_requested'
+  | 'quoted'
   | 'pending'
   | 'confirmed'
   | 'processing'
@@ -44,6 +46,9 @@ export interface CustomerOrder {
   id: number;
   orderNumber: string;
   status: OrderStatus;
+  /** 'quote': prices arrive from the vendor after placing (hidden-price vendors). */
+  pricingMode?: 'standard' | 'quote';
+  quotedAt?: string | null;
   paymentStatus: string;
   paymentMethod: string | null;
   subtotal: string;
@@ -87,8 +92,9 @@ export interface CreateOrderPayload {
   requestedDeliveryDate?: string | null;
   requestedDeliveryTime?: string | null;
   notes?: string | null;
-  /** Total shown to the customer; server rejects with PRICES_CHANGED on drift. */
-  expectedTotal?: number;
+  /** Total shown to the customer; server rejects with PRICES_CHANGED on drift.
+   *  Null for quote orders — there is no client-visible total to confirm. */
+  expectedTotal?: number | null;
 }
 
 // ==================== ORDERS ====================
@@ -122,6 +128,25 @@ export const getOrder = async (orderId: number): Promise<CustomerOrder> => {
 export const cancelOrder = async (orderId: number, reason?: string): Promise<CustomerOrder> => {
   const res = await apiRequest(`/customer/orders/${orderId}/cancel`, 'POST', { reason });
   if (!res.success) throw new Error(getErrorMessage(res.data, 'Failed to cancel order'));
+  return res.data.data;
+};
+
+/** Accept the vendor's quote — locks prices and confirms the order. */
+export const acceptQuote = async (orderId: number): Promise<CustomerOrder> => {
+  const res = await apiRequest(`/customer/orders/${orderId}/quote/accept`, 'POST');
+  if (!res.success) {
+    const err: any = new Error(getErrorMessage(res.data, 'Failed to accept quote'));
+    err.code = res.data?.error?.code || res.data?.code;
+    err.details = res.data?.error?.details || res.data?.details;
+    throw err;
+  }
+  return res.data.data;
+};
+
+/** Decline the vendor's quote — cancels the order. */
+export const declineQuote = async (orderId: number): Promise<CustomerOrder> => {
+  const res = await apiRequest(`/customer/orders/${orderId}/quote/decline`, 'POST');
+  if (!res.success) throw new Error(getErrorMessage(res.data, 'Failed to decline quote'));
   return res.data.data;
 };
 

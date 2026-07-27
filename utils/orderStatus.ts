@@ -13,6 +13,8 @@ interface StatusMeta {
 }
 
 const META: Record<OrderStatus, StatusMeta> = {
+  quote_requested: { label: 'Quote requested', tone: 'neutral' },
+  quoted: { label: 'Quote ready', tone: 'active' },
   pending: { label: 'Placed', tone: 'neutral' },
   confirmed: { label: 'Accepted', tone: 'active' },
   processing: { label: 'Preparing', tone: 'active' },

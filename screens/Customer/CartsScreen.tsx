@@ -45,7 +45,7 @@ export default function CartsScreen() {
               icon="storefront-outline"
               title={item.vendorName || `Vendor #${item.vendorId}`}
               subtitle={`${item.count} item${item.count === 1 ? '' : 's'}`}
-              amount={formatPrice(item.total)}
+              amount={item.total > 0 ? formatPrice(item.total) : '—'}
               divider={index > 0}
               onPress={() =>
                 navigation.navigate('CartScreen', {

@@ -1,24 +1,53 @@
 // screens/Vendor/OrdersScreen.tsx
-import React, { useState, useEffect } from 'react';
+// Owns every filter/sort/date preference for the order book and persists them
+// per vendor (utils/uiPrefs) so the screen reopens exactly how the vendor
+// left it — e.g. defaulting to tomorrow's orders. A picked custom date is
+// deliberately NOT persisted (a stale date next morning is worse than none).
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Pressable, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { useThemeContext } from 'context/ThemeProvider';
+import { useAuth } from 'context/AuthContext';
 import { typo } from 'constants/design';
 import { AttentionRow, BottomSheet } from 'components/ui';
 import { getVendorOrders } from 'api/actions/vendorOrderInboxActions';
-import { formatPrice } from 'types/order.types';
+import { formatPrice, SortField, SortOrder, DateFilterField } from 'types/order.types';
+import { loadUiPrefs, saveUiPrefs } from 'utils/uiPrefs';
 import SearchBar from 'components/SearchBar';
-import OrdersList from './components/OrdersList';
+import OrdersList, { DateScope } from './components/OrdersList';
 import OrderDetailModal from './components/OrderDetailModal';
 import PaymentModal from './components/PaymentModal';
 import BulkActionsBar from './components/BulkActionsBar';
 
+// Noon-anchored days: local midnight can cross into the previous day once
+// serialized to an ISO date for the API.
+const atNoon = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(12, 0, 0, 0);
+  return x;
+};
+const dayWithOffset = (days: number) => atNoon(new Date(Date.now() + days * 864e5));
+
+interface OrdersPrefs {
+  dateScope?: 'today' | 'tomorrow' | 'all';
+  sortBy?: SortField;
+  sortOrder?: SortOrder;
+  dateFilterField?: DateFilterField;
+  statusFilter?: string | null;
+  paymentFilter?: string | null;
+  vanFilter?: string | null;
+  showSummary?: boolean;
+}
+
 export default function Orders() {
   const { colors } = useThemeContext();
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const isFocused = useIsFocused();
+  const { user } = useAuth();
+  const prefsKey = `vendor_orders_prefs_v1:${user?.id ?? 'anon'}`;
 
   // Search & filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,6 +56,102 @@ export default function Orders() {
   const [vanFilter, setVanFilter] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
   const [dateTo, setDateTo] = useState<Date | null>(null);
+  const [dateScope, setDateScope] = useState<DateScope>('all');
+  const [customDate, setCustomDate] = useState<Date | null>(null);
+
+  // Sort & display prefs
+  const [sortBy, setSortBy] = useState<SortField>('orderDate');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('DESC');
+  const [dateFilterField, setDateFilterField] = useState<DateFilterField>('orderDate');
+  const [showSummary, setShowSummary] = useState(false);
+  const [prefsReady, setPrefsReady] = useState(false);
+
+  const applyDateScope = useCallback((scope: DateScope, custom?: Date | null) => {
+    if (scope === 'today' || scope === 'tomorrow') {
+      const d = dayWithOffset(scope === 'today' ? 0 : 1);
+      setDateScope(scope);
+      setCustomDate(null);
+      setDateFrom(d);
+      setDateTo(d);
+    } else if (scope === 'custom') {
+      const d = atNoon(custom ?? new Date());
+      setDateScope('custom');
+      setCustomDate(d);
+      setDateFrom(d);
+      setDateTo(d);
+    } else {
+      setDateScope('all');
+      setCustomDate(null);
+      setDateFrom(null);
+      setDateTo(null);
+    }
+  }, []);
+
+  // Step the scoped day: lands back on the today/tomorrow chips when it can.
+  const stepDay = useCallback(
+    (dir: 1 | -1) => {
+      const base = dateScope !== 'all' && dateFrom ? dateFrom : dayWithOffset(0);
+      const next = atNoon(new Date(base.getTime() + dir * 864e5));
+      if (next.toDateString() === dayWithOffset(0).toDateString()) applyDateScope('today');
+      else if (next.toDateString() === dayWithOffset(1).toDateString()) applyDateScope('tomorrow');
+      else applyDateScope('custom', next);
+    },
+    [dateScope, dateFrom, applyDateScope]
+  );
+
+  // Hydrate persisted preferences once per user, then start rendering the list.
+  useEffect(() => {
+    let alive = true;
+    loadUiPrefs<OrdersPrefs>(prefsKey).then((p) => {
+      if (!alive) return;
+      if (p) {
+        if (p.sortBy) setSortBy(p.sortBy);
+        if (p.sortOrder) setSortOrder(p.sortOrder);
+        if (p.dateFilterField) setDateFilterField(p.dateFilterField);
+        if (typeof p.showSummary === 'boolean') setShowSummary(p.showSummary);
+        // Deep links (dashboard attention rows) win over remembered filters.
+        if (!route.params?.statusFilter && p.statusFilter !== undefined) {
+          setStatusFilter(p.statusFilter);
+        }
+        if (!route.params?.paymentFilter && p.paymentFilter !== undefined) {
+          setPaymentFilter(p.paymentFilter);
+        }
+        if (p.vanFilter !== undefined) setVanFilter(p.vanFilter);
+        if (p.dateScope) applyDateScope(p.dateScope);
+      }
+      setPrefsReady(true);
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefsKey]);
+
+  // Persist on every change (custom dates degrade to 'all').
+  useEffect(() => {
+    if (!prefsReady) return;
+    saveUiPrefs(prefsKey, {
+      dateScope: dateScope === 'custom' ? 'all' : dateScope,
+      sortBy,
+      sortOrder,
+      dateFilterField,
+      statusFilter,
+      paymentFilter,
+      vanFilter,
+      showSummary,
+    } satisfies OrdersPrefs);
+  }, [
+    prefsReady,
+    prefsKey,
+    dateScope,
+    sortBy,
+    sortOrder,
+    dateFilterField,
+    statusFilter,
+    paymentFilter,
+    vanFilter,
+    showSummary,
+  ]);
 
   // Modal states
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -37,11 +162,11 @@ export default function Orders() {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState<Set<number>>(new Set());
 
-  // Pending app orders (customer-placed, awaiting acceptance)
+  // App orders awaiting vendor action: fresh orders + quote requests.
   const [appOrdersSheetVisible, setAppOrdersSheetVisible] = useState(false);
   const { data: pendingAppOrders } = useQuery({
-    queryKey: ['vendor-customer-orders', 'pending'],
-    queryFn: () => getVendorOrders('pending'),
+    queryKey: ['vendor-customer-orders', 'needs-action'],
+    queryFn: () => getVendorOrders('pending,quote_requested'),
     refetchInterval: isFocused ? 30000 : false,
   });
   const pendingItems = pendingAppOrders?.items ?? [];
@@ -61,7 +186,6 @@ export default function Orders() {
   };
 
   // Filters can be preset by other screens (e.g. Dashboard attention rows).
-  const route = useRoute<any>();
   useEffect(() => {
     if (route.params?.statusFilter) {
       setStatusFilter(route.params.statusFilter);
@@ -147,9 +271,13 @@ export default function Orders() {
     setSelectedOrderId(null);
   };
 
+  // Advanced from/to range (set in the filters sheet) — leaves the day chips
+  // deselected and shows up as an active-filter chip instead.
   const handleDateRangeChange = (from: Date | null, to: Date | null) => {
-    setDateFrom(from);
-    setDateTo(to);
+    setDateScope('all');
+    setCustomDate(null);
+    setDateFrom(from ? atNoon(from) : null);
+    setDateTo(to ? atNoon(to) : null);
   };
 
   const handleVanFilterChange = (van: string | null) => {
@@ -183,50 +311,36 @@ export default function Orders() {
             placeholder="Search orders, customers..."
           />
 
-          {/* Quick Action Buttons */}
-          <View className="flex-row gap-2 px-4 pb-2">
-            <TouchableOpacity
-              onPress={handleCollectionSheet}
-              className="flex-row items-center rounded-lg px-3 py-2"
-              style={{
-                backgroundColor: colors.card,
-                borderWidth: 1,
-                borderColor: colors.border,
-              }}>
-              <MaterialCommunityIcons name="basket-outline" size={16} color={colors.primary} />
-              <Text className="ml-1.5 text-sm font-medium" style={{ color: colors.text }}>
-                Collection
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={()=> navigation.navigate('VanOrdersScreen')}
-              className="flex-row items-center rounded-lg px-3 py-2"
-              style={{
-                backgroundColor: colors.card,
-                borderWidth: 1,
-                borderColor: colors.border,
-              }}>
-              <MaterialCommunityIcons name="truck-outline" size={16} color={colors.primary} />
-              <Text className="ml-1.5 text-sm font-medium" style={{ color: colors.text }}>
-                By Van
-              </Text>
-            </TouchableOpacity>
-
-            {/* NEW: By Customer Button */}
-            <TouchableOpacity
-              onPress={()=> navigation.navigate('CustomerOrdersScreen')}
-              className="flex-row items-center rounded-lg px-3 py-2"
-              style={{
-                backgroundColor: colors.card,
-                borderWidth: 1,
-                borderColor: colors.border,
-              }}>
-              <MaterialCommunityIcons name="account-outline" size={16} color={colors.primary} />
-              <Text className="ml-1.5 text-sm font-medium" style={{ color: colors.text }}>
-                By Customer
-              </Text>
-            </TouchableOpacity>
+          {/* Alternate views — quiet text links, one slim row */}
+          <View className="flex-row items-center gap-5 px-4 pb-2">
+            {[
+              { label: 'Collection', icon: 'basket-outline', onPress: handleCollectionSheet },
+              {
+                label: 'By Van',
+                icon: 'truck-outline',
+                onPress: () => navigation.navigate('VanOrdersScreen'),
+              },
+              {
+                label: 'By Customer',
+                icon: 'account-outline',
+                onPress: () => navigation.navigate('CustomerOrdersScreen'),
+              },
+            ].map((link) => (
+              <TouchableOpacity
+                key={link.label}
+                onPress={link.onPress}
+                hitSlop={6}
+                className="flex-row items-center py-1">
+                <MaterialCommunityIcons
+                  name={link.icon as any}
+                  size={15}
+                  color={colors.primary}
+                />
+                <Text className="ml-1 text-xs font-semibold" style={{ color: colors.text }}>
+                  {link.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
           {/* New app orders awaiting acceptance */}
@@ -243,24 +357,41 @@ export default function Orders() {
         </View>
       )}
 
-      {/* Orders List with Filters */}
-      <OrdersList
-        searchQuery={searchQuery}
-        statusFilter={statusFilter}
-        paymentFilter={paymentFilter}
-        vanFilter={vanFilter}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        onStatusFilterChange={setStatusFilter}
-        onPaymentFilterChange={setPaymentFilter}
-        onVanFilterChange={handleVanFilterChange}
-        onDateRangeChange={handleDateRangeChange}
-        onViewOrder={handleViewOrder}
-        onLongPressOrder={handleLongPressOrder}
-        isSelectionMode={isSelectionMode}
-        selectedOrders={selectedOrders}
-        onSelectAll={handleSelectAll}
-      />
+      {/* Orders List with Filters (waits for persisted prefs so the first
+          fetch already uses the vendor's remembered defaults) */}
+      {prefsReady && (
+        <OrdersList
+          searchQuery={searchQuery}
+          statusFilter={statusFilter}
+          paymentFilter={paymentFilter}
+          vanFilter={vanFilter}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          dateScope={dateScope}
+          customDate={customDate}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          dateFilterField={dateFilterField}
+          showSummary={showSummary}
+          onStatusFilterChange={setStatusFilter}
+          onPaymentFilterChange={setPaymentFilter}
+          onVanFilterChange={handleVanFilterChange}
+          onDateRangeChange={handleDateRangeChange}
+          onDateScopeChange={applyDateScope}
+          onStepDay={stepDay}
+          onSortChange={(field, order) => {
+            setSortBy(field);
+            setSortOrder(order);
+          }}
+          onDateFilterFieldChange={setDateFilterField}
+          onToggleSummary={() => setShowSummary((s) => !s)}
+          onViewOrder={handleViewOrder}
+          onLongPressOrder={handleLongPressOrder}
+          isSelectionMode={isSelectionMode}
+          selectedOrders={selectedOrders}
+          onSelectAll={handleSelectAll}
+        />
+      )}
 
       {/* Bulk Actions Bar */}
       {isSelectionMode && selectedOrders.size > 0 && (
@@ -335,9 +466,15 @@ export default function Orders() {
                     {item.orderNumber} · {itemCount} item{itemCount === 1 ? '' : 's'}
                   </Text>
                 </View>
-                <Text className="mr-1 text-[15px]" style={[typo.num, { color: colors.text }]}>
-                  {formatPrice(item.totalAmount)}
-                </Text>
+                {item.status === 'quote_requested' ? (
+                  <Text className="mr-1 text-xs font-semibold" style={{ color: colors.accent }}>
+                    Quote
+                  </Text>
+                ) : (
+                  <Text className="mr-1 text-[15px]" style={[typo.num, { color: colors.text }]}>
+                    {formatPrice(item.totalAmount)}
+                  </Text>
+                )}
                 <MaterialCommunityIcons name="chevron-right" size={20} color={colors.muted} />
               </TouchableOpacity>
             );

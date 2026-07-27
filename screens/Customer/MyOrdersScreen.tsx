@@ -19,12 +19,25 @@ const FILTERS: { key: 'all' | 'active' | 'delivered' | 'cancelled'; label: strin
 ];
 
 const ACTIVE_STATUSES: OrderStatus[] = [
+  'quote_requested',
+  'quoted',
   'pending',
   'confirmed',
   'processing',
   'ready_for_delivery',
   'dispatched',
 ];
+
+const fmtPlaced = (iso: string) => {
+  const d = new Date(iso);
+  const day = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return `${day}, ${time}`;
+};
+
+// DATEONLY strings parse as UTC midnight — pin to midday so the day never shifts.
+const fmtDay = (ymd: string) =>
+  new Date(`${ymd}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
 export default function MyOrdersScreen() {
   const { colors } = useThemeContext();
@@ -109,6 +122,12 @@ export default function MyOrdersScreen() {
               <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>
                 {item.orderNumber}
               </Text>
+              <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>
+                Placed {fmtPlaced(item.placedAt)}
+                {item.requestedDeliveryDate
+                  ? `  ·  Delivery ${fmtDay(item.requestedDeliveryDate)}`
+                  : ''}
+              </Text>
               <View
                 style={{
                   flexDirection: 'row',
@@ -120,7 +139,7 @@ export default function MyOrdersScreen() {
                   {item.itemCount ?? 0} item{(item.itemCount ?? 0) === 1 ? '' : 's'}
                 </Text>
                 <Text style={[typo.num, { color: colors.text }]}>
-                  {formatPrice(item.totalAmount)}
+                  {item.status === 'quote_requested' ? '—' : formatPrice(item.totalAmount)}
                 </Text>
               </View>
             </Pressable>

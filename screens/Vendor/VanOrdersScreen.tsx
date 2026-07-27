@@ -1,5 +1,5 @@
 // screens/Vendor/VanOrdersScreen.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,17 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
-  Platform,
   Share,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useThemeContext } from 'context/ThemeProvider';
+import { useAuth } from 'context/AuthContext';
 import { fetchVans } from 'api/actions/vendorActions';
 import { fetchOrdersByVan } from 'api/actions/orderActions';
 import { typo } from 'constants/design';
-import { EmptyState, StatInline } from 'components/ui';
+import { EmptyState, StatInline, DatePickerSheet } from 'components/ui';
+import { loadUiPrefs, saveUiPrefs } from 'utils/uiPrefs';
 import { ViewToggle } from './components/OrderTableView';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'utils/Toast';
@@ -32,6 +32,8 @@ interface AggregatedProduct {
 
 export default function VanOrdersScreen({ navigation }: any) {
   const { colors } = useThemeContext();
+  const { user } = useAuth();
+  const prefsKey = `van_orders_prefs_v1:${user?.id ?? 'anon'}`;
 
   const [selectedVan, setSelectedVan] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -40,6 +42,22 @@ export default function VanOrdersScreen({ navigation }: any) {
   const [expandedProduct, setExpandedProduct] = useState<number | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+
+  // Remember the vendor's preferred card/table view.
+  useEffect(() => {
+    let alive = true;
+    loadUiPrefs<{ viewMode: 'card' | 'table' }>(prefsKey).then((p) => {
+      if (alive && (p?.viewMode === 'card' || p?.viewMode === 'table')) setViewMode(p.viewMode);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [prefsKey]);
+
+  const changeViewMode = (mode: 'card' | 'table') => {
+    setViewMode(mode);
+    saveUiPrefs(prefsKey, { viewMode: mode });
+  };
 
   // Fetch vans
   const { data: vansData, isLoading: vansLoading } = useQuery({
@@ -135,13 +153,6 @@ export default function VanOrdersScreen({ navigation }: any) {
   const handleCloseDetailModal = () => {
     setDetailModalVisible(false);
     setSelectedOrderId(null);
-  };
-
-  const handleDateChange = (event: any, date?: Date) => {
-    setShowDatePicker(false);
-    if (date) {
-      setSelectedDate(date);
-    }
   };
 
   const formatDisplayDate = (date: Date) => {
@@ -295,7 +306,7 @@ export default function VanOrdersScreen({ navigation }: any) {
               <Text className="text-sm font-semibold" style={{ color: colors.muted }}>
                 {totals.products} products from {totals.orders} orders for {selectedVan}
               </Text>
-              <ViewToggle viewMode={viewMode} onToggle={setViewMode} />
+              <ViewToggle viewMode={viewMode} onToggle={changeViewMode} />
             </View>
 
             <StatInline
@@ -349,15 +360,18 @@ export default function VanOrdersScreen({ navigation }: any) {
         </>
       )}
 
-      {/* Date Picker */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={handleDateChange}
-        />
-      )}
+      {/* Date Picker — sheet-based, always dismissable */}
+      <DatePickerSheet
+        visible={showDatePicker}
+        onClose={() => setShowDatePicker(false)}
+        title="Orders for date"
+        value={selectedDate}
+        onSelect={(d) => {
+          const noon = new Date(d);
+          noon.setHours(12, 0, 0, 0);
+          setSelectedDate(noon);
+        }}
+      />
 
       {/* Import VanOrderDetailsModal */}
       {selectedOrderId && (

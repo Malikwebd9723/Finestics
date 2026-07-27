@@ -3,11 +3,13 @@ import React, { useLayoutEffect } from 'react';
 import { View, Text, FlatList, Pressable } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useQuery } from '@tanstack/react-query';
 
 import { useThemeContext } from 'context/ThemeProvider';
 import { useCart } from 'context/CartContext';
 import { EmptyState } from 'components/ui';
 import { typo, fonts } from 'constants/design';
+import { getVendor } from 'api/actions/marketplaceActions';
 import { formatPrice } from './components/ProductCard';
 
 export default function CartScreen() {
@@ -20,6 +22,14 @@ export default function CartScreen() {
   const { getCart, getTotal, setQty } = useCart();
   const items = getCart(vendorId);
   const total = getTotal(vendorId);
+
+  // Hidden-price vendors: no amounts anywhere — the vendor quotes at checkout.
+  const { data: vendorInfo } = useQuery({
+    queryKey: ['marketplace-vendor', vendorId],
+    queryFn: () => getVendor(vendorId),
+    enabled: !!vendorId,
+  });
+  const isQuote = !!vendorInfo?.hidePrices;
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerTitle: `Cart · ${vendorName}` });
@@ -72,12 +82,20 @@ export default function CartScreen() {
                 numberOfLines={1}>
                 {item.name}
               </Text>
-              <Text style={{ color: colors.muted, fontSize: 13, marginTop: 2 }}>
-                {formatPrice(item.sellingPrice)} / {item.unit}
-              </Text>
-              <Text style={[typo.num, { color: colors.text, fontSize: 14, marginTop: 4 }]}>
-                {formatPrice(Number(item.sellingPrice) * item.quantity)}
-              </Text>
+              {isQuote ? (
+                <Text style={{ color: colors.muted, fontSize: 13, marginTop: 2 }}>
+                  per {item.unit} · price on request
+                </Text>
+              ) : (
+                <>
+                  <Text style={{ color: colors.muted, fontSize: 13, marginTop: 2 }}>
+                    {formatPrice(item.sellingPrice)} / {item.unit}
+                  </Text>
+                  <Text style={[typo.num, { color: colors.text, fontSize: 14, marginTop: 4 }]}>
+                    {formatPrice(Number(item.sellingPrice) * item.quantity)}
+                  </Text>
+                </>
+              )}
             </View>
 
             <View
@@ -126,7 +144,9 @@ export default function CartScreen() {
         }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
           <Text style={{ color: colors.muted, fontSize: 15 }}>Subtotal</Text>
-          <Text style={[typo.stat, { color: colors.text }]}>{formatPrice(total)}</Text>
+          <Text style={[typo.stat, { color: colors.text }]}>
+            {isQuote ? 'Quoted at checkout' : formatPrice(total)}
+          </Text>
         </View>
         <Pressable
           onPress={() => navigation.navigate('CheckoutScreen', { vendorId, vendorName })}

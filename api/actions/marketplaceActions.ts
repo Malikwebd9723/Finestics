@@ -15,6 +15,10 @@ export interface MarketplaceVendor {
   website: string | null;
   city?: string | null;
   productCount?: number;
+  /** Shareable 6-char code customers can search to find this vendor. */
+  vendorCode?: string | null;
+  /** Vendor hides catalog prices — orders become quote requests. */
+  hidePrices?: boolean;
 }
 
 export interface MarketplaceProduct {
@@ -93,7 +97,7 @@ export const getVendor = async (vendorId: number): Promise<VendorDetail> => {
 export const getVendorProducts = async (
   vendorId: number,
   params: { search?: string; page?: number; limit?: number } = {}
-): Promise<{ items: MarketplaceProduct[]; pagination: Pagination }> => {
+): Promise<{ items: MarketplaceProduct[]; pagination: Pagination; hidePrices: boolean }> => {
   const res = await apiRequest(
     `/marketplace/vendors/${vendorId}/products${buildQuery(params)}`,
     'GET'
@@ -101,5 +105,9 @@ export const getVendorProducts = async (
   if (!res.success) {
     throw new Error(getErrorMessage(res.data, 'Failed to load products'));
   }
-  return { items: res.data.data, pagination: res.data.pagination };
+  return {
+    items: res.data.data,
+    pagination: res.data.pagination,
+    hidePrices: !!res.data.hidePrices,
+  };
 };

@@ -12,8 +12,13 @@ export type VendorOrderStatusAction =
   | 'delivered'
   | 'cancelled';
 
+/**
+ * List customer app orders. `status` may be a single status or a
+ * comma-separated list (e.g. "pending,quote_requested" for everything
+ * awaiting vendor action).
+ */
 export const getVendorOrders = async (
-  status?: OrderStatus
+  status?: OrderStatus | string
 ): Promise<{ items: CustomerOrder[]; pagination: Pagination }> => {
   const query = status ? `?status=${status}` : '';
   const res = await apiRequest(`/vendor/customer-orders${query}`, 'GET');
@@ -30,13 +35,34 @@ export const getVendorOrder = async (orderId: number): Promise<CustomerOrder> =>
 export const updateVendorOrderStatus = async (
   orderId: number,
   status: VendorOrderStatusAction,
-  notes?: string
+  notes?: string,
+  /** Acceptance only: pre-assign the mirrored order-book entry to this van. */
+  vanName?: string | null
 ): Promise<CustomerOrder> => {
   const res = await apiRequest(`/vendor/customer-orders/${orderId}/status`, 'PATCH', {
     status,
     notes,
+    ...(vanName ? { vanName } : {}),
   });
   if (!res.success) throw new Error(getErrorMessage(res.data, 'Failed to update order'));
+  return res.data.data;
+};
+
+/**
+ * Price a quote-request order and send the quote to the customer.
+ * Every order item needs a unit price; totals are recomputed server-side.
+ */
+export const submitVendorQuote = async (
+  orderId: number,
+  payload: {
+    items: { itemId: number; unitPrice: number }[];
+    deliveryFee?: number;
+    discount?: number;
+    notes?: string;
+  }
+): Promise<CustomerOrder> => {
+  const res = await apiRequest(`/vendor/customer-orders/${orderId}/quote`, 'PATCH', payload);
+  if (!res.success) throw new Error(getErrorMessage(res.data, 'Failed to send quote'));
   return res.data.data;
 };
 

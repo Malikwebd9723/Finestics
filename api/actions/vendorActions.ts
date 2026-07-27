@@ -32,6 +32,8 @@ export const updateVendorProfile = async (data: {
   businessEmail?: string;
   operatingHours?: object;
   deliveryAreas?: string[];
+  /** Hide catalog prices — app orders become quote requests. */
+  hidePrices?: boolean;
 }) => {
   const res = await apiRequest('/vendors/me', 'PUT', data);
   throwIfError(res, 'Failed to update profile');

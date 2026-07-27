@@ -21,6 +21,7 @@ export { default as TrendCard } from './TrendCard';
 export { default as ListRow } from './ListRow';
 export { default as EmptyState } from './EmptyState';
 export { default as BottomSheet } from './BottomSheet';
+export { default as DatePickerSheet } from './DatePickerSheet';
 export { default as FullSheet } from './FullSheet';
 export { default as Input } from './Input';
 export { default as Button } from './Button';

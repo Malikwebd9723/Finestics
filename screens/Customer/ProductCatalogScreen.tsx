@@ -41,6 +41,8 @@ export default function ProductCatalogScreen() {
   });
 
   const products = data?.items ?? [];
+  // Vendor hides prices — the whole order gets quoted after placing.
+  const quotePricing = !!data?.hidePrices;
   const cartItems = getCart(vendorId);
   const count = getCount(vendorId);
   const total = getTotal(vendorId);
@@ -74,6 +76,7 @@ export default function ProductCatalogScreen() {
               <ProductCard
                 product={item}
                 cartQty={qty}
+                quotePricing={quotePricing}
                 onAdd={() =>
                   addItem(vendorId, vendorName, {
                     productId: item.id,
@@ -123,7 +126,7 @@ export default function ProductCatalogScreen() {
             </Text>
           </View>
           <Text style={[typo.num, { color: colors.onCta }]}>
-            View Cart · {formatPrice(total)}
+            {quotePricing ? 'View Cart · quote at checkout' : `View Cart · ${formatPrice(total)}`}
           </Text>
         </Pressable>
       )}

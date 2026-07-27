@@ -18,6 +18,8 @@ interface Props {
   onAdd?: () => void;
   onIncrement?: () => void;
   onDecrement?: () => void;
+  /** Vendor hides prices — orders are quoted after placing. */
+  quotePricing?: boolean;
 }
 
 export default function ProductCard({
@@ -26,6 +28,7 @@ export default function ProductCard({
   onAdd,
   onIncrement,
   onDecrement,
+  quotePricing = false,
 }: Props) {
   const { colors } = useThemeContext();
   const initial = product.name?.[0]?.toUpperCase() || 'P';
@@ -71,15 +74,16 @@ export default function ProductCard({
           numberOfLines={1}>
           {product.name}
         </Text>
-        {product.sellingPrice != null ? (
+        {product.sellingPrice != null && !quotePricing ? (
           <Text style={[typo.num, { color: colors.text, fontSize: 14, marginTop: 2 }]}>
             {formatPrice(product.sellingPrice)}
             <Text style={{ color: colors.muted, fontFamily: fonts.regular }}> / {product.unit}</Text>
           </Text>
         ) : (
-          // Marketplace preview before connecting — prices are connection-gated.
+          // No price shown: either not connected yet (marketplace preview) or
+          // the vendor hides prices and quotes each order.
           <Text style={{ color: colors.muted, fontSize: 13, marginTop: 2 }}>
-            per {product.unit} · price after connecting
+            per {product.unit} · {quotePricing ? 'price on request' : 'price after connecting'}
           </Text>
         )}
       </View>

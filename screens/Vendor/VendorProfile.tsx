@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Switch,
+  Share,
 } from 'react-native';
 import Toast from 'utils/Toast';
 import Dialog from 'utils/Dialog';
@@ -71,6 +73,34 @@ export default function VendorProfile() {
       Dialog.alert('Error', error?.response?.data?.message || 'Failed to update profile');
     },
   });
+
+  // Instant toggle for hiding catalog prices (separate from edit mode).
+  const hidePricesMutation = useMutation({
+    mutationFn: (hidePrices: boolean) => updateVendorProfile({ hidePrices }),
+    onSuccess: (_data, hidePrices) => {
+      queryClient.invalidateQueries({ queryKey: ['vendorProfile'] });
+      Toast.success(
+        hidePrices
+          ? 'Prices hidden — app orders now come in as quote requests'
+          : 'Prices visible — app orders are placed at catalog prices'
+      );
+    },
+    onError: (error: any) => {
+      queryClient.invalidateQueries({ queryKey: ['vendorProfile'] });
+      Dialog.alert('Error', error?.message || 'Failed to update setting');
+    },
+  });
+
+  const shareVendorCode = async () => {
+    if (!profile?.vendorCode) return;
+    try {
+      await Share.share({
+        message: `Find ${profile.businessName || 'us'} on Finestics — search vendor code ${profile.vendorCode} in the app to connect and order.`,
+      });
+    } catch {
+      // user dismissed the share sheet
+    }
+  };
 
   // Add van mutation
   const addVanMutation = useMutation({
@@ -231,6 +261,72 @@ export default function VendorProfile() {
                 </TouchableOpacity>
               </View>
             )}
+          </View>
+
+          {/* Vendor code + selling settings */}
+          <View
+            className="mb-4 rounded-xl p-4"
+            style={{
+              backgroundColor: colors.card,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}>
+            <Text className="mb-3" style={[typo.eyebrow, { color: colors.muted }]}>
+              CUSTOMER ACCESS
+            </Text>
+
+            {/* Shareable code customers search to connect */}
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 pr-3">
+                <Text className="text-xs font-medium" style={{ color: colors.muted }}>
+                  Your vendor code
+                </Text>
+                <Text
+                  className="mt-0.5 text-xl"
+                  style={[typo.num, { color: colors.text, letterSpacing: 2 }]}>
+                  {profile?.vendorCode || '——————'}
+                </Text>
+                <Text className="mt-1 text-xs" style={{ color: colors.muted }}>
+                  Customers search this code (or your business name) in the app to connect with
+                  you.
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={shareVendorCode}
+                disabled={!profile?.vendorCode}
+                className="flex-row items-center rounded-lg px-3 py-2"
+                style={{
+                  backgroundColor: colors.cta,
+                  opacity: profile?.vendorCode ? 1 : 0.5,
+                }}>
+                <MaterialCommunityIcons name="share-variant" size={16} color={colors.onCta} />
+                <Text className="ml-1.5 font-medium" style={{ color: colors.onCta }}>
+                  Share
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Hide prices → quote flow */}
+            <View
+              className="mt-4 flex-row items-center justify-between border-t pt-4"
+              style={{ borderColor: colors.border }}>
+              <View className="flex-1 pr-3">
+                <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+                  Hide my item prices
+                </Text>
+                <Text className="mt-0.5 text-xs" style={{ color: colors.muted }}>
+                  Customers see your catalog without prices; each app order arrives as a quote
+                  request you price before they accept.
+                </Text>
+              </View>
+              <Switch
+                value={!!profile?.hidePrices}
+                onValueChange={(value) => hidePricesMutation.mutate(value)}
+                disabled={hidePricesMutation.isPending}
+                trackColor={{ false: colors.border, true: colors.accent }}
+                thumbColor={colors.card}
+              />
+            </View>
           </View>
 
           {/* Business Info Card */}

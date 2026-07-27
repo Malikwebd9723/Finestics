@@ -91,11 +91,12 @@ export default function TabNavigator() {
     return () => sub.remove();
   }, []);
 
-  // Vendor only: pending app orders drive a badge on the Orders tab.
+  // Vendor only: app orders awaiting action (new + quote requests) drive a
+  // badge on the Orders tab.
   const hasOrdersTab = navigationItems.some((item) => item.screen === 'OrdersScreen');
   const { data: pendingAppOrders } = useQuery({
-    queryKey: ['vendor-customer-orders', 'pending-badge'],
-    queryFn: () => getVendorOrders('pending'),
+    queryKey: ['vendor-customer-orders', 'needs-action-badge'],
+    queryFn: () => getVendorOrders('pending,quote_requested'),
     enabled: hasOrdersTab,
     refetchInterval: appActive ? 60000 : false,
     refetchIntervalInBackground: false,
